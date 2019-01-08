@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
 		auto vp1 = vp.get();
 		vp1->setBkColor({0.f, 0.f, 0.f});
 		vp1->camera()->setFOV(PI/2.5f);
-		vp1->camera()->moveTo({0, 0, -2.f});
+		vp1->camera()->moveTo({2, 1.5, 2.f});
+		vp1->camera()->lookAt({0.f, 0.f, 0.f});
 		renderer.addViewport("main", std::move(vp));
 
 		World &world = World::getInstance();

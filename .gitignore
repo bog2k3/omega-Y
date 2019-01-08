@@ -1,4 +1,6 @@
 .boglfw_path 
 Omega-Y* 
 build/ 
-.codelite 
+.codelite
+*.project
+*.workspace 
