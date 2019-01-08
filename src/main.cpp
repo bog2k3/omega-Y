@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
 		// initialize stuff:
 		int winW = 1024, winH = 768;
-		if (!gltInitGLFW(winW, winH, "OmegaY"))
+		if (!gltInitGLFW(winW, winH, "Omega-Y"))
 			return -1;
 
 		GLFWInput::initialize(gltGetWindow());
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
 				glm::vec3(1.f, 0.2f, 0.2f), 0.1f, 50, 0.1, 0, 3);
 
 		auto infoTexts = [&](Viewport*) {
-			GLText::get()->print("OmegaY v0.1",
+			GLText::get()->print("Omega-Y v0.1",
 					{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
 					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
 

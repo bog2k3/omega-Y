@@ -14,7 +14,7 @@ RESULT=$?
 cd ..
 
 if [[ $RESULT = 0 ]]; then
-	cp build/OmegaY* ./
+	cp build/Omega-Y* ./
 	printf "\n Success.\n\n"
 	exit 0
 else

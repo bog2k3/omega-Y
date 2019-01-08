@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 ###### SET YOUR PROJECT'S NAME HERE #######
-SET(PROJECT_NAME "OmegaY")
+SET(PROJECT_NAME "Omega-Y")
 
 # Project's name
 project(${PROJECT_NAME})
