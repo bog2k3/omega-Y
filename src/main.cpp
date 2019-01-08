@@ -137,6 +137,8 @@ int main(int argc, char* argv[]) {
 		drawList.push_back(&infoTexts);
 		
 		vp1->setDrawList(drawList);
+		
+		initSession();
 
 		// initial update:
 		updateList.update(0);

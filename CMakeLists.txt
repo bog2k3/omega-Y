@@ -79,11 +79,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 ADD_CUSTOM_COMMAND (
 	TARGET ${PROJECT_NAME}
 	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy "${BOGLFW_DIST_DIR}/fw-version" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fw-target"
+	COMMAND ${CMAKE_COMMAND} -E copy "${BOGLFW_DIST_DIR}/fw-version" "${CMAKE_SOURCE_DIR}/fw-target"
 )
 
 # copy data files from the framework
 ADD_CUSTOM_TARGET(doAlways ALL
 	SOURCES "${dataFiles}"
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${BOGLFW_DIST_DIR}/data $<TARGET_FILE_DIR:${PROJECT_NAME}>/data
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${BOGLFW_DIST_DIR}/data ${CMAKE_SOURCE_DIR}/data
 )
