@@ -1,4 +1,4 @@
-# omegaY
+# omega-Y
 re-iteration of the classic Omega-X first person shooter
 
 (uses Bugs OpenGL Framework library from https://github.com/bog2k3/boglfw.git)
