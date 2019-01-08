@@ -2,6 +2,7 @@
 #include <boglfw/renderOpenGL/Renderer.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/GLText.h>
+#include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
@@ -9,6 +10,8 @@
 #include <boglfw/OSD/SignalViewer.h>
 #include <boglfw/GUI/GuiSystem.h>
 #include <boglfw/Infrastructure.h>
+
+#include <boglfw/entities/Gizmo.h>
 
 #include <boglfw/utils/drawable.h>
 #include <boglfw/utils/log.h>
@@ -58,6 +61,10 @@ void onInputEventHandler(InputEvent& ev) {
 	}
 }
 
+void initSession() {
+	World::getInstance().takeOwnershipOf(std::make_unique<Gizmo>(glm::mat4{1.f}, 1.f));
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -75,6 +82,8 @@ int main(int argc, char* argv[]) {
 		auto vp = std::make_unique<Viewport>(0, 0, winW, winH);
 		auto vp1 = vp.get();
 		vp1->setBkColor({0.f, 0.f, 0.f});
+		vp1->camera()->setFOV(PI/2.5f);
+		vp1->camera()->moveTo({0, 0, -2.f});
 		renderer.addViewport("main", std::move(vp));
 
 		World &world = World::getInstance();
