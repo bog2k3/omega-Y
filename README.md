@@ -7,6 +7,7 @@ re-iteration of the classic Omega-X first person shooter
 1. install tools (cmake, make, g++)
 
 2. install dependencies: 
+- GLM https://github.com/g-truc/glm/releases/download/0.9.8.5/glm-0.9.8.5.zip
 - GLFW3 https://www.glfw.org/ 
 - GLEW http://glew.sourceforge.net/ 
 - ASIO https://think-async.com/Asio/Download.html 
