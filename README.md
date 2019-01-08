@@ -7,14 +7,10 @@ re-iteration of the classic Omega-X first person shooter
 1. install tools (cmake, make, g++)
 
 2. install dependencies:
-
-  a. GLFW3 https://www.glfw.org/
-  
-  b. GLEW http://glew.sourceforge.net/
-  
-  c. ASIO https://think-async.com/Asio/Download.html
-  
-  d. libpng-devel, libz-devel, mesa-devel
+..2.a. GLFW3 https://www.glfw.org/
+..2.b. GLEW http://glew.sourceforge.net/
+..2.c. ASIO https://think-async.com/Asio/Download.html
+..2.d. libpng-devel, libz-devel, mesa-devel
   
 3. clone boglfw repo and build it:
 ```
