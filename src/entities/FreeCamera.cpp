@@ -2,6 +2,9 @@
 #include <boglfw/math/aabb.h>
 #include <boglfw/math/math3D.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
+
 FreeCamera::FreeCamera(glm::vec3 position, glm::vec3 direction)
 	: position_(position)
 	, direction_(direction)
@@ -29,17 +32,17 @@ glm::mat4 FreeCamera::getTransform() const {
 void FreeCamera::move(direction dir) {
 	switch (dir) {
 		case FORWARD:
-			frameMoveValues_.z += running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.z += 1.f; break;
 		case BACKWARD:
-			frameMoveValues_.z -= running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.z -= 1.f; break;
 		case LEFT:
-			frameMoveValues_.x -= running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.x -= 1.f; break;
 		case RIGHT:
-			frameMoveValues_.x += running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.x += 1.f; break;
 		case UP:
-			frameMoveValues_.y += running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.y += 1.f; break;
 		case DOWN:
-			frameMoveValues_.y -= running_ ? 1.f : 0.5f; break;
+			frameMoveValues_.y -= 1.f; break;
 		default: 
 			break;
 	}
@@ -61,7 +64,7 @@ void FreeCamera::rotate(direction dir, float angle) {
 }
 
 void FreeCamera::update(float dt) {
-	const float maxMoveSpeed = 3.f * running_ ? 2.f : 1.f; // m/s
+	const float maxMoveSpeed = 3.f * (running_ ? 2.f : 1.f); // m/s
 	const float linearAcceleration = maxMoveSpeed / 0.5f;	// m/s^2	- we want to reach the target speed in 0.5 seconds
 	const float maxRotateSpeed = 4 * PI;	// rad/s
 	const float rotationalAcceleration = maxRotateSpeed / 0.25f;	// rad/s^2	- we want to reach the target rotational speed in 0.25 seconds
@@ -81,8 +84,26 @@ void FreeCamera::update(float dt) {
 	frameMoveValues_ = glm::vec3(0.f);
 	
 	// compute rotation alteration based on inputs
-	glm::vec2 deltaRot = rotateSpeed_ * dt;	// this is how much we would rotate during this frame
 	// we want to rotate by targetRotateValues_ in total from the current state
-	//rotateSpeed_.x += rotationalAcceleration * dt * sign
-	
+	rotateSpeed_.x += rotationalAcceleration * dt * sign(targetRotateValues_.x);
+	rotateSpeed_.y += rotationalAcceleration * dt * sign(targetRotateValues_.y);
+	rotateSpeed_.x = clamp(rotateSpeed_.x, -maxRotateSpeed, +maxRotateSpeed);
+	rotateSpeed_.y = clamp(rotateSpeed_.y, -maxRotateSpeed, +maxRotateSpeed);
+
+	glm::vec2 deltaRot = rotateSpeed_ * dt;	// this is how much we would rotate during this frame
+	deltaRot.x = clamp(deltaRot.x, min(0.f, targetRotateValues_.x), max(0.f, targetRotateValues_.x));
+	deltaRot.y = clamp(deltaRot.y, min(0.f, targetRotateValues_.y), max(0.f, targetRotateValues_.y));
+	targetRotateValues_ -= deltaRot;
+
+	// stop rotation if reached the target
+	if (abs(deltaRot.x) < 0.01)
+		rotateSpeed_.x = 0;
+	if (abs(deltaRot.y) < 0.01)
+		rotateSpeed_.y = 0;
+
+	glm::vec3 xAxis = vec4xyz(transform_[0]);
+	auto rotMat = glm::rotate(deltaRot.x, xAxis) * glm::rotate(deltaRot.y, glm::vec3{0.f, 1.f, 0.f});
+	direction_ = vec4xyz(rotMat * glm::vec4(direction_, 0));
+
+	transformDirty_ = true;
 }

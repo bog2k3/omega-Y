@@ -1,3 +1,6 @@
+#include "entities/FreeCamera.h"
+#include "PlayerInputHandler.h"
+
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Renderer.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -43,28 +46,57 @@ bool updatePaused = false;
 bool slowMo = false;
 bool captureFrame = false;
 
+std::weak_ptr<FreeCamera> freeCam;
+PlayerInputHandler playerInputHandler;
+
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
 
-void onInputEventHandler(InputEvent& ev) {
-	if (ev.isConsumed())
-		return;
+void handleSystemKeys(InputEvent& ev) {
 	if (ev.key == GLFW_KEY_SPACE) {
-		if (ev.type == InputEvent::EV_KEY_DOWN)
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			updatePaused ^= true;
+			ev.consume();
+		}
 	} else if (ev.key == GLFW_KEY_S) {
-		if (ev.type == InputEvent::EV_KEY_DOWN)
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			slowMo ^= true;
+			ev.consume();
+		}
 	} else if (ev.key == GLFW_KEY_F1) {
-		if (ev.type == InputEvent::EV_KEY_DOWN)
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			captureFrame = true;
+			ev.consume();
+		}
 	}
 }
 
+void handleGUIInputs(InputEvent& ev) {
+	// call guiSystem.handleInput(ev)
+}
+
+void handlePlayerInputs(InputEvent& ev) {
+	playerInputHandler.handleInputEvent(ev);
+}
+
+void onInputEventHandler(InputEvent& ev) {
+	// propagate input events in order of priority:
+	if (!ev.isConsumed())
+		handleSystemKeys(ev);
+	if (!ev.isConsumed())
+		handleGUIInputs(ev);
+	if (!ev.isConsumed())
+		handlePlayerInputs(ev);
+}
+
 void initSession() {
-	World::getInstance().takeOwnershipOf(std::make_unique<Gizmo>(glm::mat4{1.f}, 1.f));
-	World::getInstance().takeOwnershipOf(std::make_unique<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
+	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
+	World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
+
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2, 1, 2}, glm::vec3{-2, -1, -2});
+	freeCam = sFreeCam;
+	World::getInstance().takeOwnershipOf(sFreeCam);
 }
 
 int main(int argc, char* argv[]) {
@@ -105,6 +137,7 @@ int main(int argc, char* argv[]) {
 		UpdateList updateList;
 		updateList.add(&World::getInstance());
 		updateList.add(&sigViewer);
+		updateList.add(&playerInputHandler);
 
 		float realTime = 0;							// [s]
 		float simulationTime = 0;					// [s]
