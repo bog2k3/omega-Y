@@ -12,6 +12,7 @@
 #include <boglfw/Infrastructure.h>
 
 #include <boglfw/entities/Gizmo.h>
+#include <boglfw/entities/Box.h>
 
 #include <boglfw/utils/drawable.h>
 #include <boglfw/utils/log.h>
@@ -63,6 +64,7 @@ void onInputEventHandler(InputEvent& ev) {
 
 void initSession() {
 	World::getInstance().takeOwnershipOf(std::make_unique<Gizmo>(glm::mat4{1.f}, 1.f));
+	World::getInstance().takeOwnershipOf(std::make_unique<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 }
 
 int main(int argc, char* argv[]) {
