@@ -31,17 +31,17 @@ glm::mat4 FreeCamera::getTransform() const {
 
 void FreeCamera::move(direction dir) {
 	switch (dir) {
-		case FORWARD:
+		case IUserControllable::FORWARD:
 			frameMoveValues_.z += 1.f; break;
-		case BACKWARD:
+		case IUserControllable::BACKWARD:
 			frameMoveValues_.z -= 1.f; break;
-		case LEFT:
+		case IUserControllable::LEFT:
 			frameMoveValues_.x -= 1.f; break;
-		case RIGHT:
+		case IUserControllable::RIGHT:
 			frameMoveValues_.x += 1.f; break;
-		case UP:
+		case IUserControllable::UP:
 			frameMoveValues_.y += 1.f; break;
-		case DOWN:
+		case IUserControllable::DOWN:
 			frameMoveValues_.y -= 1.f; break;
 		default: 
 			break;
@@ -50,13 +50,13 @@ void FreeCamera::move(direction dir) {
 
 void FreeCamera::rotate(direction dir, float angle) {
 	switch (dir) {
-		case LEFT:
+		case IUserControllable::LEFT:
 			targetRotateValues_.y -= angle; break;
-		case RIGHT:
+		case IUserControllable::RIGHT:
 			targetRotateValues_.y += angle; break;
-		case UP:
+		case IUserControllable::UP:
 			targetRotateValues_.x -= angle; break;
-		case DOWN:
+		case IUserControllable::DOWN:
 			targetRotateValues_.x += angle; break;
 		default: 
 			break;

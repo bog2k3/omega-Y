@@ -1,10 +1,11 @@
 #ifndef FREECAMERA_H
 #define FREECAMERA_H
 
+#include "IUserControllable.h"
 #include "enttypes.h"
 #include <boglfw/entities/Entity.h>
 
-class FreeCamera : public Entity
+class FreeCamera : public Entity, public IUserControllable
 {
 public:
 	FreeCamera(glm::vec3 position, glm::vec3 direction);
@@ -17,17 +18,11 @@ public:
 	virtual aabb getAABB(bool requirePrecise=false) const override;
 	virtual glm::mat4 getTransform() const override;
 	
-	enum direction {
-		FORWARD,
-		BACKWARD,
-		LEFT,
-		RIGHT,
-		UP,
-		DOWN
-	};
-	void move(direction dir);
-	void toggleRun(bool on) { running_ = on; }
-	void rotate(direction dir, float angle);
+	virtual void move(direction dir) override;
+	virtual void toggleRun(bool on) override { running_ = on; }
+	virtual void rotate(direction dir, float angle) override;
+	
+	virtual void setActionState(int actionId, bool on) override {}
 
 private:
 	glm::vec3 position_;
