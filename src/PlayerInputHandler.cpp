@@ -49,7 +49,7 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 						if (bindings[a].code == 0) 		// X-axis
 							inputStates_[a] += ev.dx * mouseSensitivity;
 						else if (bindings[a].code == 1) // Y-axis
-							inputStates_[a] -= ev.dy * mouseSensitivity * (invertMouseY ? -1.f : 1.f);
+							inputStates_[a] += ev.dy * mouseSensitivity * (invertMouseY ? -1.f : 1.f);
 						else if (bindings[a].code == 2) // Z-axis
 							inputStates_[a] += ev.dz;	// we don't apply sensitivity to scroll wheel
 					}
@@ -87,11 +87,11 @@ void PlayerInputHandler::update(float dt) {
 	targetSP->toggleRun(inputStates_[RUN]);
 	
 	if (inputStates_[ROTATE_YAW]) {
-		targetSP->rotate(IUserControllable::LEFT, inputStates_[ROTATE_YAW] * dt);
+		targetSP->rotate(IUserControllable::RIGHT, inputStates_[ROTATE_YAW] * dt);	// rotating RIGHT with negative angle rotates LEFT
 		inputStates_[ROTATE_YAW] = 0;
 	}
 	if (inputStates_[ROTATE_PITCH]) {
-		targetSP->rotate(IUserControllable::UP, inputStates_[ROTATE_PITCH] * dt);
+		targetSP->rotate(IUserControllable::DOWN, inputStates_[ROTATE_PITCH] * dt);	// rotating DOWN with negative angle rotates UP
 		inputStates_[ROTATE_PITCH] = 0;
 	}
 	

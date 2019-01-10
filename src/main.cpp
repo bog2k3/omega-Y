@@ -46,6 +46,7 @@
 bool updatePaused = false;
 bool slowMo = false;
 bool captureFrame = false;
+bool signalQuit = false;
 
 std::weak_ptr<FreeCamera> freeCam;
 PlayerInputHandler playerInputHandler;
@@ -54,21 +55,32 @@ template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
 
+void toggleMouseCapture();
+
 void handleSystemKeys(InputEvent& ev) {
-	if (ev.key == GLFW_KEY_SPACE) {
+	if (ev.key == GLFW_KEY_ESCAPE) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			updatePaused ^= true;
-			ev.consume();
-		}
-	} else if (ev.key == GLFW_KEY_S) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			slowMo ^= true;
+			signalQuit = true;
 			ev.consume();
 		}
 	} else if (ev.key == GLFW_KEY_F1) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			captureFrame = true;
 			ev.consume();
+		}
+	} else if (ev.key == GLFW_KEY_F2) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			slowMo ^= true;
+			ev.consume();
+		}
+	} else if (ev.key == GLFW_KEY_F3) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			updatePaused ^= true;
+			ev.consume();
+		}
+	} else if (ev.key == GLFW_KEY_TAB) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			toggleMouseCapture();
 		}
 	}
 }
@@ -89,6 +101,15 @@ void onInputEventHandler(InputEvent& ev) {
 		handleGUIInputs(ev);
 	if (!ev.isConsumed())
 		handlePlayerInputs(ev);
+}
+
+void toggleMouseCapture() {
+	static bool isCaptured = false;
+	if (isCaptured)
+		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	else
+		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	isCaptured = !isCaptured;
 }
 
 void initSession(Camera* camera) {
@@ -124,8 +145,6 @@ int main(int argc, char* argv[]) {
 		auto vp1 = vp.get();
 		vp1->setBkColor({0.f, 0.f, 0.f});
 		vp1->camera()->setFOV(PI/2.5f);
-		vp1->camera()->moveTo({2, 1.5, 2.f});
-		vp1->camera()->lookAt({0.f, 0.f, 0.f});
 		renderer.addViewport("main", std::move(vp));
 
 		World &world = World::getInstance();
@@ -146,20 +165,19 @@ int main(int argc, char* argv[]) {
 		updateList.add(&sigViewer);
 		updateList.add(&playerInputHandler);
 
-		float realTime = 0;							// [s]
-		float simulationTime = 0;					// [s]
-		float simDTAcc = 0; // [s] accumulated sim dt values since last status print
-		float realDTAcc = 0; // [s] accumulated real dt values since last status print
-		constexpr float simTimePrintInterval = 10.f; // [s]
+		float realTime = 0;							// [s] real time that passed since starting
+		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
+		float frameRate = 0;
 
-		float frameTime = 0;
-
-		sigViewer.addSignal("frameTime", &frameTime,
-				glm::vec3(1.f, 0.2f, 0.2f), 0.1f, 50, 0.1, 0, 3);
+		sigViewer.addSignal("FPS", &frameRate,
+				glm::vec3(1.f, 0.2f, 0.2f), 0.2f, 50, 0, 0, 0);
 
 		auto infoTexts = [&](Viewport*) {
 			GLText::get()->print("Omega-Y v0.1",
 					{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
+					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+			GLText::get()->print("Press TAB to capture/release mouse",
+					{20, 20, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
 					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
 
 			if (updatePaused) {
@@ -186,8 +204,9 @@ int main(int argc, char* argv[]) {
 		// initial update:
 		updateList.update(0);
 
-		float t = glfwGetTime();
-		while (GLFWInput::checkInput()) {
+		float initialTime = glfwGetTime();
+		float t = initialTime;
+		while (!signalQuit && GLFWInput::checkInput()) {
 			if (captureFrame)
 				perf::FrameCapture::start(perf::FrameCapture::AllThreads);
 			/* frame context */
@@ -195,26 +214,17 @@ int main(int argc, char* argv[]) {
 				PERF_MARKER("frame");
 				float newTime = glfwGetTime();
 				float realDT = newTime - t;
-				frameTime = realDT;
-				realDTAcc += realDT;
+				frameRate = 1.0 / realDT;
 				t = newTime;
-				realTime += realDT;
+				realTime = newTime - initialTime;
 
-				// fixed time step for simulation (unless slowMo is on)
-				float simDT = updatePaused ? 0 : 0.02f;
+				// time step for simulation
+				float simDT = updatePaused ? 0 : realDT;
 				if (slowMo) {
-					// use same fixed timestep in order to avoid breaking physics, but
-					// only update once every n frames to slow down
-					static float frameCounter = 0;
-					constexpr float cycleLength = 10; // frames
-					if (++frameCounter == cycleLength) {
-						frameCounter = 0;
-					} else
-						simDT = 0;
+					simDT *= 0.1f;	// 10x slow-down factor
 				}
 
 				simulationTime += simDT;
-				simDTAcc += simDT;
 
 				continuousUpdateList.update(realDT);
 				if (simDT > 0) {
