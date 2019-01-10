@@ -16,6 +16,7 @@
 
 #include <boglfw/entities/Gizmo.h>
 #include <boglfw/entities/Box.h>
+#include <boglfw/entities/CameraController.h>
 
 #include <boglfw/utils/drawable.h>
 #include <boglfw/utils/log.h>
@@ -90,13 +91,19 @@ void onInputEventHandler(InputEvent& ev) {
 		handlePlayerInputs(ev);
 }
 
-void initSession() {
+void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
 	World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
 	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2, 1, 2}, glm::vec3{-2, -1, -2});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
+	
+	auto sCamCtrl = std::make_shared<CameraController>(camera);
+	World::getInstance().takeOwnershipOf(sCamCtrl);
+	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
+	
+	playerInputHandler.setTargetObject(freeCam);
 }
 
 int main(int argc, char* argv[]) {
@@ -174,7 +181,7 @@ int main(int argc, char* argv[]) {
 		
 		vp1->setDrawList(drawList);
 		
-		initSession();
+		initSession(vp1->camera());
 
 		// initial update:
 		updateList.update(0);
