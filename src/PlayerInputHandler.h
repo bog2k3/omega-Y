@@ -46,7 +46,7 @@ public:
 	};
 
 	bindingDescriptor bindings[ALL_ACTIONS];	// maps each action to a key/button/analog axis
-	float mouseSensitivity = 1.0f;				// radians per pixels per second
+	float mouseSensitivity = 0.2f;				// radians per hundred pixels
 	bool invertMouseY = false;					// invert mouse Y axis
 
 	void setDefaultBindings();

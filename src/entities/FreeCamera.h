@@ -33,8 +33,7 @@ private:
 	glm::vec3 speed_ {0.f};
 	bool running_ = false;
 	glm::vec3 frameMoveValues_ {0.f};
-	glm::vec2 rotateSpeed_ {0.f};
-	glm::vec2 targetRotateValues_ {0.f};
+	glm::vec2 frameRotateValues_ {0.f};
 };
 
 #endif // FREECAMERA_H
