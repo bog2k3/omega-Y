@@ -90,6 +90,9 @@ void handleGUIInputs(InputEvent& ev) {
 }
 
 void handlePlayerInputs(InputEvent& ev) {
+	if (ev.type == InputEvent::EV_MOUSE_MOVED) {
+		LOGLN("Mouse move: " << ev.dx << ", " << ev.dy);
+	}
 	playerInputHandler.handleInputEvent(ev);
 }
 
@@ -116,7 +119,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
 	World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.5, 1, 2}, glm::vec3{-2.5, -1, -2});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2, 1, 2}, glm::vec3{-2, -1, -2});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 	
@@ -134,8 +137,7 @@ int main(int argc, char* argv[]) {
 
 		// initialize stuff:
 		int winW = 1024, winH = 768;
-		unsigned samples = 4; // 1 for no AA, bigger for multi-sampling
-		if (!gltInitGLFW(winW, winH, "Omega-Y", samples))
+		if (!gltInitGLFW(winW, winH, "Omega-Y"))
 			return -1;
 
 		GLFWInput::initialize(gltGetWindow());
@@ -148,9 +150,6 @@ int main(int argc, char* argv[]) {
 		vp1->camera()->setFOV(PI/2.5f);
 		renderer.addViewport("main", std::move(vp));
 
-		WorldConfig wldConfig;
-		wldConfig.drawBoundaries = true;
-		World::setConfig(wldConfig);
 		World &world = World::getInstance();
 
 		//randSeed(1424118659);
@@ -207,6 +206,7 @@ int main(int argc, char* argv[]) {
 
 		// initial update:
 		updateList.update(0);
+		GLFWInput::resetInputQueue();	// purge any input events that occured during window creation
 
 		float initialTime = glfwGetTime();
 		float t = initialTime;
