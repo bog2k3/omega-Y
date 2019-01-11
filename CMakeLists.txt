@@ -39,8 +39,8 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include")
-link_directories("${BOGLFW_DIST_DIR}/lib")
+include_directories("${BOGLFW_DIST_DIR}/include" "./3rdparty/bullet3/include/")
+link_directories("${BOGLFW_DIST_DIR}/lib" "./3rdparty/bullet3/lib/")
 if (WIN32)
 	link_directories("C:/mingw64/lib")
 	include_directories("C:/mingw64/include")

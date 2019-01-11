@@ -90,9 +90,6 @@ void handleGUIInputs(InputEvent& ev) {
 }
 
 void handlePlayerInputs(InputEvent& ev) {
-	if (ev.type == InputEvent::EV_MOUSE_MOVED) {
-		LOGLN("Mouse move: " << ev.dx << ", " << ev.dy);
-	}
 	playerInputHandler.handleInputEvent(ev);
 }
 
@@ -119,7 +116,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
 	World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2, 1, 2}, glm::vec3{-2, -1, -2});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.3f, 1, 2}, glm::vec3{-2.3f, -1, -2});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 	

@@ -31,10 +31,13 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 			case bindingDescriptor::DeviceType::Keyboard: {
 				// treat keyboard buttons
 				if (ev.key == bindings[a].code) {
-					if (ev.type == InputEvent::EV_KEY_DOWN)
+					if (ev.type == InputEvent::EV_KEY_DOWN) {
 						inputStates_[a] = 1.f;					// TODO change to += 1.f if allowing multiple bindings for same action
-					else if (ev.type == InputEvent::EV_KEY_UP)
+						ev.consume();
+					} else if (ev.type == InputEvent::EV_KEY_UP) {
 						inputStates_[a] = 0.f;
+						ev.consume();
+					}
 				}
 			}
 			break;
@@ -46,19 +49,29 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 				if (bindings[a].analog) {
 					// treat mouse movement
 					if (ev.type == InputEvent::EV_MOUSE_MOVED || ev.type == InputEvent::EV_MOUSE_SCROLL) {
-						if (bindings[a].code == 0) 		// X-axis
+						if (bindings[a].code == 0) { 		// X-axis
 							inputStates_[a] += ev.dx * mouseSensitivity * 0.01f;
-						else if (bindings[a].code == 1) // Y-axis
+							ev.consume();
+						}
+						else if (bindings[a].code == 1) { // Y-axis
 							inputStates_[a] += ev.dy * mouseSensitivity * 0.01f * (invertMouseY ? -1.f : 1.f);
-						else if (bindings[a].code == 2) // Z-axis
+							ev.consume();
+						}
+						else if (bindings[a].code == 2) { // Z-axis
 							inputStates_[a] += ev.dz;	// we don't apply sensitivity to scroll wheel
+							ev.consume();
+						}
 					}
 				} else if (ev.mouseButton == bindings[a].code) {
 					// treat mouse buttons
-					if (ev.type == InputEvent::EV_MOUSE_DOWN)
+					if (ev.type == InputEvent::EV_MOUSE_DOWN) {
 						inputStates_[a] = 1.f;
-					else if (ev.type == InputEvent::EV_MOUSE_UP)
+						ev.consume();
+					}
+					else if (ev.type == InputEvent::EV_MOUSE_UP) {
 						inputStates_[a] = 0.f;
+						ev.consume();
+					}
 				}
 			}
 		}
