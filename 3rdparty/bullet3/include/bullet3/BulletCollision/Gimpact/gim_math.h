@@ -32,7 +32,7 @@ email: projectileman@yahoo.com
 -----------------------------------------------------------------------------
 */
 
-#include "LinearMath/btScalar.h"
+#include <bullet3/LinearMath/btScalar.h>
 
 #define GREAL btScalar
 #define GREAL2 double

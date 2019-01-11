@@ -24,8 +24,8 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "btGImpactBvh.h"
-#include "btQuantization.h"
+#include <bullet3/btGImpactBvh.h>
+#include <bullet3/btQuantization.h>
 
 ///btQuantizedBvhNode is a compressed aabb node, 16 bytes.
 ///Node can be used for leafnode or internal node. Leafnodes can point to 32-bit triangle index (non-negative range).

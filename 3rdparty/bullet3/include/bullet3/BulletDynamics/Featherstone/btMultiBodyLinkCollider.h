@@ -16,10 +16,10 @@ subject to the following restrictions:
 #ifndef BT_FEATHERSTONE_LINK_COLLIDER_H
 #define BT_FEATHERSTONE_LINK_COLLIDER_H
 
-#include "BulletCollision/CollisionDispatch/btCollisionObject.h"
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionObject.h>
 
-#include "btMultiBody.h"
-#include "LinearMath/btSerializer.h"
+#include <bullet3/btMultiBody.h>
+#include <bullet3/LinearMath/btSerializer.h>
 
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btMultiBodyLinkColliderData btMultiBodyLinkColliderDoubleData

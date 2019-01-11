@@ -16,11 +16,11 @@ subject to the following restrictions:
 #ifndef B3_OVERLAPPING_PAIR_CACHE_H
 #define B3_OVERLAPPING_PAIR_CACHE_H
 
-#include "Bullet3Common/shared/b3Int2.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
+#include <bullet3/Bullet3Common/shared/b3Int2.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
 
 class b3Dispatcher;
-#include "b3OverlappingPair.h"
+#include <bullet3/b3OverlappingPair.h>
 
 typedef b3AlignedObjectArray<b3BroadphasePair> b3BroadphasePairArray;
 

@@ -16,10 +16,10 @@ subject to the following restrictions:
 #ifndef BT_SPHERE_SPHERE_COLLISION_ALGORITHM_H
 #define BT_SPHERE_SPHERE_COLLISION_ALGORITHM_H
 
-#include "btActivatingCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
-#include "btCollisionDispatcher.h"
+#include <bullet3/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 
 class btPersistentManifold;
 

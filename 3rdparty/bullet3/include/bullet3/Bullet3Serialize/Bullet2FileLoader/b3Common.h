@@ -17,9 +17,9 @@ subject to the following restrictions:
 #define __BCOMMON_H__
 
 #include <assert.h>
-//#include "bLog.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
-#include "Bullet3Common/b3HashMap.h"
+//#include <bullet3/bLog.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
+#include <bullet3/Bullet3Common/b3HashMap.h>
 
 namespace bParse
 {

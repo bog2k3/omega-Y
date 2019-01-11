@@ -1,12 +1,12 @@
 
 #ifndef B3_GPU_JACOBI_CONTACT_SOLVER_H
 #define B3_GPU_JACOBI_CONTACT_SOLVER_H
-#include "Bullet3OpenCL/Initialize/b3OpenCLInclude.h"
-//#include "Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h"
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h"
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLInclude.h>
+//#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h>
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h>
 
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3Contact4Data.h"
-#include "Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h"
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3Contact4Data.h>
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h>
 
 //struct b3InertiaData;
 //b3InertiaData

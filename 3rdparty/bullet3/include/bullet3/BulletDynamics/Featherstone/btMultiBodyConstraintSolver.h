@@ -16,14 +16,14 @@ subject to the following restrictions:
 #ifndef BT_MULTIBODY_CONSTRAINT_SOLVER_H
 #define BT_MULTIBODY_CONSTRAINT_SOLVER_H
 
-#include "BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h"
-#include "btMultiBodySolverConstraint.h"
+#include <bullet3/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
+#include <bullet3/btMultiBodySolverConstraint.h>
 
 #define DIRECTLY_UPDATE_VELOCITY_DURING_SOLVER_ITERATIONS
 
 class btMultiBody;
 
-#include "btMultiBodyConstraint.h"
+#include <bullet3/btMultiBodyConstraint.h>
 
 ATTRIBUTE_ALIGNED16(class)
 btMultiBodyConstraintSolver : public btSequentialImpulseConstraintSolver

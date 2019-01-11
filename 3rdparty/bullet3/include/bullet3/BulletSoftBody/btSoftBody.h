@@ -17,15 +17,15 @@ subject to the following restrictions:
 #ifndef _BT_SOFT_BODY_H
 #define _BT_SOFT_BODY_H
 
-#include "LinearMath/btAlignedObjectArray.h"
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btIDebugDraw.h"
-#include "BulletDynamics/Dynamics/btRigidBody.h"
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btIDebugDraw.h>
+#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 
-#include "BulletCollision/CollisionShapes/btConcaveShape.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
-#include "btSparseSDF.h"
-#include "BulletCollision/BroadphaseCollision/btDbvt.h"
+#include <bullet3/BulletCollision/CollisionShapes/btConcaveShape.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
+#include <bullet3/btSparseSDF.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btDbvt.h>
 
 //#ifdef BT_USE_DOUBLE_PRECISION
 //#define btRigidBodyData	btRigidBodyDoubleData

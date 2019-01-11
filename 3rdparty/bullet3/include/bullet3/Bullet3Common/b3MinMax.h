@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef B3_GEN_MINMAX_H
 #define B3_GEN_MINMAX_H
 
-#include "b3Scalar.h"
+#include <bullet3/b3Scalar.h>
 
 template <class T>
 B3_FORCE_INLINE const T& b3Min(const T& a, const T& b)

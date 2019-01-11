@@ -16,9 +16,9 @@ subject to the following restrictions:
 #ifndef BT_CONCAVE_SHAPE_H
 #define BT_CONCAVE_SHAPE_H
 
-#include "btCollisionShape.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"  // for the types
-#include "btTriangleCallback.h"
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionShape.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>  // for the types
+#include <bullet3/BulletCollision/CollisionShapes/btTriangleCallback.h>
 
 /// PHY_ScalarType enumerates possible scalar types.
 /// See the btStridingMeshInterface or btHeightfieldTerrainShape for its use

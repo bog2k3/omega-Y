@@ -1,10 +1,10 @@
 #ifndef B3_GPU_NARROWPHASE_H
 #define B3_GPU_NARROWPHASE_H
 
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3Collidable.h"
-#include "Bullet3OpenCL/Initialize/b3OpenCLInclude.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
-#include "Bullet3Common/b3Vector3.h"
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3Collidable.h>
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLInclude.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
+#include <bullet3/Bullet3Common/b3Vector3.h>
 
 class b3GpuNarrowPhase
 {

@@ -16,9 +16,9 @@ subject to the following restrictions:
 #ifndef B3_STRIDING_MESHINTERFACE_H
 #define B3_STRIDING_MESHINTERFACE_H
 
-#include "Bullet3Common/b3Vector3.h"
-#include "b3TriangleCallback.h"
-//#include "b3ConcaveShape.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
+#include <bullet3/b3TriangleCallback.h>
+//#include <bullet3/b3ConcaveShape.h>
 
 enum PHY_ScalarType
 {

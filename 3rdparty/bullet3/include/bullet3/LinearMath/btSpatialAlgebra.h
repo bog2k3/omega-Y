@@ -18,7 +18,7 @@ subject to the following restrictions:
 #ifndef BT_SPATIAL_ALGEBRA_H
 #define BT_SPATIAL_ALGEBRA_H
 
-#include "btMatrix3x3.h"
+#include <bullet3/btMatrix3x3.h>
 
 struct btSpatialForceVector
 {

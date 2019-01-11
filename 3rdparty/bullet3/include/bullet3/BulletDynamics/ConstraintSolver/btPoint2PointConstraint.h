@@ -16,9 +16,9 @@ subject to the following restrictions:
 #ifndef BT_POINT2POINTCONSTRAINT_H
 #define BT_POINT2POINTCONSTRAINT_H
 
-#include "LinearMath/btVector3.h"
-#include "btJacobianEntry.h"
-#include "btTypedConstraint.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btJacobianEntry.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btTypedConstraint.h>
 
 class btRigidBody;
 

@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef B3_VORONOI_SIMPLEX_SOLVER_H
 #define B3_VORONOI_SIMPLEX_SOLVER_H
 
-#include "Bullet3Common/b3Vector3.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
 
 #define VORONOI_SIMPLEX_MAX_VERTS 5
 

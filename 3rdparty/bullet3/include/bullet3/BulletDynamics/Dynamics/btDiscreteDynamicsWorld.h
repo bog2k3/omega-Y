@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_DISCRETE_DYNAMICS_WORLD_H
 #define BT_DISCRETE_DYNAMICS_WORLD_H
 
-#include "btDynamicsWorld.h"
+#include <bullet3/BulletDynamics/Dynamics/btDynamicsWorld.h>
 
 class btDispatcher;
 class btOverlappingPairCache;
@@ -28,8 +28,8 @@ class btPersistentManifold;
 class btIDebugDraw;
 struct InplaceSolverIslandCallback;
 
-#include "LinearMath/btAlignedObjectArray.h"
-#include "LinearMath/btThreads.h"
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/LinearMath/btThreads.h>
 
 ///btDiscreteDynamicsWorld provides discrete rigid body simulation
 ///those classes replace the obsolete CcdPhysicsEnvironment/CcdPhysicsController

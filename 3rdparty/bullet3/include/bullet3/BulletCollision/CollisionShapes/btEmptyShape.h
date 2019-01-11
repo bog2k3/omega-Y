@@ -16,12 +16,12 @@ subject to the following restrictions:
 #ifndef BT_EMPTY_SHAPE_H
 #define BT_EMPTY_SHAPE_H
 
-#include "btConcaveShape.h"
+#include <bullet3/BulletCollision/CollisionShapes/btConcaveShape.h>
 
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btMatrix3x3.h"
-#include "btCollisionMargin.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btMatrix3x3.h>
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionMargin.h>
 
 /// The btEmptyShape is a collision shape without actual collision detection shape, so most users should ignore this class.
 /// It can be replaced by another shape during runtime, but the inertia tensor should be recomputed.

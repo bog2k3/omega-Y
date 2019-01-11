@@ -26,9 +26,9 @@ http://gimpact.sf.net
 #ifndef B3_GENERIC_6DOF_CONSTRAINT_H
 #define B3_GENERIC_6DOF_CONSTRAINT_H
 
-#include "Bullet3Common/b3Vector3.h"
-#include "b3JacobianEntry.h"
-#include "b3TypedConstraint.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
+#include <bullet3/b3JacobianEntry.h>
+#include <bullet3/b3TypedConstraint.h>
 
 struct b3RigidBodyData;
 

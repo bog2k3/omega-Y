@@ -16,8 +16,8 @@ subject to the following restrictions:
 #ifndef BT_SOFT_BODY_DEFAULT_SOLVER_H
 #define BT_SOFT_BODY_DEFAULT_SOLVER_H
 
-#include "BulletSoftBody/btSoftBodySolvers.h"
-#include "btSoftBodySolverVertexBuffer.h"
+#include <bullet3/BulletSoftBody/btSoftBodySolvers.h>
+#include <bullet3/btSoftBodySolverVertexBuffer.h>
 struct btCollisionObjectWrapper;
 
 class btDefaultSoftBodySolver : public btSoftBodySolver

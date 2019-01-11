@@ -74,12 +74,12 @@ class btConvexShape;
 class btBroadphaseInterface;
 class btSerializer;
 
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btTransform.h"
-#include "btCollisionObject.h"
-#include "btCollisionDispatcher.h"
-#include "BulletCollision/BroadphaseCollision/btOverlappingPairCache.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionObject.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 ///CollisionWorld is interface and container for the collision detection
 class btCollisionWorld

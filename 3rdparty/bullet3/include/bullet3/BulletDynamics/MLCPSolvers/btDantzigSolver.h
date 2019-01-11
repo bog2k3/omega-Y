@@ -17,8 +17,8 @@ subject to the following restrictions:
 #ifndef BT_DANTZIG_SOLVER_H
 #define BT_DANTZIG_SOLVER_H
 
-#include "btMLCPSolverInterface.h"
-#include "btDantzigLCP.h"
+#include <bullet3/btMLCPSolverInterface.h>
+#include <bullet3/btDantzigLCP.h>
 
 class btDantzigSolver : public btMLCPSolverInterface
 {

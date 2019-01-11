@@ -36,7 +36,7 @@ inline int b3GetVersion()
 #define B3_DEBUG
 #endif
 
-#include "b3Logging.h"  //for b3Error
+#include <bullet3/b3Logging.h>  //for b3Error
 
 #ifdef _WIN32
 

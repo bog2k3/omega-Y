@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef B3_TRANSFORM_H
 #define B3_TRANSFORM_H
 
-#include "b3Matrix3x3.h"
+#include <bullet3/b3Matrix3x3.h>
 
 #ifdef B3_USE_DOUBLE_PRECISION
 #define b3TransformData b3TransformDoubleData

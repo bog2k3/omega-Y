@@ -16,11 +16,11 @@ subject to the following restrictions:
 #ifndef BT_GJK_PAIR_DETECTOR_H
 #define BT_GJK_PAIR_DETECTOR_H
 
-#include "btDiscreteCollisionDetectorInterface.h"
-#include "BulletCollision/CollisionShapes/btCollisionMargin.h"
+#include <bullet3/btDiscreteCollisionDetectorInterface.h>
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionMargin.h>
 
 class btConvexShape;
-#include "btSimplexSolverInterface.h"
+#include <bullet3/btSimplexSolverInterface.h>
 class btConvexPenetrationDepthSolver;
 
 /// btGjkPairDetector uses GJK to implement the btDiscreteCollisionDetectorInterface

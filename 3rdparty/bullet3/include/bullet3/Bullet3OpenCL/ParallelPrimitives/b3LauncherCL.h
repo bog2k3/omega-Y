@@ -2,9 +2,9 @@
 #ifndef B3_LAUNCHER_CL_H
 #define B3_LAUNCHER_CL_H
 
-#include "b3BufferInfoCL.h"
-#include "Bullet3Common/b3MinMax.h"
-#include "b3OpenCLArray.h"
+#include <bullet3/b3BufferInfoCL.h>
+#include <bullet3/Bullet3Common/b3MinMax.h>
+#include <bullet3/b3OpenCLArray.h>
 #include <stdio.h>
 
 #define B3_DEBUG_SERIALIZE_CL

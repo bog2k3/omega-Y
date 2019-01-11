@@ -14,9 +14,9 @@ subject to the following restrictions:
 #ifndef B3_GPU_PARALLEL_LINEAR_BVH_BROADPHASE_H
 #define B3_GPU_PARALLEL_LINEAR_BVH_BROADPHASE_H
 
-#include "Bullet3OpenCL/BroadphaseCollision/b3GpuBroadphaseInterface.h"
+#include <bullet3/Bullet3OpenCL/BroadphaseCollision/b3GpuBroadphaseInterface.h>
 
-#include "b3GpuParallelLinearBvh.h"
+#include <bullet3/b3GpuParallelLinearBvh.h>
 
 class b3GpuParallelLinearBvhBroadphase : public b3GpuBroadphaseInterface
 {

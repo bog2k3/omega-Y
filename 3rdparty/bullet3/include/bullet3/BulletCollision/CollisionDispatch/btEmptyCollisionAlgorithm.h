@@ -15,9 +15,9 @@ subject to the following restrictions:
 
 #ifndef BT_EMPTY_ALGORITH
 #define BT_EMPTY_ALGORITH
-#include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
-#include "btCollisionCreateFunc.h"
-#include "btCollisionDispatcher.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h>
+#include <bullet3/btCollisionCreateFunc.h>
+#include <bullet3/btCollisionDispatcher.h>
 
 #define ATTRIBUTE_ALIGNED(a)
 

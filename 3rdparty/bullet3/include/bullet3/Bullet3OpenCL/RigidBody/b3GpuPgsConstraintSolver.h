@@ -21,16 +21,16 @@ struct b3ContactPoint;
 
 class b3Dispatcher;
 
-#include "Bullet3Dynamics/ConstraintSolver/b3TypedConstraint.h"
-#include "Bullet3Dynamics/ConstraintSolver/b3ContactSolverInfo.h"
-#include "b3GpuSolverBody.h"
-#include "b3GpuSolverConstraint.h"
-#include "Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h"
+#include <bullet3/Bullet3Dynamics/ConstraintSolver/b3TypedConstraint.h>
+#include <bullet3/Bullet3Dynamics/ConstraintSolver/b3ContactSolverInfo.h>
+#include <bullet3/b3GpuSolverBody.h>
+#include <bullet3/b3GpuSolverConstraint.h>
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h>
 struct b3RigidBodyData;
 struct b3InertiaData;
 
-#include "Bullet3OpenCL/Initialize/b3OpenCLInclude.h"
-#include "b3GpuGenericConstraint.h"
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLInclude.h>
+#include <bullet3/b3GpuGenericConstraint.h>
 
 class b3GpuPgsConstraintSolver
 {

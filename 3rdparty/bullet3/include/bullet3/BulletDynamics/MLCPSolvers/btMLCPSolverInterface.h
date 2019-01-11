@@ -17,7 +17,7 @@ subject to the following restrictions:
 #ifndef BT_MLCP_SOLVER_INTERFACE_H
 #define BT_MLCP_SOLVER_INTERFACE_H
 
-#include "LinearMath/btMatrixX.h"
+#include <bullet3/LinearMath/btMatrixX.h>
 
 class btMLCPSolverInterface
 {

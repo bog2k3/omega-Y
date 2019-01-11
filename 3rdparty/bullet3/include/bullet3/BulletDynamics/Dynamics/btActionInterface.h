@@ -19,8 +19,8 @@ subject to the following restrictions:
 class btIDebugDraw;
 class btCollisionWorld;
 
-#include "LinearMath/btScalar.h"
-#include "btRigidBody.h"
+#include <bullet3/LinearMath/btScalar.h>
+#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 
 ///Basic interface to allow actions such as vehicles and characters to be updated inside a btDynamicsWorld
 class btActionInterface

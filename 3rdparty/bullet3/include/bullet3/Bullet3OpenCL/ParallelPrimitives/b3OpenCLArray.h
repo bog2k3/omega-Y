@@ -1,8 +1,8 @@
 #ifndef B3_OPENCL_ARRAY_H
 #define B3_OPENCL_ARRAY_H
 
-#include "Bullet3Common/b3AlignedObjectArray.h"
-#include "Bullet3OpenCL/Initialize/b3OpenCLInclude.h"
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLInclude.h>
 
 template <typename T>
 class b3OpenCLArray

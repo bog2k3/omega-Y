@@ -2,9 +2,9 @@
 #ifndef B3_SUPPORT_MAPPINGS_H
 #define B3_SUPPORT_MAPPINGS_H
 
-#include "Bullet3Common/b3Transform.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
-#include "b3VectorFloat4.h"
+#include <bullet3/Bullet3Common/b3Transform.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
+#include <bullet3/b3VectorFloat4.h>
 
 struct b3GjkPairDetector;
 

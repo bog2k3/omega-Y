@@ -19,12 +19,12 @@
 #ifndef BT_AXIS_SWEEP_3_INTERNAL_H
 #define BT_AXIS_SWEEP_3_INTERNAL_H
 
-#include "LinearMath/btVector3.h"
-#include "btOverlappingPairCache.h"
-#include "btBroadphaseInterface.h"
-#include "btBroadphaseProxy.h"
-#include "btOverlappingPairCallback.h"
-#include "btDbvtBroadphase.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
 
 //#define DEBUG_BROADPHASE 1
 #define USE_OVERLAP_TEST_ON_REMOVES 1

@@ -1,11 +1,11 @@
 #ifndef B3_GPU_RAYCAST_H
 #define B3_GPU_RAYCAST_H
 
-#include "Bullet3Common/b3Vector3.h"
-#include "Bullet3OpenCL/Initialize/b3OpenCLInclude.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLInclude.h>
 
-#include "Bullet3Common/b3AlignedObjectArray.h"
-#include "Bullet3Collision/NarrowPhaseCollision/b3RaycastInfo.h"
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/b3RaycastInfo.h>
 
 class b3GpuRaycast
 {

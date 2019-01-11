@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef B3_TRANSFORM_UTIL_H
 #define B3_TRANSFORM_UTIL_H
 
-#include "b3Transform.h"
+#include <bullet3/b3Transform.h>
 #define B3_ANGULAR_MOTION_THRESHOLD b3Scalar(0.5) * B3_HALF_PI
 
 B3_FORCE_INLINE b3Vector3 b3AabbSupport(const b3Vector3& halfExtents, const b3Vector3& supportDir)

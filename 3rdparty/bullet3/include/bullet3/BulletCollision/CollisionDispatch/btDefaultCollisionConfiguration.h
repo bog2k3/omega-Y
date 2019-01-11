@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_DEFAULT_COLLISION_CONFIGURATION
 #define BT_DEFAULT_COLLISION_CONFIGURATION
 
-#include "btCollisionConfiguration.h"
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionConfiguration.h>
 class btVoronoiSimplexSolver;
 class btConvexPenetrationDepthSolver;
 

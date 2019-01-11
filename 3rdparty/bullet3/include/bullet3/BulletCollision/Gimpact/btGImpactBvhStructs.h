@@ -24,10 +24,10 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
-#include "btBoxCollision.h"
-#include "btTriangleShapeEx.h"
+#include <bullet3/btBoxCollision.h>
+#include <bullet3/btTriangleShapeEx.h>
 
 //! Overlapping pair
 struct GIM_PAIR

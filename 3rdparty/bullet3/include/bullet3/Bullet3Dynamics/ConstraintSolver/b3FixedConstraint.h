@@ -2,7 +2,7 @@
 #ifndef B3_FIXED_CONSTRAINT_H
 #define B3_FIXED_CONSTRAINT_H
 
-#include "b3TypedConstraint.h"
+#include <bullet3/b3TypedConstraint.h>
 
 B3_ATTRIBUTE_ALIGNED16(class)
 b3FixedConstraint : public b3TypedConstraint

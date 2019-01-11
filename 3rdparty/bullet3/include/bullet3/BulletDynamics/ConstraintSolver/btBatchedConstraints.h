@@ -16,10 +16,10 @@ subject to the following restrictions:
 #ifndef BT_BATCHED_CONSTRAINTS_H
 #define BT_BATCHED_CONSTRAINTS_H
 
-#include "LinearMath/btThreads.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "BulletDynamics/ConstraintSolver/btSolverBody.h"
-#include "BulletDynamics/ConstraintSolver/btSolverConstraint.h"
+#include <bullet3/LinearMath/btThreads.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btSolverBody.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btSolverConstraint.h>
 
 class btIDebugDraw;
 

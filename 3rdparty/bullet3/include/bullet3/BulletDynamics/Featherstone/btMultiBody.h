@@ -24,11 +24,11 @@
 #ifndef BT_MULTIBODY_H
 #define BT_MULTIBODY_H
 
-#include "LinearMath/btScalar.h"
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btQuaternion.h"
-#include "LinearMath/btMatrix3x3.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btScalar.h>
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btQuaternion.h>
+#include <bullet3/LinearMath/btMatrix3x3.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 ///serialization data, don't change them if you are not familiar with the details of the serialization mechanisms
 #ifdef BT_USE_DOUBLE_PRECISION
@@ -43,7 +43,7 @@
 #define btMultiBodyLinkDataName "btMultiBodyLinkFloatData"
 #endif  //BT_USE_DOUBLE_PRECISION
 
-#include "btMultiBodyLink.h"
+#include <bullet3/btMultiBodyLink.h>
 class btMultiBodyLinkCollider;
 
 ATTRIBUTE_ALIGNED16(class)

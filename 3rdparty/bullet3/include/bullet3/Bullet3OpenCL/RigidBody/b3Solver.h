@@ -16,17 +16,17 @@ subject to the following restrictions:
 #ifndef __ADL_SOLVER_H
 #define __ADL_SOLVER_H
 
-#include "Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h"
-#include "b3GpuConstraint4.h"
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h>
+#include <bullet3/b3GpuConstraint4.h>
 
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h"
-#include "Bullet3Collision/NarrowPhaseCollision/b3Contact4.h"
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h>
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/b3Contact4.h>
 
-#include "Bullet3OpenCL/ParallelPrimitives/b3PrefixScanCL.h"
-#include "Bullet3OpenCL/ParallelPrimitives/b3RadixSort32CL.h"
-#include "Bullet3OpenCL/ParallelPrimitives/b3BoundSearchCL.h"
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3PrefixScanCL.h>
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3RadixSort32CL.h>
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3BoundSearchCL.h>
 
-#include "Bullet3OpenCL/Initialize/b3OpenCLUtils.h"
+#include <bullet3/Bullet3OpenCL/Initialize/b3OpenCLUtils.h>
 
 #define B3NEXTMULTIPLEOF(num, alignment) (((num) / (alignment) + (((num) % (alignment) == 0) ? 0 : 1)) * (alignment))
 

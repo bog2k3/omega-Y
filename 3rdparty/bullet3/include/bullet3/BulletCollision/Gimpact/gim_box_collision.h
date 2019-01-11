@@ -33,7 +33,7 @@ email: projectileman@yahoo.com
 -----------------------------------------------------------------------------
 */
 #include "gim_basic_geometry_operations.h"
-#include "LinearMath/btTransform.h"
+#include <bullet3/LinearMath/btTransform.h>
 
 //SIMD_FORCE_INLINE bool test_cross_edge_box(
 //	const btVector3 & edge,

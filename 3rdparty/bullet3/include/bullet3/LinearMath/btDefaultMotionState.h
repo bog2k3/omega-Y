@@ -1,7 +1,7 @@
 #ifndef BT_DEFAULT_MOTION_STATE_H
 #define BT_DEFAULT_MOTION_STATE_H
 
-#include "btMotionState.h"
+#include <bullet3/LinearMath/btMotionState.h>
 
 ///The btDefaultMotionState provides a common implementation to synchronize world transforms with offsets.
 ATTRIBUTE_ALIGNED16(struct)

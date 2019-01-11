@@ -17,18 +17,18 @@ subject to the following restrictions:
 #ifndef BT_COMPOUND_COMPOUND_COLLISION_ALGORITHM_H
 #define BT_COMPOUND_COMPOUND_COLLISION_ALGORITHM_H
 
-#include "btCompoundCollisionAlgorithm.h"
+#include <bullet3/btCompoundCollisionAlgorithm.h>
 
-#include "BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btDispatcher.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseInterface.h"
+#include <bullet3/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btDispatcher.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h>
 
-#include "BulletCollision/NarrowPhaseCollision/btPersistentManifold.h"
+#include <bullet3/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h>
 class btDispatcher;
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "BulletCollision/CollisionDispatch/btHashedSimplePairCache.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btHashedSimplePairCache.h>
 class btDispatcher;
 class btCollisionObject;
 

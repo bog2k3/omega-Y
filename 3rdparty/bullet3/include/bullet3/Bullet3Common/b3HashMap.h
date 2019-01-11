@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef B3_HASH_MAP_H
 #define B3_HASH_MAP_H
 
-#include "b3AlignedObjectArray.h"
+#include <bullet3/b3AlignedObjectArray.h>
 
 #include <string>
 

@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_SIMPLE_BROADPHASE_H
 #define BT_SIMPLE_BROADPHASE_H
 
-#include "btOverlappingPairCache.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h>
 
 struct btSimpleBroadphaseProxy : public btBroadphaseProxy
 {

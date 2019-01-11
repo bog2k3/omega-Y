@@ -32,9 +32,9 @@ and swing 1 and 2 are along the z and y axes respectively.
 #ifndef BT_CONETWISTCONSTRAINT_H
 #define BT_CONETWISTCONSTRAINT_H
 
-#include "LinearMath/btVector3.h"
-#include "btJacobianEntry.h"
-#include "btTypedConstraint.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btJacobianEntry.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btTypedConstraint.h>
 
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btConeTwistConstraintData2 btConeTwistConstraintDoubleData

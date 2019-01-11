@@ -16,13 +16,13 @@ subject to the following restrictions:
 #ifndef BT_MULTIBODY_SOLVER_CONSTRAINT_H
 #define BT_MULTIBODY_SOLVER_CONSTRAINT_H
 
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 class btMultiBody;
 class btMultiBodyConstraint;
-#include "BulletDynamics/ConstraintSolver/btSolverBody.h"
-#include "BulletDynamics/ConstraintSolver/btContactSolverInfo.h"
+#include <bullet3/BulletDynamics/ConstraintSolver/btSolverBody.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btContactSolverInfo.h>
 
 ///1D constraint along a normal axis between bodyA and bodyB. It can be combined to solve contact and friction constraints.
 ATTRIBUTE_ALIGNED16(struct)

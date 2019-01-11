@@ -16,13 +16,13 @@ subject to the following restrictions:
 #ifndef BT_SOFT_RIGID_COLLISION_ALGORITHM_H
 #define BT_SOFT_RIGID_COLLISION_ALGORITHM_H
 
-#include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
 class btPersistentManifold;
-#include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 
-#include "LinearMath/btVector3.h"
+#include <bullet3/LinearMath/btVector3.h>
 class btSoftBody;
 
 /// btSoftRigidCollisionAlgorithm  provides collision detection between btSoftBody and btRigidBody

@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_POINT_COLLECTOR_H
 #define BT_POINT_COLLECTOR_H
 
-#include "btDiscreteCollisionDetectorInterface.h"
+#include <bullet3/btDiscreteCollisionDetectorInterface.h>
 
 struct btPointCollector : public btDiscreteCollisionDetectorInterface::Result
 {

@@ -2,7 +2,7 @@
 #ifndef B3_BUFFER_INFO_CL_H
 #define B3_BUFFER_INFO_CL_H
 
-#include "b3OpenCLArray.h"
+#include <bullet3/b3OpenCLArray.h>
 
 struct b3BufferInfoCL
 {

@@ -19,13 +19,13 @@
 #ifndef BT_AXIS_SWEEP_3_H
 #define BT_AXIS_SWEEP_3_H
 
-#include "LinearMath/btVector3.h"
-#include "btOverlappingPairCache.h"
-#include "btBroadphaseInterface.h"
-#include "btBroadphaseProxy.h"
-#include "btOverlappingPairCallback.h"
-#include "btDbvtBroadphase.h"
-#include "btAxisSweep3Internal.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btAxisSweep3Internal.h>
 
 /// The btAxisSweep3 is an efficient implementation of the 3d axis sweep and prune broadphase.
 /// It uses arrays rather then lists for storage of the 3 axis. Also it operates using 16 bit integer coordinates instead of floats.

@@ -2,9 +2,9 @@
 #ifndef B3_NEW_CONTACT_REDUCTION_H
 #define B3_NEW_CONTACT_REDUCTION_H
 
-#include "Bullet3Common/shared/b3Float4.h"
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h"
-#include "Bullet3Collision/NarrowPhaseCollision/shared/b3Contact4Data.h"
+#include <bullet3/Bullet3Common/shared/b3Float4.h>
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3RigidBodyData.h>
+#include <bullet3/Bullet3Collision/NarrowPhaseCollision/shared/b3Contact4Data.h>
 
 #define GET_NPOINTS(x) (x).m_worldNormalOnB.w
 

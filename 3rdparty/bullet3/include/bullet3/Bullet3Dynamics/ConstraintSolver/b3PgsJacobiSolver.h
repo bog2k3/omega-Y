@@ -6,10 +6,10 @@ struct b3ContactPoint;
 
 class b3Dispatcher;
 
-#include "b3TypedConstraint.h"
-#include "b3ContactSolverInfo.h"
-#include "b3SolverBody.h"
-#include "b3SolverConstraint.h"
+#include <bullet3/b3TypedConstraint.h>
+#include <bullet3/b3ContactSolverInfo.h>
+#include <bullet3/b3SolverBody.h>
+#include <bullet3/b3SolverConstraint.h>
 
 struct b3RigidBodyData;
 struct b3InertiaData;

@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_VORONOI_SIMPLEX_SOLVER_H
 #define BT_VORONOI_SIMPLEX_SOLVER_H
 
-#include "btSimplexSolverInterface.h"
+#include <bullet3/btSimplexSolverInterface.h>
 
 #define VORONOI_SIMPLEX_MAX_VERTS 5
 

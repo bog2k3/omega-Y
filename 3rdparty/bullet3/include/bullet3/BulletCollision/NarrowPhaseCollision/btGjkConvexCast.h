@@ -16,13 +16,13 @@ subject to the following restrictions:
 #ifndef BT_GJK_CONVEX_CAST_H
 #define BT_GJK_CONVEX_CAST_H
 
-#include "BulletCollision/CollisionShapes/btCollisionMargin.h"
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionMargin.h>
 
-#include "LinearMath/btVector3.h"
-#include "btConvexCast.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/btConvexCast.h>
 class btConvexShape;
 class btMinkowskiSumShape;
-#include "btSimplexSolverInterface.h"
+#include <bullet3/btSimplexSolverInterface.h>
 
 ///GjkConvexCast performs a raycast on a convex object using support mapping.
 class btGjkConvexCast : public btConvexCast

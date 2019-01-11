@@ -20,7 +20,7 @@ subject to the following restrictions:
 ///so we replace _aligned_malloc and _aligned_free with our own
 ///that is better portable and more predictable
 
-#include "btScalar.h"
+#include <bullet3/LinearMath/btScalar.h>
 
 ///BT_DEBUG_MEMORY_ALLOCATIONS preprocessor can be set in build system
 ///for regression tests to detect memory leaks

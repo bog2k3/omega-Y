@@ -2,9 +2,9 @@
 #ifndef B3_PREFIX_SCAN_CL_H
 #define B3_PREFIX_SCAN_CL_H
 
-#include "b3OpenCLArray.h"
-#include "b3BufferInfoCL.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
+#include <bullet3/b3OpenCLArray.h>
+#include <bullet3/b3BufferInfoCL.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
 
 class b3PrefixScanCL
 {

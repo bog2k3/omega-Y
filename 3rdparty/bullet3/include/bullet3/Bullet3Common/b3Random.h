@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef B3_GEN_RANDOM_H
 #define B3_GEN_RANDOM_H
 
-#include "b3Scalar.h"
+#include <bullet3/b3Scalar.h>
 
 #ifdef MT19937
 

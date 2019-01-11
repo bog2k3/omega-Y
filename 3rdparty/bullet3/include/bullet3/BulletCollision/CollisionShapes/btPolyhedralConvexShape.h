@@ -16,8 +16,8 @@ subject to the following restrictions:
 #ifndef BT_POLYHEDRAL_CONVEX_SHAPE_H
 #define BT_POLYHEDRAL_CONVEX_SHAPE_H
 
-#include "LinearMath/btMatrix3x3.h"
-#include "btConvexInternalShape.h"
+#include <bullet3/LinearMath/btMatrix3x3.h>
+#include <bullet3/BulletCollision/CollisionShapes/btConvexInternalShape.h>
 class btConvexPolyhedron;
 
 ///The btPolyhedralConvexShape is an internal interface class for polyhedral convex shapes.

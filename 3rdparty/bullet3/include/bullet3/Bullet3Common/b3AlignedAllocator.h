@@ -20,7 +20,7 @@ subject to the following restrictions:
 ///so we replace _aligned_malloc and _aligned_free with our own
 ///that is better portable and more predictable
 
-#include "b3Scalar.h"
+#include <bullet3/b3Scalar.h>
 //#define B3_DEBUG_MEMORY_ALLOCATIONS 1
 #ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 

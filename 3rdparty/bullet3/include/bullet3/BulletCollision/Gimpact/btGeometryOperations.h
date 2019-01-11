@@ -25,7 +25,7 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "btBoxCollision.h"
+#include <bullet3/btBoxCollision.h>
 
 #define PLANEDIREPSILON 0.0000001f
 #define PARALELENORMALS 0.000001f

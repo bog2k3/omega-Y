@@ -16,10 +16,10 @@ subject to the following restrictions:
 #ifndef BT_COLLISION_WORLD_IMPORTER_H
 #define BT_COLLISION_WORLD_IMPORTER_H
 
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "LinearMath/btHashMap.h"
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/LinearMath/btHashMap.h>
 
 class btCollisionShape;
 class btCollisionObject;

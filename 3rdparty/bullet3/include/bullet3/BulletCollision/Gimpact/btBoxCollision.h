@@ -24,7 +24,7 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "LinearMath/btTransform.h"
+#include <bullet3/LinearMath/btTransform.h>
 
 ///Swap numbers
 #define BT_SWAP_NUMBERS(a, b) \

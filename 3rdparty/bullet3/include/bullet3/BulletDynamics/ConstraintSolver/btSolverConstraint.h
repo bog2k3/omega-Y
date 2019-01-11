@@ -17,13 +17,13 @@ subject to the following restrictions:
 #define BT_SOLVER_CONSTRAINT_H
 
 class btRigidBody;
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btMatrix3x3.h"
-#include "btJacobianEntry.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btMatrix3x3.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btJacobianEntry.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 //#define NO_FRICTION_TANGENTIALS 1
-#include "btSolverBody.h"
+#include <bullet3/BulletDynamics/ConstraintSolver/btSolverBody.h>
 
 ///1D constraint along a normal axis between bodyA and bodyB. It can be combined to solve contact and friction constraints.
 ATTRIBUTE_ALIGNED16(struct)

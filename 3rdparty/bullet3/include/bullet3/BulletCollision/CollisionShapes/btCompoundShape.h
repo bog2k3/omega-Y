@@ -16,13 +16,13 @@ subject to the following restrictions:
 #ifndef BT_COMPOUND_SHAPE_H
 #define BT_COMPOUND_SHAPE_H
 
-#include "btCollisionShape.h"
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionShape.h>
 
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btMatrix3x3.h"
-#include "btCollisionMargin.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btMatrix3x3.h>
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionMargin.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 //class btOptimizedBvh;
 struct btDbvt;

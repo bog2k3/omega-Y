@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef BT_TRANSFORM_UTIL_H
 #define BT_TRANSFORM_UTIL_H
 
-#include "btTransform.h"
+#include <bullet3/LinearMath/btTransform.h>
 #define ANGULAR_MOTION_THRESHOLD btScalar(0.5) * SIMD_HALF_PI
 
 SIMD_FORCE_INLINE btVector3 btAabbSupport(const btVector3& halfExtents, const btVector3& supportDir)

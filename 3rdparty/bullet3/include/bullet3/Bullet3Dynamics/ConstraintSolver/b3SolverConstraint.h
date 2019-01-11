@@ -16,13 +16,13 @@ subject to the following restrictions:
 #ifndef B3_SOLVER_CONSTRAINT_H
 #define B3_SOLVER_CONSTRAINT_H
 
-#include "Bullet3Common/b3Vector3.h"
-#include "Bullet3Common/b3Matrix3x3.h"
-//#include "b3JacobianEntry.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
+#include <bullet3/Bullet3Common/b3Matrix3x3.h>
+//#include <bullet3/b3JacobianEntry.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
 
 //#define NO_FRICTION_TANGENTIALS 1
-#include "b3SolverBody.h"
+#include <bullet3/b3SolverBody.h>
 
 ///1D constraint along a normal axis between bodyA and bodyB. It can be combined to solve contact and friction constraints.
 B3_ATTRIBUTE_ALIGNED16(struct)

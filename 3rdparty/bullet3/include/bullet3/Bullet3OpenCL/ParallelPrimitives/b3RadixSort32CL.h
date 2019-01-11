@@ -2,7 +2,7 @@
 #ifndef B3_RADIXSORT32_H
 #define B3_RADIXSORT32_H
 
-#include "b3OpenCLArray.h"
+#include <bullet3/b3OpenCLArray.h>
 
 struct b3SortData
 {
@@ -16,7 +16,7 @@ struct b3SortData
 		unsigned int y;
 	};
 };
-#include "b3BufferInfoCL.h"
+#include <bullet3/b3BufferInfoCL.h>
 
 class b3RadixSort32CL
 {

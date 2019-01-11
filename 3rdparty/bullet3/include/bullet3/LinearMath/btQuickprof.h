@@ -13,7 +13,7 @@
 #ifndef BT_QUICK_PROF_H
 #define BT_QUICK_PROF_H
 
-#include "btScalar.h"
+#include <bullet3/LinearMath/btScalar.h>
 #define USE_BT_CLOCK 1
 
 #ifdef USE_BT_CLOCK
@@ -76,7 +76,7 @@ unsigned int btQuickprofGetCurrentThreadIndex2();
 
 #include <stdio.h>  //@todo remove this, backwards compatibility
 
-#include "btAlignedAllocator.h"
+#include <bullet3/btAlignedAllocator.h>
 #include <new>
 
 ///A node in the Profile Hierarchy Tree

@@ -17,11 +17,11 @@ subject to the following restrictions:
 #ifndef B3_DBVT_BROADPHASE_H
 #define B3_DBVT_BROADPHASE_H
 
-#include "Bullet3Collision/BroadPhaseCollision/b3DynamicBvh.h"
-#include "Bullet3Collision/BroadPhaseCollision/b3OverlappingPairCache.h"
-#include "Bullet3Common/b3AlignedObjectArray.h"
+#include <bullet3/Bullet3Collision/BroadPhaseCollision/b3DynamicBvh.h>
+#include <bullet3/Bullet3Collision/BroadPhaseCollision/b3OverlappingPairCache.h>
+#include <bullet3/Bullet3Common/b3AlignedObjectArray.h>
 
-#include "b3BroadphaseCallback.h"
+#include <bullet3/b3BroadphaseCallback.h>
 
 //
 // Compile time config

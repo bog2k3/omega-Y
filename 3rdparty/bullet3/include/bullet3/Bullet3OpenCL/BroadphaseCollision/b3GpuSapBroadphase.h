@@ -1,15 +1,15 @@
 #ifndef B3_GPU_SAP_BROADPHASE_H
 #define B3_GPU_SAP_BROADPHASE_H
 
-#include "Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h"
-#include "Bullet3OpenCL/ParallelPrimitives/b3FillCL.h"  //b3Int2
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3OpenCLArray.h>
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3FillCL.h>  //b3Int2
 class b3Vector3;
-#include "Bullet3OpenCL/ParallelPrimitives/b3RadixSort32CL.h"
+#include <bullet3/Bullet3OpenCL/ParallelPrimitives/b3RadixSort32CL.h>
 
-#include "b3SapAabb.h"
-#include "Bullet3Common/shared/b3Int2.h"
+#include <bullet3/b3SapAabb.h>
+#include <bullet3/Bullet3Common/shared/b3Int2.h>
 
-#include "b3GpuBroadphaseInterface.h"
+#include <bullet3/b3GpuBroadphaseInterface.h>
 
 class b3GpuSapBroadphase : public b3GpuBroadphaseInterface
 {

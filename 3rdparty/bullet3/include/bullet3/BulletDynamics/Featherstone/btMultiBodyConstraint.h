@@ -16,14 +16,14 @@ subject to the following restrictions:
 #ifndef BT_MULTIBODY_CONSTRAINT_H
 #define BT_MULTIBODY_CONSTRAINT_H
 
-#include "LinearMath/btScalar.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "btMultiBody.h"
+#include <bullet3/LinearMath/btScalar.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
+#include <bullet3/btMultiBody.h>
 
 class btMultiBody;
 struct btSolverInfo;
 
-#include "btMultiBodySolverConstraint.h"
+#include <bullet3/btMultiBodySolverConstraint.h>
 
 struct btMultiBodyJacobianData
 {

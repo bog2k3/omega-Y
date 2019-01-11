@@ -15,9 +15,9 @@ subject to the following restrictions:
 #ifndef BT_AABB_UTIL2
 #define BT_AABB_UTIL2
 
-#include "btTransform.h"
-#include "btVector3.h"
-#include "btMinMax.h"
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btMinMax.h>
 
 SIMD_FORCE_INLINE void AabbExpand(btVector3& aabbMin,
 								  btVector3& aabbMax,

@@ -40,9 +40,9 @@ http://gimpact.sf.net
 #ifndef BT_GENERIC_6DOF_CONSTRAINT2_H
 #define BT_GENERIC_6DOF_CONSTRAINT2_H
 
-#include "LinearMath/btVector3.h"
-#include "btJacobianEntry.h"
-#include "btTypedConstraint.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btJacobianEntry.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btTypedConstraint.h>
 
 class btRigidBody;
 

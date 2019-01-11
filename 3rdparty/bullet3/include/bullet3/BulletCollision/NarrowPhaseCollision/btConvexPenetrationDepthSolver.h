@@ -17,7 +17,7 @@ subject to the following restrictions:
 #define BT_CONVEX_PENETRATION_DEPTH_H
 
 class btVector3;
-#include "btSimplexSolverInterface.h"
+#include <bullet3/btSimplexSolverInterface.h>
 class btConvexShape;
 class btTransform;
 

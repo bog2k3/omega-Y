@@ -25,7 +25,7 @@ TODO:
 #ifndef BT_SLIDER_CONSTRAINT_H
 #define BT_SLIDER_CONSTRAINT_H
 
-#include "LinearMath/btScalar.h"  //for BT_USE_DOUBLE_PRECISION
+#include <bullet3/LinearMath/btScalar.h>  //for BT_USE_DOUBLE_PRECISION
 
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btSliderConstraintData2 btSliderConstraintDoubleData
@@ -35,9 +35,9 @@ TODO:
 #define btSliderConstraintDataName "btSliderConstraintData"
 #endif  //BT_USE_DOUBLE_PRECISION
 
-#include "LinearMath/btVector3.h"
-#include "btJacobianEntry.h"
-#include "btTypedConstraint.h"
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btJacobianEntry.h>
+#include <bullet3/BulletDynamics/ConstraintSolver/btTypedConstraint.h>
 
 class btRigidBody;
 

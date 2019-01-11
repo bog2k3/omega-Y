@@ -15,7 +15,7 @@ subject to the following restrictions:
 #ifndef BT_TRANSFORM_H
 #define BT_TRANSFORM_H
 
-#include "btMatrix3x3.h"
+#include <bullet3/LinearMath/btMatrix3x3.h>
 
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btTransformData btTransformDoubleData

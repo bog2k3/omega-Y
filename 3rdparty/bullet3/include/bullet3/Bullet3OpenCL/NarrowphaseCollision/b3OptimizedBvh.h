@@ -18,7 +18,7 @@ subject to the following restrictions:
 #ifndef B3_OPTIMIZED_BVH_H
 #define B3_OPTIMIZED_BVH_H
 
-#include "b3QuantizedBvh.h"
+#include <bullet3/b3QuantizedBvh.h>
 
 class b3StridingMeshInterface;
 

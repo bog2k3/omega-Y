@@ -16,11 +16,11 @@ subject to the following restrictions:
 #ifndef BT_CONVEX_CAST_H
 #define BT_CONVEX_CAST_H
 
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btScalar.h"
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btVector3.h>
+#include <bullet3/LinearMath/btScalar.h>
 class btMinkowskiSumShape;
-#include "LinearMath/btIDebugDraw.h"
+#include <bullet3/LinearMath/btIDebugDraw.h>
 
 #ifdef BT_USE_DOUBLE_PRECISION
 #define MAX_ITERATIONS 64

@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef BT_SIMPLE_DYNAMICS_WORLD_H
 #define BT_SIMPLE_DYNAMICS_WORLD_H
 
-#include "btDynamicsWorld.h"
+#include <bullet3/BulletDynamics/Dynamics/btDynamicsWorld.h>
 
 class btDispatcher;
 class btOverlappingPairCache;

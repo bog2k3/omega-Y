@@ -16,8 +16,8 @@ subject to the following restrictions:
 #ifndef BT_SERIALIZER_H
 #define BT_SERIALIZER_H
 
-#include "btScalar.h"  // has definitions like SIMD_FORCE_INLINE
-#include "btHashMap.h"
+#include <bullet3/LinearMath/btScalar.h>  // has definitions like SIMD_FORCE_INLINE
+#include <bullet3/LinearMath/btHashMap.h>
 
 #if !defined(__CELLOS_LV2__) && !defined(__MWERKS__)
 #include <memory.h>

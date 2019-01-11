@@ -18,7 +18,7 @@ subject to the following restrictions:
 
 struct btDispatcherInfo;
 class btDispatcher;
-#include "btBroadphaseProxy.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
 
 class btOverlappingPairCache;
 
@@ -41,7 +41,7 @@ protected:
 	btBroadphaseRayCallback() {}
 };
 
-#include "LinearMath/btVector3.h"
+#include <bullet3/LinearMath/btVector3.h>
 
 ///The btBroadphaseInterface class provides an interface to detect aabb-overlapping object pairs.
 ///Some implementations for this broadphase interface include btAxisSweep3, bt32BitAxisSweep3 and btDbvtBroadphase.

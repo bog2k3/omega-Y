@@ -26,8 +26,8 @@ Improvements and refactoring by Erwin Coumans, 2008-2014
 #ifndef BT_GJK_EPA3_H
 #define BT_GJK_EPA3_H
 
-#include "LinearMath/btTransform.h"
-#include "btGjkCollisionDescription.h"
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/btGjkCollisionDescription.h>
 
 struct btGjkEpaSolver3
 {

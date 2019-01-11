@@ -24,9 +24,9 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "btGImpactBvh.h"
-#include "btQuantization.h"
-#include "btGImpactQuantizedBvhStructs.h"
+#include <bullet3/btGImpactBvh.h>
+#include <bullet3/btQuantization.h>
+#include <bullet3/btGImpactQuantizedBvhStructs.h>
 
 class GIM_QUANTIZED_BVH_NODE_ARRAY : public btAlignedObjectArray<BT_QUANTIZED_BVH_NODE>
 {

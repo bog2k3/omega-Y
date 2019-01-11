@@ -1,9 +1,9 @@
 
 #ifndef B3_CONSTRAINT4_h
 #define B3_CONSTRAINT4_h
-#include "Bullet3Common/b3Vector3.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
 
-#include "Bullet3Dynamics/shared/b3ContactConstraint4.h"
+#include <bullet3/Bullet3Dynamics/shared/b3ContactConstraint4.h>
 
 B3_ATTRIBUTE_ALIGNED16(struct)
 b3GpuConstraint4 : public b3ContactConstraint4

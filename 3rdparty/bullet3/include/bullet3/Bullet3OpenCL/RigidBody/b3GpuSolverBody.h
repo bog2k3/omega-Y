@@ -16,11 +16,11 @@ subject to the following restrictions:
 #ifndef B3_GPU_SOLVER_BODY_H
 #define B3_GPU_SOLVER_BODY_H
 
-#include "Bullet3Common/b3Vector3.h"
-#include "Bullet3Common/b3Matrix3x3.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
+#include <bullet3/Bullet3Common/b3Matrix3x3.h>
 
-#include "Bullet3Common/b3AlignedAllocator.h"
-#include "Bullet3Common/b3TransformUtil.h"
+#include <bullet3/Bullet3Common/b3AlignedAllocator.h>
+#include <bullet3/Bullet3Common/b3TransformUtil.h>
 
 ///Until we get other contributions, only use SIMD on Windows, when using Visual Studio 2008 or later, and not double precision
 #ifdef B3_USE_SSE

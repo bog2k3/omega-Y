@@ -19,7 +19,7 @@ subject to the following restrictions:
 #ifndef B3_OPENCL_UTILS_H
 #define B3_OPENCL_UTILS_H
 
-#include "b3OpenCLInclude.h"
+#include <bullet3/b3OpenCLInclude.h>
 
 #ifdef __cplusplus
 extern "C"

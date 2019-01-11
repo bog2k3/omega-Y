@@ -16,8 +16,8 @@ subject to the following restrictions:
 #ifndef BT_SUBSIMPLEX_CONVEX_CAST_H
 #define BT_SUBSIMPLEX_CONVEX_CAST_H
 
-#include "btConvexCast.h"
-#include "btSimplexSolverInterface.h"
+#include <bullet3/btConvexCast.h>
+#include <bullet3/btSimplexSolverInterface.h>
 class btConvexShape;
 
 /// btSubsimplexConvexCast implements Gino van den Bergens' paper

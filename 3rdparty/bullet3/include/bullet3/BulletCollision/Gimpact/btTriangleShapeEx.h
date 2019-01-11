@@ -24,11 +24,11 @@ subject to the following restrictions:
 #ifndef GIMPACT_TRIANGLE_SHAPE_EX_H
 #define GIMPACT_TRIANGLE_SHAPE_EX_H
 
-#include "BulletCollision/CollisionShapes/btCollisionShape.h"
-#include "BulletCollision/CollisionShapes/btTriangleShape.h"
-#include "btBoxCollision.h"
-#include "btClipPolygon.h"
-#include "btGeometryOperations.h"
+#include <bullet3/BulletCollision/CollisionShapes/btCollisionShape.h>
+#include <bullet3/BulletCollision/CollisionShapes/btTriangleShape.h>
+#include <bullet3/btBoxCollision.h>
+#include <bullet3/btClipPolygon.h>
+#include <bullet3/btGeometryOperations.h>
 
 #define MAX_TRI_CLIPPING 16
 

@@ -2,7 +2,7 @@
 #define B3_FILE_UTILS_H
 
 #include <stdio.h>
-#include "b3Scalar.h"
+#include <bullet3/b3Scalar.h>
 #include <stddef.h>  //ptrdiff_h
 #include <string.h>
 

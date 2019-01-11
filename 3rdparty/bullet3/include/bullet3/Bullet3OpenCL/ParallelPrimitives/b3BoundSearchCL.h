@@ -24,9 +24,9 @@ subject to the following restrictions:
 #include <AdlPrimitives/Fill/Fill.h>
 */
 
-#include "b3OpenCLArray.h"
-#include "b3FillCL.h"
-#include "b3RadixSort32CL.h"  //for b3SortData (perhaps move it?)
+#include <bullet3/b3OpenCLArray.h>
+#include <bullet3/b3FillCL.h>
+#include <bullet3/b3RadixSort32CL.h>  //for b3SortData (perhaps move it?)
 class b3BoundSearchCL
 {
 public:

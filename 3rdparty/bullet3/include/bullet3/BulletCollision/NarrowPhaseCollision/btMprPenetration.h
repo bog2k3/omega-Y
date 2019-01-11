@@ -23,8 +23,8 @@
 
 #define BT_DEBUG_MPR1
 
-#include "LinearMath/btTransform.h"
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btTransform.h>
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 
 //#define MPR_AVERAGE_CONTACT_POSITIONS
 

@@ -1,7 +1,7 @@
 #ifndef B3_BVH_INFO_H
 #define B3_BVH_INFO_H
 
-#include "Bullet3Common/b3Vector3.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
 
 struct b3BvhInfo
 {

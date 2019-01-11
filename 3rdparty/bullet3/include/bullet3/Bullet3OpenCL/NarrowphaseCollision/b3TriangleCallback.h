@@ -16,7 +16,7 @@ subject to the following restrictions:
 #ifndef B3_TRIANGLE_CALLBACK_H
 #define B3_TRIANGLE_CALLBACK_H
 
-#include "Bullet3Common/b3Vector3.h"
+#include <bullet3/Bullet3Common/b3Vector3.h>
 
 ///The b3TriangleCallback provides a callback for each overlapping triangle when calling processAllTriangles.
 ///This callback is called by processAllTriangles for all b3ConcaveShape derived class, such as  b3BvhTriangleMeshShape, b3StaticPlaneShape and b3HeightfieldTerrainShape.

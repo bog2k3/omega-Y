@@ -16,20 +16,20 @@ subject to the following restrictions:
 #ifndef BT_SOFT_BODY_CONCAVE_COLLISION_ALGORITHM_H
 #define BT_SOFT_BODY_CONCAVE_COLLISION_ALGORITHM_H
 
-#include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btDispatcher.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseInterface.h"
-#include "BulletCollision/CollisionShapes/btTriangleCallback.h"
-#include "BulletCollision/NarrowPhaseCollision/btPersistentManifold.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btDispatcher.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h>
+#include <bullet3/BulletCollision/CollisionShapes/btTriangleCallback.h>
+#include <bullet3/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h>
 class btDispatcher;
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
 class btSoftBody;
 class btCollisionShape;
 
-#include "LinearMath/btHashMap.h"
+#include <bullet3/LinearMath/btHashMap.h>
 
-#include "BulletCollision/BroadphaseCollision/btQuantizedBvh.h"  //for definition of MAX_NUM_PARTS_IN_BITS
+#include <bullet3/BulletCollision/BroadphaseCollision/btQuantizedBvh.h>  //for definition of MAX_NUM_PARTS_IN_BITS
 
 struct btTriIndex
 {

@@ -16,11 +16,11 @@ subject to the following restrictions:
 #ifndef BT_OVERLAPPING_PAIR_CACHE_H
 #define BT_OVERLAPPING_PAIR_CACHE_H
 
-#include "btBroadphaseInterface.h"
-#include "btBroadphaseProxy.h"
-#include "btOverlappingPairCallback.h"
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet3/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h>
 
-#include "LinearMath/btAlignedObjectArray.h"
+#include <bullet3/LinearMath/btAlignedObjectArray.h>
 class btDispatcher;
 
 typedef btAlignedObjectArray<btBroadphasePair> btBroadphasePairArray;
