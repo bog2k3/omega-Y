@@ -39,8 +39,8 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include" "./3rdparty/bullet3/include/")
-link_directories("${BOGLFW_DIST_DIR}/lib" "./3rdparty/bullet3/lib/")
+include_directories("${BOGLFW_DIST_DIR}/include" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/include")
+link_directories("${BOGLFW_DIST_DIR}/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib")
 if (WIN32)
 	link_directories("C:/mingw64/lib")
 	include_directories("C:/mingw64/include")
@@ -59,7 +59,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png Bullet3Common BulletCollision BulletDynamics LinearMath)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()

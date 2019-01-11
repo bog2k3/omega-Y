@@ -28,6 +28,8 @@
 #include <boglfw/perf/frameCapture.h>
 #include <boglfw/perf/perfPrint.h>
 
+#include <bullet3/btBulletDynamicsCommon.h>
+
 #include <GLFW/glfw3.h>
 
 #include <iostream>
@@ -125,6 +127,17 @@ void initSession(Camera* camera) {
 	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
 	
 	playerInputHandler.setTargetObject(freeCam);
+}
+
+btDiscreteDynamicsWorld* physWorld = nullptr;
+
+void initPhysTest() {
+	auto collisionConfig = new btDefaultCollisionConfiguration();
+	auto dispatcher = new btCollisionDispatcher(collisionConfig);
+	auto broadphase = new btDbvtBroadphase();
+	auto solver = new btSequentialImpulseConstraintSolver();
+	physWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+	//physWorld->setGravity(btVector3(0, -10, 0));
 }
 
 int main(int argc, char* argv[]) {
