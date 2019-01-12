@@ -1,7 +1,7 @@
 #include "DebugDrawer.h"
 #include "math.h"
 
-#include <boglfw/RenderOpenGL/Shape3D.h>
+#include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/utils/log.h>
 
 namespace physics {
