@@ -59,7 +59,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png Bullet3Common BulletCollision BulletDynamics LinearMath)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletCollision BulletDynamics ConvexDecomposition gwen GIMPACTUtils LinearMath)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()
