@@ -7,6 +7,8 @@
 #include <boglfw/renderOpenGL/GLText.h>
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/Shape3D.h>
+#include <boglfw/renderOpenGL/Mesh.h>
+#include <boglfw/renderOpenGL/MeshRenderer.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
@@ -32,6 +34,8 @@
 #include <rp3d/reactphysics3d.h>
 
 #include <GLFW/glfw3.h>
+
+#include <glm/mat4x4.hpp>
 
 #include <iostream>
 #include <sstream>
@@ -122,9 +126,9 @@ void toggleMouseCapture() {
 
 void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
-	World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
+	//World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.3f, 1, 2}, glm::vec3{-2.3f, -1, -2});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -0.5f, -4.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 	
@@ -139,6 +143,7 @@ rp3d::RigidBody* groundBody = nullptr;
 rp3d::BoxShape* groundShape = nullptr;
 rp3d::RigidBody* boxBody = nullptr;
 rp3d::BoxShape* boxShape = nullptr;
+Mesh* boxMesh = nullptr;
 
 void physTestInit(rp3d::DynamicsWorld &physWld) {
 	// create ground body
@@ -159,6 +164,9 @@ void physTestInit(rp3d::DynamicsWorld &physWld) {
 	rp3d::Vector3 boxHalfExt(0.5f, 0.5f, 0.5f);
 	boxShape = new rp3d::BoxShape(boxHalfExt);
 	boxBody->addCollisionShape(boxShape, rp3d::Transform::identity(), 10.f);
+	// create test body representation
+	boxMesh = new Mesh();
+	boxMesh->createBox({0.f, 0.f, 0.f}, 1.f, 1.f, 1.f);
 }
 
 void physTestDebugDraw(Viewport* vp) {
@@ -171,6 +179,12 @@ void physTestDebugDraw(Viewport* vp) {
 		Shape3D::get()->drawLine({x, y, -zext}, {x, y, +zext}, {1.f, 1.f, 1.f, 0.6f});
 	for (float z=-zext; z<zext; z+=step)
 		Shape3D::get()->drawLine({-xext, y, z}, {+xext, y, z}, {1.f, 1.f, 1.f, 0.6f});
+		
+	// draw the test body's representation:
+	rp3d::Transform tr = boxBody->getTransform();
+	glm::mat4 matTr;
+	tr.getOpenGLMatrix(&matTr[0][0]);
+	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
 		
 	// draw info about simulated body
 	rp3d::Transform bodyTr = boxBody->getTransform();
