@@ -39,14 +39,14 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include" "${CMAKE_SOURCE_DIR}/3rdparty")
-link_directories("${BOGLFW_DIST_DIR}/lib" "${CMAKE_SOURCE_DIR}/3rdparty")
+include_directories("${BOGLFW_DIST_DIR}/include" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include")
+link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
-	link_directories("C:/mingw64/lib")
+	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/lib/mingw")
 	include_directories("C:/mingw64/include")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WIN32__")
 else()
-	link_directories("/usr/lib")
+	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/lib/linux")
 	include_directories("/usr/include")
 endif()
 
@@ -59,7 +59,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png reactphysics3d)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()
