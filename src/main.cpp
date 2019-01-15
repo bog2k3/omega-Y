@@ -6,6 +6,7 @@
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/GLText.h>
 #include <boglfw/renderOpenGL/Camera.h>
+#include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
@@ -134,18 +135,45 @@ void initSession(Camera* camera) {
 	playerInputHandler.setTargetObject(freeCam);
 }
 
-rp3d::RigidBody* theBody = nullptr;
+rp3d::RigidBody* groundBody = nullptr;
+rp3d::BoxShape* groundShape = nullptr;
+rp3d::RigidBody* boxBody = nullptr;
+rp3d::BoxShape* boxShape = nullptr;
 
 void physTestInit(rp3d::DynamicsWorld &physWld) {
-	rp3d::Vector3 pos(0.f, 5.f, 0.f);
-	rp3d::Quaternion orient = rp3d::Quaternion::identity();
-	rp3d::Transform tr(pos, orient);
+	// create ground body
+	rp3d::Vector3 gPos(0.f, -0.15f, 0.f);
+	rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
+	groundBody = physWld.createRigidBody({gPos, gOrient});
+	groundBody->setType(rp3d::BodyType::STATIC);
+	// create ground shape
+	rp3d::Vector3 groundHalfExt(50, 0.1f, 50);
+	groundShape = new rp3d::BoxShape(groundHalfExt);
+	groundBody->addCollisionShape(groundShape, rp3d::Transform::identity(), 1.f);
 	
-	theBody = physWld.createRigidBody(tr);
+	// create test body
+	rp3d::Vector3 pos(0.f, 8.f, 0.f);
+	rp3d::Quaternion orient = rp3d::Quaternion::identity();
+	boxBody = physWld.createRigidBody({pos, orient});
+	// create test body shape
+	rp3d::Vector3 boxHalfExt(0.5f, 0.5f, 0.5f);
+	boxShape = new rp3d::BoxShape(boxHalfExt);
+	boxBody->addCollisionShape(boxShape, rp3d::Transform::identity(), 10.f);
 }
 
 void physTestDebugDraw(Viewport* vp) {
-	rp3d::Transform bodyTr = theBody->getTransform();
+	// draw ground
+	float xext = 30;
+	float zext = 30;
+	float step = 0.5f;
+	float y = -0.1f;
+	for (float x=-xext; x<xext; x+=step)
+		Shape3D::get()->drawLine({x, y, -zext}, {x, y, +zext}, {1.f, 1.f, 1.f, 0.6f});
+	for (float z=-zext; z<zext; z+=step)
+		Shape3D::get()->drawLine({-xext, y, z}, {+xext, y, z}, {1.f, 1.f, 1.f, 0.6f});
+		
+	// draw info about simulated body
+	rp3d::Transform bodyTr = boxBody->getTransform();
 	auto pos = bodyTr.getPosition();
 	std::stringstream ss;
 	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
@@ -154,9 +182,9 @@ void physTestDebugDraw(Viewport* vp) {
 		0, 20, glm::vec3(1.f, 1.f, 1.f));
 }
 
-void physTestDestroy() {
-	delete theBody;
-	theBody = nullptr;
+void physTestDestroy(rp3d::DynamicsWorld &physWld) {
+	physWld.destroyRigidBody(boxBody), boxBody = nullptr;
+	physWld.destroyRigidBody(groundBody), groundBody = nullptr;
 }
 
 int main(int argc, char* argv[]) {
@@ -179,6 +207,9 @@ int main(int argc, char* argv[]) {
 		vp1->camera()->setFOV(PI/2.5f);
 		renderer.addViewport("main", std::move(vp));
 
+		WorldConfig wldCfg;
+		wldCfg.drawBoundaries = false;
+		World::setConfig(wldCfg);
 		World &world = World::getInstance();
 		
 		rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
@@ -290,7 +321,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		physTestDestroy();
+		physTestDestroy(physWorld);
 		renderer.unload();
 		Infrastructure::shutDown();
 	} while (0);
