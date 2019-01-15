@@ -158,7 +158,7 @@ void physTestInit(rp3d::DynamicsWorld &physWld) {
 	
 	// create test body
 	rp3d::Vector3 pos(0.f, 8.f, 0.f);
-	rp3d::Quaternion orient = rp3d::Quaternion::identity();
+	rp3d::Quaternion orient({1.f, 0.5f, 1.f}, PI/3);
 	boxBody = physWld.createRigidBody({pos, orient});
 	// create test body shape
 	rp3d::Vector3 boxHalfExt(0.5f, 0.5f, 0.5f);
