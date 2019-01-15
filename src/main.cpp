@@ -208,7 +208,8 @@ int main(int argc, char* argv[]) {
 
 		// initialize stuff:
 		int winW = 1024, winH = 768;
-		if (!gltInitGLFW(winW, winH, "Omega-Y"))
+		int multisamples = 4; // 0 to disable MSAA or >0 to enable it
+		if (!gltInitGLFW(winW, winH, "Omega-Y", multisamples))
 			return -1;
 
 		GLFWInput::initialize(gltGetWindow());
