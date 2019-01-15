@@ -39,7 +39,9 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include")
+include_directories("${BOGLFW_DIST_DIR}/include" 
+					"${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include" 
+					"${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include/rp3d")
 link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
 	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/lib/mingw")

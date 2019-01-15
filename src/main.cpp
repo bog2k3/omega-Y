@@ -28,6 +28,8 @@
 #include <boglfw/perf/frameCapture.h>
 #include <boglfw/perf/perfPrint.h>
 
+#include <rp3d/reactphysics3d.h>
+
 #include <GLFW/glfw3.h>
 
 #include <iostream>
@@ -53,6 +55,11 @@ PlayerInputHandler playerInputHandler;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
+}
+
+template<> void update(rp3d::DynamicsWorld* wld, float dt) {
+	// TODO fixed time step
+	wld->update(dt);
 }
 
 void toggleMouseCapture();
@@ -127,6 +134,31 @@ void initSession(Camera* camera) {
 	playerInputHandler.setTargetObject(freeCam);
 }
 
+rp3d::RigidBody* theBody = nullptr;
+
+void physTestInit(rp3d::DynamicsWorld &physWld) {
+	rp3d::Vector3 pos(0.f, 5.f, 0.f);
+	rp3d::Quaternion orient = rp3d::Quaternion::identity();
+	rp3d::Transform tr(pos, orient);
+	
+	theBody = physWld.createRigidBody(tr);
+}
+
+void physTestDebugDraw(Viewport* vp) {
+	rp3d::Transform bodyTr = theBody->getTransform();
+	auto pos = bodyTr.getPosition();
+	std::stringstream ss;
+	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
+	GLText::get()->print(ss.str(),
+		{20, 40, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+		0, 20, glm::vec3(1.f, 1.f, 1.f));
+}
+
+void physTestDestroy() {
+	delete theBody;
+	theBody = nullptr;
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -148,6 +180,10 @@ int main(int argc, char* argv[]) {
 		renderer.addViewport("main", std::move(vp));
 
 		World &world = World::getInstance();
+		
+		rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
+		rp3d::DynamicsWorld physWorld(gravity);
+		physTestInit(physWorld);
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
@@ -164,6 +200,7 @@ int main(int argc, char* argv[]) {
 		updateList.add(&World::getInstance());
 		updateList.add(&sigViewer);
 		updateList.add(&playerInputHandler);
+		updateList.add(&physWorld);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -196,6 +233,7 @@ int main(int argc, char* argv[]) {
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
+		drawList.push_back(&physTestDebugDraw);
 		
 		vp1->setDrawList(drawList);
 		
@@ -252,6 +290,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		physTestDestroy();
 		renderer.unload();
 		Infrastructure::shutDown();
 	} while (0);
