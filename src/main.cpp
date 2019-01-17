@@ -36,6 +36,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <sstream>
@@ -67,9 +68,9 @@ template<> void update(rp3d::DynamicsWorld* wld, float dt) {
 	wld->update(dt);
 }
 
-void toggleMouseCapture();
+bool toggleMouseCapture();
 
-void handleSystemKeys(InputEvent& ev) {
+void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	if (ev.key == GLFW_KEY_ESCAPE) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			signalQuit = true;
@@ -92,7 +93,7 @@ void handleSystemKeys(InputEvent& ev) {
 		}
 	} else if (ev.key == GLFW_KEY_TAB) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			toggleMouseCapture();
+			mouseCaptureDisabled = !toggleMouseCapture();
 		}
 	}
 }
@@ -106,26 +107,39 @@ void handlePlayerInputs(InputEvent& ev) {
 }
 
 void onInputEventHandler(InputEvent& ev) {
+	// suppress first mouse move event because the values are broken
+	static bool firstMoveSuppressed = false;
+	if (!firstMoveSuppressed && ev.type == InputEvent::EV_MOUSE_MOVED) {
+		ev.consume();
+		firstMoveSuppressed = true;
+		return;
+	}
 	// propagate input events in order of priority:
-	if (!ev.isConsumed())
-		handleSystemKeys(ev);
+	if (!ev.isConsumed()) {
+		bool mouseUncaptured = false;
+		handleSystemKeys(ev, mouseUncaptured);
+		if (mouseUncaptured)
+			firstMoveSuppressed = false; // enable suppressing first move event again after uncapturing mouse to avoid jumps
+	}
 	if (!ev.isConsumed())
 		handleGUIInputs(ev);
 	if (!ev.isConsumed())
 		handlePlayerInputs(ev);
 }
 
-void toggleMouseCapture() {
+bool toggleMouseCapture() {
 	static bool isCaptured = false;
 	if (isCaptured)
 		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	else
 		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	isCaptured = !isCaptured;
+	return isCaptured;
 }
 
 void initSession(Camera* camera) {
-	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(glm::mat4{1.f}, 1.f));
+	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
+	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 	//World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
 	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -0.5f, -4.f});
@@ -147,7 +161,7 @@ Mesh* boxMesh = nullptr;
 
 void physTestInit(rp3d::DynamicsWorld &physWld) {
 	// create ground body
-	rp3d::Vector3 gPos(0.f, -0.15f, 0.f);
+	rp3d::Vector3 gPos(0.f, -0.1f, 0.f);
 	rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
 	groundBody = physWld.createRigidBody({gPos, gOrient});
 	groundBody->setType(rp3d::BodyType::STATIC);
@@ -174,7 +188,7 @@ void physTestDebugDraw(Viewport* vp) {
 	float xext = 30;
 	float zext = 30;
 	float step = 0.5f;
-	float y = -0.1f;
+	float y = 0.f;
 	for (float x=-xext; x<xext; x+=step)
 		Shape3D::get()->drawLine({x, y, -zext}, {x, y, +zext}, {1.f, 1.f, 1.f, 0.6f});
 	for (float z=-zext; z<zext; z+=step)
