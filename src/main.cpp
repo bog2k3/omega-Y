@@ -340,13 +340,16 @@ int main(int argc, char* argv[]) {
 		renderer.unload();
 		Infrastructure::shutDown();
 	} while (0);
-
-	for (unsigned i=0; i<perf::Results::getNumberOfThreads(); i++) {
-		std::cout << "\n=============Call Tree for thread [" << perf::Results::getThreadName(i) << "]==========================================\n";
-		printCallTree(perf::Results::getCallTrees(i), 0);
-		std::cout << "\n------------ TOP HITS -------------\n";
-		printTopHits(perf::Results::getFlatList(i));
-		std::cout << "\n--------------- END -------------------------------\n";
+	
+	if (false) {
+		// print profiling stats
+		for (unsigned i=0; i<perf::Results::getNumberOfThreads(); i++) {
+			std::cout << "\n=============Call Tree for thread [" << perf::Results::getThreadName(i) << "]==========================================\n";
+			printCallTree(perf::Results::getCallTrees(i), 0);
+			std::cout << "\n------------ TOP HITS -------------\n";
+			printTopHits(perf::Results::getFlatList(i));
+			std::cout << "\n--------------- END -------------------------------\n";
+		}
 	}
 
 	std::cout << "\n\n";
