@@ -160,6 +160,7 @@ rp3d::BoxShape* boxShape = nullptr;
 Mesh* boxMesh = nullptr;
 
 void physTestInit(rp3d::DynamicsWorld &physWld) {
+	return;
 	// create ground body
 	rp3d::Vector3 gPos(0.f, -0.1f, 0.f);
 	rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
@@ -184,7 +185,7 @@ void physTestInit(rp3d::DynamicsWorld &physWld) {
 }
 
 void physTestDebugDraw(Viewport* vp) {
-	// draw ground
+	// draw ground grid
 	float xext = 30;
 	float zext = 30;
 	float step = 0.5f;
@@ -193,6 +194,8 @@ void physTestDebugDraw(Viewport* vp) {
 		Shape3D::get()->drawLine({x, y, -zext}, {x, y, +zext}, {1.f, 1.f, 1.f, 0.6f});
 	for (float z=-zext; z<zext; z+=step)
 		Shape3D::get()->drawLine({-xext, y, z}, {+xext, y, z}, {1.f, 1.f, 1.f, 0.6f});
+
+	return;
 		
 	// draw the test body's representation:
 	rp3d::Transform tr = boxBody->getTransform();
@@ -211,8 +214,10 @@ void physTestDebugDraw(Viewport* vp) {
 }
 
 void physTestDestroy(rp3d::DynamicsWorld &physWld) {
-	physWld.destroyRigidBody(boxBody), boxBody = nullptr;
-	physWld.destroyRigidBody(groundBody), groundBody = nullptr;
+	if (boxBody)
+		physWld.destroyRigidBody(boxBody), boxBody = nullptr;
+	if (groundBody)
+		physWld.destroyRigidBody(groundBody), groundBody = nullptr;
 }
 
 int main(int argc, char* argv[]) {
