@@ -13,6 +13,8 @@ struct TerrainSettings {
 	// structure settings
 	float vertexDensity = 2.f;	// vertices per meter (actual density may be slightly higher due to rounding,
 								// but is guaranteed to always be at least the specified value)
+	bool irregularEdges = false;	// false keeps the edges as straight as possible, true will remove stretched triangles
+									// from the edges, giving an irregular aspect with only 'nice' triangles
 	
 	// generation parameters
 	float relativeRandomJitter = 0.5f;	// random jitter applied to the vertex mesh in the XoZ plane;
