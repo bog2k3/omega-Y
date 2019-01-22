@@ -46,6 +46,9 @@ private:
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
 	TerrainSettings settings_;	
+	
+	void cleanupEdges();
+	bool isDegenerateTriangle(Triangle const& t) const;
 };
 
 #endif // TERRAIN_H
