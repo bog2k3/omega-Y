@@ -16,8 +16,8 @@ public:
 	HeightMap(HeightmapParams const& params);
 	virtual ~HeightMap();
 	
-	// return the interpolated height value at position (x, z)
-	float value(float x, float z) const;
+	// return the interpolated height value at position with normalized coordinates (u, v) <- [0.0, 1.0]
+	float value(float u, float v) const;
 	
 private:
 	unsigned width_;
@@ -38,6 +38,7 @@ private:
 	
 	void computeMidpointStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp);
 	void generate(float amplitude);
+	float getSample(int r, int c) const;
 };
 
 #endif // HEIGHTMAP_H

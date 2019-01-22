@@ -1,10 +1,11 @@
 #include "HeightMap.h"
 
 #include <boglfw/utils/rand.h>
+#include <boglfw/math/math3D.h>
 
 #include <cassert>
 
-static const float jitterReductionFactor = 0.25f;
+static const float jitterReductionFactor = 0.5f;	// jitter is multiplied by this factor at each iteration
 
 // return the first power-of-two number greater than or equal to x
 unsigned nextPo2(unsigned x) {
@@ -30,7 +31,33 @@ HeightMap::~HeightMap()
 		delete [] elements_, elements_ = nullptr;
 }
 
-float HeightMap::value(float x, float z) const {
+float HeightMap::getSample(int r, int c) const {
+	r = clamp(r, 0, (int)length_ - 1);
+	c = clamp(c, 0, (int)width_ - 1);
+	return elements_[r*width_ + c].value;
+}
+
+float HeightMap::value(float u, float v) const {
+	u = clamp(u, 0.f, 1.f);
+	v = clamp(v, 0.f, 1.f);
+	// bilinear filtering by sampling the 4 nearest neighbours
+	float rf = v * length_;		// floating point row coord
+	float cf = u * width_;		// floating point column coord
+	unsigned r = (unsigned) rf;	// row index
+	unsigned c = (unsigned) cf;	// column index
+	unsigned uWeight = rf - r - 0.5f;	// u blending weight
+	unsigned vWeight = cf - c - 0.5f;	// v blending weight
+	if (uWeight < 0) {
+		c--;
+		uWeight += 1.f;
+	}
+	if (vWeight < 0) {
+		r--;
+		vWeight += 1.f;
+	}
+	float f1 = getSample(r, c) * (1.f - uWeight) + getSample(r, c+1) * uWeight;
+	float f2 = getSample(r+1, c) * (1.f - uWeight) + getSample(r+1, c+1) * uWeight;
+	return baseY_ + f1 * (1.f - vWeight) + f2 * vWeight;
 }
 
 void HeightMap::computeMidpointStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp) {
@@ -51,10 +78,10 @@ void HeightMap::computeMidpointStep(unsigned r1, unsigned r2, unsigned c1, unsig
 	// center:
 	if (c2 > c1+1 && r2 > r1+1)
 		elements_[midR * width_ + midC] += 0.25f * (
-				elements[r1 * width_ + midC].get() + 
-				elements[r2 * width_ + midC].get() + 
-				elements[midR * width_ + c1].get() + 
-				elements[midR * width_ + c2].get()
+				elements_[r1 * width_ + midC].get() +
+				elements_[r2 * width_ + midC].get() +
+				elements_[midR * width_ + c1].get() +
+				elements_[midR * width_ + c2].get()
 			) + srandf() * jitterAmp;
 	if (c2 > c1+2 || r2 > r1+2) {
 		// recurse into the 4 sub-sections:
@@ -78,7 +105,17 @@ void HeightMap::generate(float amplitude) {
 	float jitterAmp = amplitude * jitterReductionFactor;
 	// compute midpoint displacement recursively:
 	computeMidpointStep(0, length_-1, 0, width_-1, jitterAmp);
-	// average out the values:
-	for (unsigned i=0; i<width_*length_; i++)
+	// average out the values compute min/max:
+	float vmin = 1e20f, vmax = -1e20f;
+	for (unsigned i=0; i<width_*length_; i++) {
 		elements_[i].value /= elements_[i].divider, elements_[i].divider = 1;
+		if (elements_[i].value < vmin)
+			vmin = elements_[i].value;
+		if (elements_[i].value > vmax)
+			vmax = elements_[i].value;
+	}
+	// renormalize the values to fill the entire height range
+	float scale = amplitude / (vmax - vmin);
+	for (unsigned i=0; i<width_*length_; i++)
+		elements_[i].value = (elements_[i].value - vmin) * scale;
 }

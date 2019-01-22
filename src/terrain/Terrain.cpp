@@ -1,6 +1,7 @@
 #include "Terrain.h"
 
 #include "triangulation.h"
+#include "HeightMap.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/math/math3D.h>
@@ -81,8 +82,27 @@ void Terrain::generate(TerrainSettings const& settings) {
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
 	if (trRes < 0)
 		ERROR("Failed to triangulate terrain mesh!");
-		
-	cleanupEdges();
+
+	if (settings_.irregularEdges)
+		cleanupEdges();
+
+	// compute heightmap:
+	HeightmapParams hparam;
+	hparam.width = settings_.width;
+	hparam.length = settings_.length;
+	hparam.minHeight = settings_.minElevation;
+	hparam.maxHeight = settings_.maxElevation;
+	HeightMap height(hparam);
+	for (unsigned i=0; i<nVertices_; i++) {
+		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
+		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
+		pVertices_[i].pos.y = height.value(u, v);
+
+		// debug
+		//pVertices_[i].color = {u, v, 0};
+		float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+		pVertices_[i].color = {1.f - hr, hr, 0};
+	}
 }
 
 bool Terrain::isDegenerateTriangle(Triangle const& t) const {
@@ -133,8 +153,8 @@ void Terrain::cleanupEdges() {
 
 void Terrain::draw(Viewport* vp) {
 	for (auto &t : triangles_) {
-		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV2].pos, {0.f, 1.f, 0.f, 1.f});
-		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV3].pos, {0.f, 1.f, 0.f, 1.f});
-		Shape3D::get()->drawLine(pVertices_[t.iV2].pos, pVertices_[t.iV3].pos, {0.f, 1.f, 0.f, 1.f});
+		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV2].pos, pVertices_[t.iV1].color);
+		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV3].pos, pVertices_[t.iV3].color);
+		Shape3D::get()->drawLine(pVertices_[t.iV2].pos, pVertices_[t.iV3].pos, pVertices_[t.iV2].color);
 	}
 }
