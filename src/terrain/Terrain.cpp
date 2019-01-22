@@ -50,8 +50,8 @@ void validateSettings(TerrainSettings const& s) {
 	assert(s.length > 0);
 	assert(s.maxElevation > s.minElevation);
 	assert(s.vertexDensity > 0);
-	assert(s.width >= s.vertexDensity);
-	assert(s.length >= s.vertexDensity);
+	assert(s.width >= 1.f / s.vertexDensity);
+	assert(s.length >= 1.f / s.vertexDensity);
 }
 
 void Terrain::generate(TerrainSettings const& settings) {
@@ -59,8 +59,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 	clear();
 	settings_ = settings;
 	
-	unsigned rows = (unsigned)ceil(settings_.length / settings_.vertexDensity) + 1;
-	unsigned cols = (unsigned)ceil(settings_.width / settings_.vertexDensity) + 1;
+	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
+	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
 	float dx = settings_.width / (cols - 1);
 	float dz = settings_.length / (rows - 1);
 	

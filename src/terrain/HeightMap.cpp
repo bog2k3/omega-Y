@@ -45,8 +45,8 @@ float HeightMap::value(float u, float v) const {
 	float cf = u * width_;		// floating point column coord
 	unsigned r = (unsigned) rf;	// row index
 	unsigned c = (unsigned) cf;	// column index
-	unsigned uWeight = rf - r - 0.5f;	// u blending weight
-	unsigned vWeight = cf - c - 0.5f;	// v blending weight
+	float uWeight = cf - c - 0.5f;	// u blending weight
+	float vWeight = rf - r - 0.5f;	// v blending weight
 	if (uWeight < 0) {
 		c--;
 		uWeight += 1.f;
