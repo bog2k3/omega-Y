@@ -1,5 +1,6 @@
 #include "entities/FreeCamera.h"
 #include "PlayerInputHandler.h"
+#include "terrain/Terrain.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Renderer.h>
@@ -185,6 +186,7 @@ void physTestInit(rp3d::DynamicsWorld &physWld) {
 }
 
 void physTestDebugDraw(Viewport* vp) {
+	return;
 	// draw ground grid
 	float xext = 30;
 	float zext = 30;
@@ -239,6 +241,7 @@ int main(int argc, char* argv[]) {
 		auto vp1 = vp.get();
 		vp1->setBkColor({0.f, 0.f, 0.f});
 		vp1->camera()->setFOV(PI/2.5f);
+		vp1->camera()->setZPlanes(0.15f, 250.f);
 		renderer.addViewport("main", std::move(vp));
 
 		WorldConfig wldCfg;
@@ -294,11 +297,17 @@ int main(int argc, char* argv[]) {
 			}
 		};
 		
+		TerrainSettings terrainSettings;
+		terrainSettings.relativeRandomJitter = 0.8f;
+		Terrain terrain;
+		terrain.generate(terrainSettings);
+		
 		std::vector<drawable> drawList;
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
 		drawList.push_back(&physTestDebugDraw);
+		drawList.push_back(&terrain);
 		
 		vp1->setDrawList(drawList);
 		

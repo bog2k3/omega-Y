@@ -1,20 +1,3 @@
-#include <iostream>
-//#include <hash_set.h>
-//#include <hash_set>
-#include <set>
-#include <vector>
-#include <fstream>
-#include <stdlib.h>
-#include <math.h>
-#include <string>
-#include <algorithm>
-
-
-#include "s_hull_pro.h"
-
-using namespace std;
-
-
 /* copyright 2016 Dr David Sinclair
    david@s-hull.org
  
@@ -31,10 +14,70 @@ using namespace std;
    revised 2/April/2016
  
  */
+ 
+#include "triangulation.h"
+
+#include <math.h>
+#include <string>
+#include <algorithm>
+ 
+using namespace std;
+
+// sort into descending order (for use in corner responce ranking).
+inline bool operator<(const Shx &a, const Shx &b) 
+{ 
+	if (a.ro == b.ro) {
+		if (a.r == b.r) {
+			return a.c < b.c;
+		}
+		return a.r < b.r;
+	}
+	return a.ro <  b.ro;
+};
+
+
+struct Dupex
+{
+	int id;
+	float r, c;
+
+	Dupex() {}
+	Dupex(float a, float b) : id(-1), r(a), c(b) {};
+	Dupex(float a, float b, int x) : id(x), r(a), c(b) {}
+	Dupex(const Dupex &p) : id(p.id),  r(p.r), c(p.c) {}
+
+	Dupex &operator=(const Dupex &p) {
+		id = p.id;
+		r = p.r;
+		c = p.c;
+		return *this;
+	}
+};
 
 
 
+// sort into descending order (for use in corner responce ranking).
+inline bool operator<(const Dupex &a, const Dupex &b) 
+{ 
+	if (a.r == b.r)
+		return a.c < b.c;
+	return a.r < b.r;
+};
 
+void circle_cent2(float r1,float c1, float r2,float c2, float r3,float c3,float &r,float &c, float &ro2);
+void circle_cent4(float r1,float c1, float r2,float c2, float r3,float c3,float &r,float &c, float &ro2);
+int Cline_Renka_test(float &Ax, float &Ay, float &Bx, float &By, float &Cx, float &Cy, float &Dx, float &Dy);
+int T_flip_pro( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<int> &slump, int numt, 
+		int start, std::vector<int> &ids);
+int T_flip_pro_idx( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<int> &slump, 
+		    std::vector<int> &ids, std::vector<int> &ids2);
+
+int de_duplicate( std::vector<Shx> &pts,  std::vector<int> &outx );
+int de_duplicateX( std::vector<Shx> &pts, std::vector<int> &outx,std::vector<Shx> &pts2 );
+int  test_center(Shx &pt0, Shx &pt1,Shx &pt2);
+
+int T_flip_edge( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<int> &slump, 
+		 int numt, int start, std::vector<int> &ids);
 
 
 void circle_cent2(float r1,float c1, float r2,float c2, float r3,float c3,
@@ -68,151 +111,15 @@ float &r,float &c, float &ro2){
    return;
 }
 
-
-/*  
-    read an ascii file of (r,c) point pairs.
-
-    the first line of the points file should contain
-    "NUMP  2 points"
-
-    if it does not have the word points in it the first line is 
-    interpretted as a point pair.
-
- */
-
-int read_Shx(std::vector<Shx> &pts, char * fname){
-  char s0[513];
-  int nump =0;
-  float p1,p2;
-
-  Shx pt;
-
-  std::string line;
-  std::string points_str("points");
-
-  std::ifstream myfile;
-  myfile.open(fname);
-
-  if (myfile.is_open()){
-    
-    getline (myfile,line);
-	//int numc = line.length();
-
-    // check string for the string "points"
-    int n = (int) line.find( points_str);
-	if( n > 0){ 
-      while ( myfile.good() ){
-	getline (myfile,line);
-	if( line.length() <= 512){
-	  copy( line.begin(), line.end(), s0);
-	  s0[line.length()] = 0;
-	  int v = sscanf( s0, "%g %g", &p1,&p2);
-	  if( v>0 ){
-	    pt.id = nump; 
-	    nump++;
-	    pt.r = p1;
-	    pt.c = p2;
-	    pts.push_back(pt);
-	  }
-	}   
-      }
-    }
-    else{   // assume all number pairs on a line are points
-      if( line.length() <= 512){
-	copy( line.begin(), line.end(), s0);
-	s0[line.length()] = 0;
-	int v = sscanf( s0, "%g %g", &p1,&p2);
-	if( v>0 ){
-	    pt.id = nump; 
-	    nump++;
-	  pt.r = p1;
-	  pt.c = p2;
-	  pts.push_back(pt);
-	}
-      }   
-
-      while ( myfile.good() ){
-	getline (myfile,line);
-	if( line.length() <= 512){
-	  copy( line.begin(), line.end(), s0);
-	  s0[line.length()] = 0;
-	  int v = sscanf( s0, "%g %g", &p1,&p2);
-	  if( v>0 ){
-	    pt.id = nump; 
-	    nump++;
-	    pt.r = p1;
-	    pt.c = p2;
-	    pts.push_back(pt);
-	  }
-	}   
-      }
-    }
-    myfile.close();
-  }
-
-  nump = (int) pts.size();
-
-  return(nump);
-};
-
-/*
-	write out a set of points to disk
-
-
-*/
-
-void write_Shx(std::vector<Shx> &pts, char * fname){
-   std::ofstream out(fname, ios::out);
-   
-   int nr = (int) pts.size();
-   out << nr << " 2 points" << endl;
-   
-   for (int r = 0; r < nr; r++){
-     out << pts[r].r << ' ' << pts[r].c <<  endl;
-   }
-   out.close();
-   
-   return;
-};
-
-
-
-/*
- write out triangle ids to be compatible with matlab/octave array numbering.
-
- */
-void write_Triads(std::vector<Triad> &ts, char * fname){
-   std::ofstream out(fname, ios::out);
-   
-   int nr = (int) ts.size();
-   out << nr << " 6   point-ids (1,2,3)  adjacent triangle-ids ( limbs ab  ac  bc )" << endl;
-   
-   for (int r = 0; r < nr; r++){
-     out << ts[r].a+1 << ' ' << ts[r].b+1 <<' ' << ts[r].c+1 <<' ' 
-	 << ts[r].ab+1 <<' ' << ts[r].ac+1 <<' ' << ts[r].bc+1 << endl; //" " << ts[r].ro <<  endl;
-   }
-   out.close();
-   
-   return;
-};
-
-
-
-
-
-/*  version in which the ids of the triangles associated with the sides of the hull are tracked.
-   
-
- */
-
-int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
+//  version in which the ids of the triangles associated with the sides of the hull are tracked.
+int triangulateImpl( std::vector<Shx> &pts, std::vector<Triad> &triads)
 {
 
   int nump = (int) pts.size();
 
 
   if( nump < 3 ){
-    cerr << "less than 3 points, aborting " << endl;
+    //cerr << "less than 3 points, aborting " << endl;
     return(-1);
   }
 
@@ -256,7 +163,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
   }
 
   if( mid < 0 ){
-    cerr << "linear structure, aborting " << endl;
+    //cerr << "linear structure, aborting " << endl;
     return(-2);
   }
 
@@ -267,7 +174,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
 
   int ptest = test_center(pt0, pt1, pt2 );
   if( ptest < 0 ){
-    cerr << "warning: obtuce seed triangle sellected " << endl;
+    //cerr << "warning: obtuce seed triangle sellected " << endl;
   }
 
 
@@ -293,7 +200,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
   slump.resize(nump);
 
   for( int k=0; k<nump; k++){
-    if( pts[k].id < nump){
+    if( pts[k].id < nump) {
       slump[ pts[k].id] = k;
     }
     else{
@@ -379,7 +286,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
     ptx.c = cx;
     ptx.id = pts[k].id;
 
-    int numh = (int) hull.size(), numh_old = numh;
+    int numh = (int) hull.size();//, numh_old = numh;
     dr = rx- hull[0].r;    dc = cx- hull[0].c;  // outwards pointing from hull[0] to pt.
 
     std::vector<int> pidx, tridx;
@@ -388,7 +295,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
 
     float df = -dc* hull[0].tr + dr*hull[0].tc;    // visibility test vector.
     if( df < 0 ){  // starting with a visible hull facet !!!
-      int e1 = 1, e2 = numh;
+      //int e1 = 1, e2 = numh;
       hidx = 0;
 
       // check to see if segment numh is also visible
@@ -626,7 +533,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
     
   }
 
-  cerr << "of triangles " << triads.size() << " to be flipped. "<< endl;
+  //cerr << "of triangles " << triads.size() << " to be flipped. "<< endl;
  
   //  write_Triads(triads, "tris0.mat");
 
@@ -634,7 +541,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
 
   int tf = T_flip_pro( pts, triads, slump, numt, 0, ids);
   if( tf < 0 ){
-    cerr << "cannot triangualte this set " << endl;
+    //cerr << "cannot triangualte this set " << endl;
 
     return(-3);
   }
@@ -655,7 +562,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
    
     nit ++;
     if( tf < 0 ){
-      cerr << "cannot triangualte this set " << endl;
+      //cerr << "cannot triangualte this set " << endl;
 
       return(-4);
     } 
@@ -675,7 +582,7 @@ int s_hull_pro( std::vector<Shx> &pts, std::vector<Triad> &triads)
     
     nit ++;
     if( tf < 0 ){
-      cerr << "cannot triangualte this set " << endl;
+      //cerr << "cannot triangualte this set " << endl;
 
       return(-4);
     } 
@@ -742,7 +649,7 @@ int de_duplicate( std::vector<Shx> &pts, std::vector<int> &outx ){
   
   for( int k=0; k<nump-1; k++){
     if( dpx[k].r == dpx[k+1].r && dpx[k].c == dpx[k+1].c ){
-      cerr << "duplicate-point ids " << dpx[k].id << "  " << dpx[k+1].id << "   at  ("  << pts[dpx[k+1].id].r << "," << pts[dpx[k+1].id].c << ")" << endl;
+      //cerr << "duplicate-point ids " << dpx[k].id << "  " << dpx[k+1].id << "   at  ("  << pts[dpx[k+1].id].r << "," << pts[dpx[k+1].id].c << ")" << endl;
       outx.push_back( dpx[k+1].id);
     }
   }
@@ -837,13 +744,13 @@ int T_flip_pro( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<i
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
 
-      if( pd < 0 || pd > 100)
-	int dfx = 9;
+      //if( pd < 0 || pd > 100)
+	//int dfx = 9;
 
       r3 = pts[pd].r;
       c3 = pts[pd].c;
@@ -951,7 +858,7 @@ int T_flip_pro( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<i
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
@@ -1064,7 +971,7 @@ int T_flip_pro( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<i
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
@@ -1156,7 +1063,7 @@ int Cline_Renka_test(float &Ax, float &Ay,
   if( cosA < 0 && cosD < 0 ) // two obtuse angles 
     return(-1);
 
-  float ADX = Ax-Dx, ADy = Ay-Dy;
+  //float ADX = Ax-Dx, ADy = Ay-Dy;
 
 
   if( cosA > 0 && cosD > 0 )  // two acute angles
@@ -1250,7 +1157,7 @@ int T_flip_pro_idx( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vect
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << "  T2: " <<  T2<<  endl;
+	//cerr << "triangle flipping error. " << t << "  T2: " <<  T2<<  endl;
 	return(-6);
       }
 
@@ -1361,7 +1268,7 @@ int T_flip_pro_idx( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vect
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t <<  endl;
+	//cerr << "triangle flipping error. " << t <<  endl;
 	return(-6);
       }
 
@@ -1471,7 +1378,7 @@ int T_flip_pro_idx( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vect
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-6);
       }
 
@@ -1604,7 +1511,7 @@ int de_duplicateX( std::vector<Shx> &pts, std::vector<int> &outx,std::vector<Shx
 
   sort(dpx.begin(), dpx.end());
   
-  cerr << "de-duplicating ";  pts2.clear();
+  //cerr << "de-duplicating ";  pts2.clear();
   pts2.push_back(pts[dpx[0].id]);
   pts2[0].id = 0;
   int cnt = 1;
@@ -1623,7 +1530,7 @@ int de_duplicateX( std::vector<Shx> &pts, std::vector<int> &outx,std::vector<Shx
     }
   }
 
-  cerr << "removed  " << outx.size() << endl;
+  //cerr << "removed  " << outx.size() << endl;
 
   return(outx.size());
 }
@@ -1694,13 +1601,13 @@ int T_flip_edge( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
 
-      if( pd < 0 || pd > 100)
-	int dfx = 9;
+      //if( pd < 0 || pd > 100)
+	//int dfx = 9;
 
       r3 = pts[pd].r;
       c3 = pts[pd].c;
@@ -1711,7 +1618,7 @@ int T_flip_edge( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<
       if( XX < 0 ){ 
 
 	L1 = tri.ab;
-	L2 = tri.ac;	
+	L2 = tri.ac;
 	//	if( L1 != L3 && L2 != L4 ){  // need this check for stability.
 
 	tx.a = tri.a;
@@ -1808,7 +1715,7 @@ int T_flip_edge( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
@@ -1921,7 +1828,7 @@ int T_flip_edge( std::vector<Shx> &pts, std::vector<Triad> &triads, std::vector<
 	}
       }
       else{
-	cerr << "triangle flipping error. " << t << endl;
+	//cerr << "triangle flipping error. " << t << endl;
 	return(-5);
       }
 
