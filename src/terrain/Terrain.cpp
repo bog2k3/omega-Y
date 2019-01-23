@@ -5,6 +5,7 @@
 #include "PerlinNoise.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
+#include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/math/math3D.h>
 #include <boglfw/utils/rand.h>
 #include <boglfw/utils/log.h>
@@ -12,16 +13,31 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <GL/glew.h>
+
 #include <new>
 #include <algorithm>
 
 struct TerrainVertex {
+	static const unsigned nTextures = 4;
+	
 	glm::vec3 pos;
 	glm::vec3 color;
-	glm::vec2 uv[4];	// uvs for each texture layer
-	float texWeight[4];	// weights for each texture layer -> the final color will be a weighted average of each texture
+	glm::vec2 uv[nTextures];	// uvs for each texture layer
+	float texWeight[nTextures];	// weights for each texture layer -> the final color will be a weighted average of each texture
 	
 	TerrainVertex() = default;
+};
+
+struct RenderData {
+	unsigned VAO_;
+	unsigned VBO_;
+	unsigned IBO_;
+	unsigned shaderProgram_;
+	unsigned iPos_;
+	unsigned iColor_;
+	unsigned iUV_;
+	unsigned iTexWeight_;
 };
 
 template<>
@@ -33,11 +49,50 @@ float nth_elem(TerrainVertex const& v, unsigned n) {
 
 Terrain::Terrain()
 {
+	renderData_ = new RenderData();
+	renderData_->shaderProgram_ = Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag");
+	if (!renderData_->shaderProgram_) {
+		ERROR("Failed to load terrain shaders!");
+		throw std::runtime_error("Failed to load terrain shaders");
+	}
+	renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
+	renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
+	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
+	renderData_->iTexWeight_ = glGetAttribLocation(renderData_->shaderProgram_, "texWeight");
+	glGenVertexArrays(1, &renderData_->VAO_);
+	glGenBuffers(1, &renderData_->VBO_);
+	glGenBuffers(1, &renderData_->IBO_);
+	
+	glBindVertexArray(renderData_->VAO_);
+	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+	glEnableVertexAttribArray(renderData_->iPos_);
+	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, pos));
+	if (renderData_->iColor_ > 0) {
+		glEnableVertexAttribArray(renderData_->iColor_);
+		glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, color));
+	}
+	if (renderData_->iUV_ > 0) {
+		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
+			glEnableVertexAttribArray(renderData_->iUV_ + i);
+			glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), 
+				(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
+		}
+	}
+	if (renderData_->iTexWeight_ > 0) {
+		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
+			glEnableVertexAttribArray(renderData_->iTexWeight_ + i);
+			glVertexAttribPointer(renderData_->iTexWeight_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), 
+				(void*)(offsetof(TerrainVertex, texWeight) + i*sizeof(TerrainVertex::texWeight[0])));
+		}
+	}
+	glBindVertexArray(0);
 }
 
 Terrain::~Terrain()
 {
 	clear();
+	delete renderData_, renderData_ = nullptr;
 }
 
 void Terrain::clear() {
@@ -81,8 +136,10 @@ void Terrain::generate(TerrainSettings const& settings) {
 		}
 	
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
-	if (trRes < 0)
+	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
+		return;
+	}
 
 	if (settings_.irregularEdges)
 		cleanupEdges();
@@ -112,6 +169,25 @@ void Terrain::generate(TerrainSettings const& settings) {
 		float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
 		pVertices_[i].color = {1.f - hr, hr, 0};
 	}
+	
+	updateRenderBuffers();
+}
+
+void Terrain::updateRenderBuffers() {
+	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
+	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	uint16_t *indices = (uint16_t*)malloc(3 * triangles_.size());
+	for (unsigned i=0; i<triangles_.size(); i++) {
+		indices[i*3 + 0] = triangles_[i].iV1;
+		indices[i*3 + 1] = triangles_[i].iV2;
+		indices[i*3 + 2] = triangles_[i].iV3;
+	}	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size(), indices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	free(indices);
 }
 
 bool Terrain::isDegenerateTriangle(Triangle const& t) const {

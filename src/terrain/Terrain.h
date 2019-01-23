@@ -28,6 +28,7 @@ struct TerrainSettings {
 struct TerrainVertex;
 class Viewport;
 struct Triangle;
+struct RenderData;
 
 class Terrain
 {
@@ -47,8 +48,10 @@ private:
 	TerrainVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
-	TerrainSettings settings_;	
-	
+	TerrainSettings settings_;
+	RenderData *renderData_ = nullptr;
+		
+	void updateRenderBuffers();
 	void cleanupEdges();
 	bool isDegenerateTriangle(Triangle const& t) const;
 };
