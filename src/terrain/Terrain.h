@@ -50,7 +50,10 @@ private:
 	std::vector<Triangle> triangles_;
 	TerrainSettings settings_;
 	RenderData *renderData_ = nullptr;
-		
+
+	void fixTriangleWinding();
+	void computeDisplacements();
+	void computeNormals();
 	void updateRenderBuffers();
 	void cleanupEdges();
 	bool isDegenerateTriangle(Triangle const& t) const;

@@ -7,5 +7,17 @@ uniform sampler2D tex[4];
 
 void main() {
 	vec4 dummy = vec4(fUV[0].x, fUV[1].x, fUV[2].x, fUV[3].x) + vec4(fNormal, 0) + vec4(fTexWeight[0], fTexWeight[1], fTexWeight[2], fTexWeight[3]);
-	gl_FragColor = fColor + dummy*0.01;// * texture(tex1, fUV1);
+
+	vec3 lightDir = normalize(vec3(1.0, -1.5, -0.3));
+	float light = dot(-lightDir, normalize(fNormal));
+
+	dummy += light;
+
+	gl_FragColor = light*fColor + dummy*0.01;// * texture(tex1, fUV1);
+	//vec3 nc = normalize(fNormal) * 0.5 + 0.5;
+	//nc.x = pow(nc.x, 4.0);
+	//nc.y = pow(nc.y, 4.0);
+	//nc.z = pow(nc.z, 4.0);
+	//nc *= 0.75;
+	//gl_FragColor = vec4(nc, 1) + dummy*0.001;
 }

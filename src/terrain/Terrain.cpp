@@ -78,6 +78,10 @@ Terrain::Terrain()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glEnableVertexAttribArray(renderData_->iPos_);
 	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, pos));
+	if (renderData_->iNormal_ > 0) {
+		glEnableVertexAttribArray(renderData_->iNormal_);
+		glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
+	}
 	if (renderData_->iColor_ > 0) {
 		glEnableVertexAttribArray(renderData_->iColor_);
 		glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, color));
@@ -139,7 +143,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*rows + j]) TerrainVertex {
 				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),	// position
-				{0.f, 1.f, 0.f},												// normal
+				{0.f, 0.f, 0.f},												// normal
 				{1.f, 1.f, 1.f},												// color
 				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},				// uvs
 				{0.f, 0.f, 0.f, 0.f}											// tex weights
@@ -151,11 +155,30 @@ void Terrain::generate(TerrainSettings const& settings) {
 		ERROR("Failed to triangulate terrain mesh!");
 		return;
 	}
+	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
 	if (settings_.irregularEdges)
 		cleanupEdges();
 
-	// compute heightmap:
+	computeDisplacements();
+	computeNormals();
+	
+	updateRenderBuffers();
+}
+
+void Terrain::fixTriangleWinding() {
+	// all triangles must be CW as seen from above
+	for (auto &t : triangles_) {
+		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
+		if (n.y < 0) {
+			// triangle is CCW, we need to reverse it
+			xchg(t.iV1, t.iV3);	// exchange vertices 1 and 3
+			xchg(t.iN12, t.iN23); // exchange edges 1-2 and 2-3
+		}
+	}
+}
+
+void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
 	hparam.width = settings_.width;
 	hparam.length = settings_.length;
@@ -163,25 +186,37 @@ void Terrain::generate(TerrainSettings const& settings) {
 	hparam.maxHeight = settings_.maxElevation;
 	HeightMap height(hparam);
 	PerlinNoise pnoise(settings_.width, settings_.length);
+
+	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
 	for (unsigned i=0; i<nVertices_; i++) {
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
-		
+
 		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.125f;
 		float perlin = pnoise.get(u/16, v/16) * perlinAmp * 0.5
 						+ pnoise.get(u/8, v/8) * perlinAmp * 0.3
 						+ pnoise.get(u/4, v/4) * perlinAmp * 0.2
 						+ pnoise.get(u/2, v/2) * perlinAmp * 0.125
 						+ pnoise.get(u/1, v/1) * perlinAmp * 0.125;
-						
+
 		pVertices_[i].pos.y = height.value(u, v) + perlin;
 
 		// debug
 		float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
 		pVertices_[i].color = {1.f - hr, hr, 0};
 	}
-	
-	updateRenderBuffers();
+}
+
+void Terrain::computeNormals() {
+	for (auto &t : triangles_) {
+		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
+		n = glm::normalize(n);
+		pVertices_[t.iV1].normal += n;
+		pVertices_[t.iV2].normal += n;
+		pVertices_[t.iV3].normal += n;
+	}
+	for (unsigned i=0; i<nVertices_; i++)
+		pVertices_[i].normal = glm::normalize(pVertices_[i].normal);
 }
 
 void Terrain::updateRenderBuffers() {
@@ -248,12 +283,15 @@ void Terrain::cleanupEdges() {
 }
 
 void Terrain::draw(Viewport* vp) {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glFrontFace(GL_CW);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 	glUseProgram(renderData_->shaderProgram_);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_SHORT, nullptr);
 	glBindVertexArray(0);
 	glUseProgram(0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
