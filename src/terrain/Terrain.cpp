@@ -180,8 +180,8 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = settings_.width;
-	hparam.length = settings_.length;
+	hparam.width = settings_.width / 2;
+	hparam.length = settings_.length / 2;
 	hparam.minHeight = settings_.minElevation;
 	hparam.maxHeight = settings_.maxElevation;
 	HeightMap height(hparam);
@@ -196,8 +196,8 @@ void Terrain::computeDisplacements() {
 		float perlin = pnoise.get(u/16, v/16) * perlinAmp * 0.5
 						+ pnoise.get(u/8, v/8) * perlinAmp * 0.3
 						+ pnoise.get(u/4, v/4) * perlinAmp * 0.2
-						+ pnoise.get(u/2, v/2) * perlinAmp * 0.125
-						+ pnoise.get(u/1, v/1) * perlinAmp * 0.125;
+						+ pnoise.get(u/2, v/2) * perlinAmp * 0.1
+						+ pnoise.get(u/1, v/1) * perlinAmp * 0.05;
 
 		pVertices_[i].pos.y = height.value(u, v) + perlin;
 
@@ -294,4 +294,9 @@ void Terrain::draw(Viewport* vp) {
 	glBindVertexArray(0);
 	glUseProgram(0);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// draw vertex normals
+	/*for (unsigned i=0; i<nVertices_; i++) {
+		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
+	}*/
 }

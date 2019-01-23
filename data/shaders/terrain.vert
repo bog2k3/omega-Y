@@ -6,6 +6,7 @@ in vec3 color;
 in vec2 uv[4];
 in float texWeight[4];
  
+out vec3 fWPos;
 out vec3 fNormal;
 out vec4 fColor;
 out vec2 fUV[4];
@@ -15,6 +16,7 @@ uniform mat4 mPV;
  
 void main() {
     gl_Position = mPV * vec4(pos, 1);
+	fWPos = pos;
     fNormal = normal;
     fColor = vec4(color, 1);
     fUV[0] = uv[0];
