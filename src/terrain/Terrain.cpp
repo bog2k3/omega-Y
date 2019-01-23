@@ -6,12 +6,15 @@
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/shader.h>
+#include <boglfw/renderOpenGL/Viewport.h>
+#include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/math/math3D.h>
 #include <boglfw/utils/rand.h>
 #include <boglfw/utils/log.h>
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <GL/glew.h>
 
@@ -22,6 +25,7 @@ struct TerrainVertex {
 	static const unsigned nTextures = 4;
 	
 	glm::vec3 pos;
+	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv[nTextures];	// uvs for each texture layer
 	float texWeight[nTextures];	// weights for each texture layer -> the final color will be a weighted average of each texture
@@ -35,9 +39,12 @@ struct RenderData {
 	unsigned IBO_;
 	unsigned shaderProgram_;
 	unsigned iPos_;
+	unsigned iNormal_;
 	unsigned iColor_;
 	unsigned iUV_;
 	unsigned iTexWeight_;
+	unsigned imPV_;
+	unsigned iSampler_;
 };
 
 template<>
@@ -56,9 +63,12 @@ Terrain::Terrain()
 		throw std::runtime_error("Failed to load terrain shaders");
 	}
 	renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
+	renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
 	renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
 	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 	renderData_->iTexWeight_ = glGetAttribLocation(renderData_->shaderProgram_, "texWeight");
+	renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+	renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
@@ -82,7 +92,7 @@ Terrain::Terrain()
 	if (renderData_->iTexWeight_ > 0) {
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
 			glEnableVertexAttribArray(renderData_->iTexWeight_ + i);
-			glVertexAttribPointer(renderData_->iTexWeight_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), 
+			glVertexAttribPointer(renderData_->iTexWeight_ + i, 1, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
 				(void*)(offsetof(TerrainVertex, texWeight) + i*sizeof(TerrainVertex::texWeight[0])));
 		}
 	}
@@ -129,6 +139,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*rows + j]) TerrainVertex {
 				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),	// position
+				{0.f, 1.f, 0.f},												// normal
 				{1.f, 1.f, 1.f},												// color
 				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},				// uvs
 				{0.f, 0.f, 0.f, 0.f}											// tex weights
@@ -178,14 +189,14 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
-	uint16_t *indices = (uint16_t*)malloc(3 * triangles_.size());
+	uint16_t *indices = (uint16_t*)malloc(3 * triangles_.size() * sizeof(uint16_t));
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		indices[i*3 + 0] = triangles_[i].iV1;
 		indices[i*3 + 1] = triangles_[i].iV2;
 		indices[i*3 + 2] = triangles_[i].iV3;
 	}	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size(), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint16_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -237,9 +248,12 @@ void Terrain::cleanupEdges() {
 }
 
 void Terrain::draw(Viewport* vp) {
-	for (auto &t : triangles_) {
-		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV2].pos, pVertices_[t.iV1].color);
-		Shape3D::get()->drawLine(pVertices_[t.iV1].pos, pVertices_[t.iV3].pos, pVertices_[t.iV3].color);
-		Shape3D::get()->drawLine(pVertices_[t.iV2].pos, pVertices_[t.iV3].pos, pVertices_[t.iV2].color);
-	}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glUseProgram(renderData_->shaderProgram_);
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
+	glBindVertexArray(renderData_->VAO_);
+	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_SHORT, nullptr);
+	glBindVertexArray(0);
+	glUseProgram(0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
