@@ -23,8 +23,8 @@
 #include <vector>
 
 struct Triangle {
-	int iV1, iV2, iV3;		// index of 1st, 2nd and 3rd vertices
-	int iN12, iN13, iN23;	// index of neighbour Triangle at edge 1-2, 1-3 and 2-3
+	unsigned iV1, iV2, iV3;		// index of 1st, 2nd and 3rd vertices
+	unsigned iN12, iN13, iN23;	// index of neighbour Triangle at edge 1-2, 1-3 and 2-3
 };
 
 

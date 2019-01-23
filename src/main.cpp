@@ -304,7 +304,9 @@ int main(int argc, char* argv[]) {
 			}
 		};
 		
-		terrainSettings.vertexDensity = 2.f;	// vertices per meter
+		terrainSettings.vertexDensity = 1.f;	// vertices per meter
+		terrainSettings.width = 200;
+		terrainSettings.length = 200;
 		terrainSettings.minElevation = -20;
 		terrainSettings.maxElevation = 10.f;
 		terrainSettings.relativeRandomJitter = 0.8f;

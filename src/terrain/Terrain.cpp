@@ -224,14 +224,14 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
-	uint16_t *indices = (uint16_t*)malloc(3 * triangles_.size() * sizeof(uint16_t));
+	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		indices[i*3 + 0] = triangles_[i].iV1;
 		indices[i*3 + 1] = triangles_[i].iV2;
 		indices[i*3 + 2] = triangles_[i].iV3;
 	}	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint16_t), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -290,7 +290,7 @@ void Terrain::draw(Viewport* vp) {
 	glUseProgram(renderData_->shaderProgram_);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
 	glBindVertexArray(renderData_->VAO_);
-	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_SHORT, nullptr);
+	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);
 	glUseProgram(0);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
