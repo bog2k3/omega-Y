@@ -60,6 +60,9 @@ bool signalQuit = false;
 std::weak_ptr<FreeCamera> freeCam;
 PlayerInputHandler playerInputHandler;
 
+Terrain* pTerrain = nullptr;
+TerrainSettings terrainSettings;
+
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
@@ -95,6 +98,10 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	} else if (ev.key == GLFW_KEY_TAB) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			mouseCaptureDisabled = !toggleMouseCapture();
+		}
+	} else if (ev.key == GLFW_KEY_R) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			pTerrain->generate(terrainSettings);
 		}
 	}
 }
@@ -297,12 +304,12 @@ int main(int argc, char* argv[]) {
 			}
 		};
 		
-		TerrainSettings terrainSettings;
 		terrainSettings.vertexDensity = 2.f;	// vertices per meter
 		terrainSettings.minElevation = -20;
 		terrainSettings.maxElevation = 10.f;
 		terrainSettings.relativeRandomJitter = 0.8f;
 		Terrain terrain;
+		pTerrain = &terrain;
 		terrain.generate(terrainSettings);
 		
 		std::vector<drawable> drawList;
