@@ -2,6 +2,7 @@
 
 #include "triangulation.h"
 #include "HeightMap.h"
+#include "PerlinNoise.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/math/math3D.h>
@@ -93,10 +94,16 @@ void Terrain::generate(TerrainSettings const& settings) {
 	hparam.minHeight = settings_.minElevation;
 	hparam.maxHeight = settings_.maxElevation;
 	HeightMap height(hparam);
+	PerlinNoise pnoise(settings_.width, settings_.length);
 	for (unsigned i=0; i<nVertices_; i++) {
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
-		pVertices_[i].pos.y = height.value(u, v);
+		
+		//pVertices_[i].pos.y = height.value(u, v);
+		pVertices_[i].pos.y = pnoise.get(u / 8, v / 8) * 8
+							+ pnoise.get(u / 4, v / 4) * 4
+							+ pnoise.get(u / 2, v / 2) * 2
+							+ pnoise.get(u, v);
 
 		// debug
 		//pVertices_[i].color = {u, v, 0};
