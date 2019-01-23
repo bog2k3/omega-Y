@@ -19,9 +19,13 @@ public:
 	virtual ~PerlinNoise();
 
 	// returns the perlin noise function at (u,v).
-	// coordinates 0.0 and 1.0 correspond to the edges of the noise map and coordinates outside
-	// of this range are wrapped around automatically
+	// coordinates 0.0 and 1.0 correspond to the edges of the noise map and 
+	// coordinates outside of this range are wrapped around automatically
 	float get(float u, float v);
+	
+#ifdef DEBUG
+	glm::vec2 getGradientVector(float u, float v);
+#endif
 	
 private:
 	glm::vec2* pGradients_  = nullptr;

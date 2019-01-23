@@ -99,14 +99,16 @@ void Terrain::generate(TerrainSettings const& settings) {
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
 		
-		//pVertices_[i].pos.y = height.value(u, v);
-		pVertices_[i].pos.y = pnoise.get(u / 8, v / 8) * 8
-							+ pnoise.get(u / 4, v / 4) * 4
-							+ pnoise.get(u / 2, v / 2) * 2
-							+ pnoise.get(u, v);
+		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.125f;
+		float perlin = pnoise.get(u/16, v/16) * perlinAmp * 0.5
+						+ pnoise.get(u/8, v/8) * perlinAmp * 0.3
+						+ pnoise.get(u/4, v/4) * perlinAmp * 0.2
+						+ pnoise.get(u/2, v/2) * perlinAmp * 0.125
+						+ pnoise.get(u/1, v/1) * perlinAmp * 0.125;
+						
+		pVertices_[i].pos.y = height.value(u, v) + perlin;
 
 		// debug
-		//pVertices_[i].color = {u, v, 0};
 		float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
 		pVertices_[i].color = {1.f - hr, hr, 0};
 	}

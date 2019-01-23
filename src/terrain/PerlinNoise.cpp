@@ -59,6 +59,32 @@ float PerlinNoise::get(float u, float v) {
 	return (1.f - vF) * samp01 + vF * samp23;
 }
 
+#ifdef DEBUG
+glm::vec2 PerlinNoise::getGradientVector(float u, float v) {
+	glm::vec2 pf {u * width_, v * height_};
+	unsigned c0 = floor(pf.x);	// left column
+	unsigned r0 = floor(pf.y); 	// top row
+	glm::vec2 p0(c0, r0);		// top left lattice point
+	glm::vec2 p1(c0+1, r0);		// top right lattice point
+	glm::vec2 p2(c0, r0+1);		// bottom left lattice point
+	glm::vec2 p3(c0+1, r0+1);	// bottom right lattice point
+	
+	float uF = pf.x - c0;	// u interpolation factor
+	float vF = pf.y - r0;	// v interpolation factor
+	
+	// sample gradient vectors from lattice:
+	glm::vec2 g0 = pGradients_[wrap(p0.y, height_+1) * (width_+1) + wrap(p0.x, width_+1)];
+	glm::vec2 g1 = pGradients_[wrap(p1.y, height_+1) * (width_+1) + wrap(p1.x, width_+1)];
+	glm::vec2 g2 = pGradients_[wrap(p2.y, height_+1) * (width_+1) + wrap(p2.x, width_+1)];
+	glm::vec2 g3 = pGradients_[wrap(p3.y, height_+1) * (width_+1) + wrap(p3.x, width_+1)];
+	
+	glm::vec2 s01 = glm::normalize((1.f - uF) * g0 + uF * g1);
+	glm::vec2 s23 = glm::normalize((1.f - uF) * g2 + uF * g3);
+	
+	return glm::normalize((1.f - vF) * s01 + vF * s23);
+}
+#endif
+
 void PerlinNoise::generate() {
 	// generate gradient template vectors
 	const unsigned nTemplates = 64;
@@ -67,15 +93,14 @@ void PerlinNoise::generate() {
 		gradTemplates[i] = glm::normalize(glm::vec2(srandf(), srandf()));
 	}
 	// generate gradient template indexes
-	std::vector<unsigned> tIndex;
-	tIndex.reserve(nTemplates);
+	std::vector<unsigned> tIndex(nTemplates, 0);
 	for (unsigned i=0; i<nTemplates; i++)
 		tIndex[i] = i;
 	std::random_shuffle(tIndex.begin(), tIndex.end());
 	// compute lattice gradient vectors
 	for (unsigned i=0; i<=height_; i++) {
 		for (unsigned j=0; j<=width_; j++) {
-			unsigned index = tIndex[(tIndex[j % nTemplates] + i) % nTemplates];
+			unsigned index = tIndex[(tIndex[i % nTemplates] + j) % nTemplates];
 			pGradients_[i*(width_+1) + j] = gradTemplates[index];
 		}
 	}
