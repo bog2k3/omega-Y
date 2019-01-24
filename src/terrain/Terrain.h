@@ -58,6 +58,7 @@ private:
 	void updateRenderBuffers();
 	void cleanupEdges();
 	bool isDegenerateTriangle(Triangle const& t) const;
+	void loadTextures();
 };
 
 #endif // TERRAIN_H

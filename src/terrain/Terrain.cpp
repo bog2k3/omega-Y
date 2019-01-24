@@ -8,6 +8,7 @@
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
+#include <boglfw/renderOpenGL/TextureLoader.h>
 #include <boglfw/math/math3D.h>
 #include <boglfw/utils/rand.h>
 #include <boglfw/utils/log.h>
@@ -35,6 +36,17 @@ struct TerrainVertex {
 	TerrainVertex() = default;
 };
 
+struct TextureInfo {
+	unsigned texID = 0;		// GL texture ID
+	float wWidth = 1.f;		// width of texture in world units (meters)
+	float wHeight = 1.f;	// height/length of texture in world units (meters)
+
+	~TextureInfo() {
+		if (texID)
+			glDeleteTextures(1, &texID);
+	}
+};
+
 struct RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
@@ -47,6 +59,7 @@ struct RenderData {
 	unsigned iTexBlendF_;
 	unsigned imPV_;
 	unsigned iSampler_;
+	TextureInfo textures_[TerrainVertex::nTextures];
 };
 
 template<>
@@ -118,6 +131,21 @@ void Terrain::clear() {
 	triangles_.clear();
 }
 
+void Terrain::loadTextures() {
+	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png");
+	renderData_->textures_[0].wWidth = 3.f;
+	renderData_->textures_[0].wHeight = 3.f;
+	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png");
+	renderData_->textures_[1].wWidth = 2.f;
+	renderData_->textures_[1].wHeight = 2.f;
+	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png");
+	renderData_->textures_[2].wWidth = 3.f;
+	renderData_->textures_[2].wHeight = 3.f;
+	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png");
+	renderData_->textures_[3].wWidth = 4.f;
+	renderData_->textures_[3].wHeight = 4.f;
+}
+
 void validateSettings(TerrainSettings const& s) {
 	assert(s.width > 0);
 	assert(s.length > 0);
@@ -132,12 +160,12 @@ void Terrain::generate(TerrainSettings const& settings) {
 	clear();
 	settings_ = settings;
 
-	glm::vec2 texTile[TerrainVertex::nTextures] {
-		{5.f, 5.f},			// how many times each texture is tiled over the terrain accross u and v
-		{5.f, 5.f},			// TODO: compute this from the texture's associated physical size
-		{5.f, 5.f},
-		{5.f, 5.f}
-	};
+	// how many times each texture is tiled over the terrain accross u and v
+	glm::vec2 texTile[TerrainVertex::nTextures];
+	for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
+		texTile[i].x = settings_.width / renderData_->textures_[i].wWidth;
+		texTile[i].y = settings_.width / renderData_->textures_[i].wHeight;
+	}
 	
 	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
 	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
@@ -216,8 +244,8 @@ void Terrain::computeDisplacements() {
 		pVertices_[i].pos.y = height.value(u, v) + perlin;
 
 		// debug
-		float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
-		pVertices_[i].color = {1.f - hr, hr, 0};
+		//float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+		//pVertices_[i].color = {1.f - hr, hr, 0};
 	}
 }
 
@@ -317,15 +345,33 @@ void Terrain::cleanupEdges() {
 
 void Terrain::draw(Viewport* vp) {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// set-up textures
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
+	// configure backface culling
 	glFrontFace(GL_CW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
+	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
+		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
+	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
+	// unbind stuff
 	glBindVertexArray(0);
 	glUseProgram(0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// draw vertex normals
