@@ -54,6 +54,7 @@ private:
 	void fixTriangleWinding();
 	void computeDisplacements();
 	void computeNormals();
+	void computeTextureWeights();
 	void updateRenderBuffers();
 	void cleanupEdges();
 	bool isDegenerateTriangle(Triangle const& t) const;

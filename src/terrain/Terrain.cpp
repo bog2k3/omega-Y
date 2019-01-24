@@ -128,6 +128,13 @@ void Terrain::generate(TerrainSettings const& settings) {
 	validateSettings(settings);
 	clear();
 	settings_ = settings;
+
+	glm::vec2 texTile[TerrainVertex::nTextures] {
+		{5.f, 5.f},			// how many times each texture is tiled over the terrain accross u and v
+		{5.f, 5.f},			// TODO: compute this from the texture's associated physical size
+		{5.f, 5.f},
+		{5.f, 5.f}
+	};
 	
 	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
 	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
@@ -142,11 +149,14 @@ void Terrain::generate(TerrainSettings const& settings) {
 		for (unsigned j=0; j<cols; j++) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*rows + j]) TerrainVertex {
-				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),	// position
-				{0.f, 0.f, 0.f},												// normal
-				{1.f, 1.f, 1.f},												// color
-				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},				// uvs
-				{0.f, 0.f, 0.f, 0.f}											// tex weights
+				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),		// position
+				{0.f, 0.f, 0.f},													// normal
+				{1.f, 1.f, 1.f},													// color
+				{{(float)j/(cols-1)*texTile[0].x, (float)i/(rows-1)*texTile[0].y}, 	// uv0
+				 {(float)j/(cols-1)*texTile[1].x, (float)i/(rows-1)*texTile[1].y}, 	// uv1
+				 {(float)j/(cols-1)*texTile[2].x, (float)i/(rows-1)*texTile[2].y}, 	// uv2
+				 {(float)j/(cols-1)*texTile[3].x, (float)i/(rows-1)*texTile[3].y}} 	// uv3
+				{0.f, 0.f, 0.f, 0.f}												// tex weights
 			};
 		}
 	
@@ -162,6 +172,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 
 	computeDisplacements();
 	computeNormals();
+	computeTextureWeights();
 	
 	updateRenderBuffers();
 }
@@ -217,6 +228,12 @@ void Terrain::computeNormals() {
 	}
 	for (unsigned i=0; i<nVertices_; i++)
 		pVertices_[i].normal = glm::normalize(pVertices_[i].normal);
+}
+
+void Terrain::computeTextureWeights() {
+	for (unsigned i=0; i<nVertices_; i++) {
+
+	}
 }
 
 void Terrain::updateRenderBuffers() {
