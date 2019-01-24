@@ -18,7 +18,7 @@ void main() {
 	// blend the textures:
 	vec4 t01 = mix(t0, t1, fTexBlendFactor.x);
 	vec4 t23 = mix(t2, t3, fTexBlendFactor.y);
-	vec4 tFinal = vec4(mix(t01, t23, fTexBlendFactor.z).xyz, 1.0);
+	vec4 tFinal = vec4(mix(t01, t23, 1.0 - fTexBlendFactor.z).xyz, 1.0);
 
 	// compute lighting
 	vec3 lightPoint = vec3(0.0, 30.0, 0.0);
@@ -30,10 +30,9 @@ void main() {
 	//float falloff = 1000.0 / (lightDist*lightDist);
 	float falloff = 25.0 / lightDist;
 
-	tFinal = vec4(1.0, 1.0, 1.0, 1.0);
+	//tFinal = vec4(1.0, 1.0, 1.0, 1.0);
 
 	vec4 final = vec4(light * falloff * (fColor * tFinal).xyz, 1.0);
 
 	gl_FragColor = final;
-	//gl_FragColor = vec4(fUV[0], 0.0, 1.0) + final*0.01;
 }

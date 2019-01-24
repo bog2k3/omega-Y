@@ -117,6 +117,8 @@ Terrain::Terrain()
 			(void*)offsetof(TerrainVertex, texBlendFactor));
 	}
 	glBindVertexArray(0);
+
+	loadTextures();
 }
 
 Terrain::~Terrain()
@@ -133,17 +135,38 @@ void Terrain::clear() {
 
 void Terrain::loadTextures() {
 	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png");
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[0].wWidth = 3.f;
 	renderData_->textures_[0].wHeight = 3.f;
+
 	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png");
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[1].wWidth = 2.f;
 	renderData_->textures_[1].wHeight = 2.f;
+
 	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png");
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[2].wWidth = 3.f;
 	renderData_->textures_[2].wHeight = 3.f;
+
 	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png");
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[3].wWidth = 4.f;
 	renderData_->textures_[3].wHeight = 4.f;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void validateSettings(TerrainSettings const& s) {
@@ -160,13 +183,6 @@ void Terrain::generate(TerrainSettings const& settings) {
 	clear();
 	settings_ = settings;
 
-	// how many times each texture is tiled over the terrain accross u and v
-	glm::vec2 texTile[TerrainVertex::nTextures];
-	for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
-		texTile[i].x = settings_.width / renderData_->textures_[i].wWidth;
-		texTile[i].y = settings_.width / renderData_->textures_[i].wHeight;
-	}
-	
 	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
 	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
 	float dx = settings_.width / (cols - 1);
@@ -180,15 +196,17 @@ void Terrain::generate(TerrainSettings const& settings) {
 		for (unsigned j=0; j<cols; j++) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*rows + j]) TerrainVertex {
-				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),		// position
-				{0.f, 0.f, 0.f},													// normal
-				{1.f, 1.f, 1.f},													// color
-				{{(float)j/(cols-1)*texTile[0].x, (float)i/(rows-1)*texTile[0].y}, 	// uv0
-				 {(float)j/(cols-1)*texTile[1].x, (float)i/(rows-1)*texTile[1].y}, 	// uv1
-				 {(float)j/(cols-1)*texTile[2].x, (float)i/(rows-1)*texTile[2].y}, 	// uv2
-				 {(float)j/(cols-1)*texTile[3].x, (float)i/(rows-1)*texTile[3].y}},	// uv3
-				{0.f, 0.f, 0.f}														// tex blend factor
+				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),	// position
+				{0.f, 0.f, 0.f},												// normal
+				{1.f, 1.f, 1.f},												// color
+				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},				// uvs
+				{0.f, 0.f, 0.f}													// tex blend factor
 			};
+			// compute UVs
+			for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
+				pVertices_[i*rows + j].uv[t].x = (pVertices_[i*rows + j].pos.x - topleft.x) / renderData_->textures_[t].wWidth;
+				pVertices_[i*rows + j].uv[t].y = (pVertices_[i*rows + j].pos.z - topleft.z) / renderData_->textures_[t].wHeight;
+			}
 		}
 	
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
