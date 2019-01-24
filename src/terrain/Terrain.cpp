@@ -28,7 +28,9 @@ struct TerrainVertex {
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv[nTextures];	// uvs for each texture layer
-	float texWeight[nTextures];	// weights for each texture layer -> the final color will be a weighted average of each texture
+	glm::vec3 texBlendFactor;	// 3 texture blend factors: x is between grass1 & grass2,
+								// 							y between rock1 & rock2
+								//							z between grass and rock
 	
 	TerrainVertex() = default;
 };
@@ -42,7 +44,7 @@ struct RenderData {
 	unsigned iNormal_;
 	unsigned iColor_;
 	unsigned iUV_;
-	unsigned iTexWeight_;
+	unsigned iTexBlendF_;
 	unsigned imPV_;
 	unsigned iSampler_;
 };
@@ -66,7 +68,7 @@ Terrain::Terrain()
 	renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
 	renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
 	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
-	renderData_->iTexWeight_ = glGetAttribLocation(renderData_->shaderProgram_, "texWeight");
+	renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
 	renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 	renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 	glGenVertexArrays(1, &renderData_->VAO_);
@@ -77,14 +79,17 @@ Terrain::Terrain()
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glEnableVertexAttribArray(renderData_->iPos_);
-	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, pos));
+	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+		(void*)offsetof(TerrainVertex, pos));
 	if (renderData_->iNormal_ > 0) {
 		glEnableVertexAttribArray(renderData_->iNormal_);
-		glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
+		glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+			(void*)offsetof(TerrainVertex, normal));
 	}
 	if (renderData_->iColor_ > 0) {
 		glEnableVertexAttribArray(renderData_->iColor_);
-		glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, color));
+		glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+			(void*)offsetof(TerrainVertex, color));
 	}
 	if (renderData_->iUV_ > 0) {
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
@@ -93,12 +98,10 @@ Terrain::Terrain()
 				(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
 		}
 	}
-	if (renderData_->iTexWeight_ > 0) {
-		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
-			glEnableVertexAttribArray(renderData_->iTexWeight_ + i);
-			glVertexAttribPointer(renderData_->iTexWeight_ + i, 1, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-				(void*)(offsetof(TerrainVertex, texWeight) + i*sizeof(TerrainVertex::texWeight[0])));
-		}
+	if (renderData_->iTexBlendF_ > 0) {
+		glEnableVertexAttribArray(renderData_->iTexBlendF_);
+		glVertexAttribPointer(renderData_->iTexBlendF_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+			(void*)offsetof(TerrainVertex, texBlendFactor));
 	}
 	glBindVertexArray(0);
 }
@@ -155,8 +158,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 				{{(float)j/(cols-1)*texTile[0].x, (float)i/(rows-1)*texTile[0].y}, 	// uv0
 				 {(float)j/(cols-1)*texTile[1].x, (float)i/(rows-1)*texTile[1].y}, 	// uv1
 				 {(float)j/(cols-1)*texTile[2].x, (float)i/(rows-1)*texTile[2].y}, 	// uv2
-				 {(float)j/(cols-1)*texTile[3].x, (float)i/(rows-1)*texTile[3].y}} 	// uv3
-				{0.f, 0.f, 0.f, 0.f}												// tex weights
+				 {(float)j/(cols-1)*texTile[3].x, (float)i/(rows-1)*texTile[3].y}},	// uv3
+				{0.f, 0.f, 0.f}														// tex blend factor
 			};
 		}
 	
@@ -231,8 +234,21 @@ void Terrain::computeNormals() {
 }
 
 void Terrain::computeTextureWeights() {
+	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
+	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
 	for (unsigned i=0; i<nVertices_; i++) {
-
+		// grass/rock factor is determined by slope
+		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
+		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
+		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length * 0.15;
+		pVertices_[i].texBlendFactor.x = pnoise.getNorm(u, v);	// grass1 / grass2
+		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u);	// rock1 / rock2
+		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
+		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
+		float hFactor = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
+		cutoffY += (1.0 - cutoffY) * hFactor;
+		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
 	}
 }
 

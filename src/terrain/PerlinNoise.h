@@ -22,6 +22,9 @@ public:
 	// coordinates 0.0 and 1.0 correspond to the edges of the noise map and 
 	// coordinates outside of this range are wrapped around automatically
 	float get(float u, float v);
+
+	// same as get, except the return value is normalized from interval [-1.0, +1.0] into [0.0, +1.0]
+	float getNorm(float u, float v);
 	
 #ifdef DEBUG
 	glm::vec2 getGradientVector(float u, float v);

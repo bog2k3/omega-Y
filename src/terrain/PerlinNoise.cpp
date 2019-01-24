@@ -59,6 +59,10 @@ float PerlinNoise::get(float u, float v) {
 	return (1.f - vF) * samp01 + vF * samp23;
 }
 
+float PerlinNoise::getNorm(float u, float v) {
+	return get(u, v) * 0.5f + 0.5f;
+}
+
 #ifdef DEBUG
 glm::vec2 PerlinNoise::getGradientVector(float u, float v) {
 	glm::vec2 pf {u * width_, v * height_};
