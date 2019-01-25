@@ -245,9 +245,6 @@ void Terrain::generate(TerrainSettings const& settings) {
 		triangles_.push_back({t, true});
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
-	//if (settings_.irregularEdges)
-	//	cleanupEdges();
-
 	computeDisplacements();
 	computeNormals();
 	computeTextureWeights();

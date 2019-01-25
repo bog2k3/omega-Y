@@ -235,6 +235,29 @@ void physTestDestroy(rp3d::DynamicsWorld &physWld) {
 		physWld.destroyRigidBody(groundBody), groundBody = nullptr;
 }
 
+void drawDebugTexts() {
+	GLText::get()->print("TAB : capture/release mouse",
+			{20, 20, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+	GLText::get()->print("R : regenerate terrain",
+			{20, 40, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+	GLText::get()->print("Q : toggle wireframe",
+			{20, 60, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+		
+	if (updatePaused) {
+		GLText::get()->print("PAUSED",
+				{50, 50, ViewportCoord::percent},
+				0, 32, glm::vec3(1.f, 0.8f, 0.2f));
+	}
+	if (slowMo) {
+		GLText::get()->print("~~ Slow Motion ON ~~",
+				{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
+				0, 18, glm::vec3(1.f, 0.5f, 0.1f));
+	}
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -294,20 +317,7 @@ int main(int argc, char* argv[]) {
 			GLText::get()->print("Omega-Y v0.1",
 					{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
 					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
-			GLText::get()->print("Press TAB to capture/release mouse",
-					{20, 20, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
-
-			if (updatePaused) {
-				GLText::get()->print("PAUSED",
-						{50, 50, ViewportCoord::percent},
-						0, 32, glm::vec3(1.f, 0.8f, 0.2f));
-			}
-			if (slowMo) {
-				GLText::get()->print("~~ Slow Motion ON ~~",
-						{10, 45},
-						0, 18, glm::vec3(1.f, 0.5f, 0.1f));
-			}
+			drawDebugTexts();
 		};
 		
 		terrainSettings.vertexDensity = 1.f;	// vertices per meter
@@ -315,8 +325,8 @@ int main(int argc, char* argv[]) {
 		terrainSettings.length = 200;
 		terrainSettings.minElevation = -20;
 		terrainSettings.maxElevation = 30.f;
+		terrainSettings.seaLevel = -10.f;
 		terrainSettings.relativeRandomJitter = 0.8f;
-		terrainSettings.irregularEdges = true;
 		terrainSettings.bigRoughness = 1.f;
 		terrainSettings.smallRoughness = 1.f;
 		Terrain terrain;
