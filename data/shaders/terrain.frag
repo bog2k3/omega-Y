@@ -3,10 +3,10 @@
 in vec3 fWPos;
 in vec3 fNormal;
 in vec4 fColor;
-in vec2 fUV[4];
-in vec3 fTexBlendFactor;
+in vec2 fUV[5];
+in vec4 fTexBlendFactor;
 
-uniform sampler2D tex[4];
+uniform sampler2D tex[5];
 
 void main() {
 	float lowFreqFactor = 0.05;
@@ -19,17 +19,21 @@ void main() {
 	vec4 t2low = texture(tex[2], fUV[2] * lowFreqFactor);
 	vec4 t3 = texture(tex[3], fUV[3]);
 	vec4 t3low = texture(tex[3], fUV[3] * lowFreqFactor);
+	vec4 t4 = texture(tex[4], fUV[4]);
+	vec4 t4low = texture(tex[4], fUV[4] * lowFreqFactor);
 	
 	// mix texture frequencies
 	t0 = (t0 * t0low) * 2;
 	t1 = (t1 * t1low) * 2;
 	t2 = (t2 * t2low) * 2;
 	t3 = (t3 * t3low) * 2;
+	t4 = (t4 * t4low);
 
 	// blend the textures:
 	vec4 t01 = mix(t0, t1, fTexBlendFactor.x);
 	vec4 t23 = mix(t2, t3, fTexBlendFactor.y);
-	vec4 tFinal = vec4(mix(t01, t23, 1.0 - fTexBlendFactor.z).xyz, 1.0);
+	vec4 tGround = vec4(mix(t01, t23, 1.0 - fTexBlendFactor.z).xyz, 1.0);
+	vec4 tFinal = vec4(mix(tGround, t4, fTexBlendFactor.w).xyz, 1.0);
 
 	// compute lighting
 	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);

@@ -24,15 +24,16 @@
 #include <algorithm>
 
 struct Terrain::TerrainVertex {
-	static const unsigned nTextures = 4;
+	static const unsigned nTextures = 5;
 	
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv[nTextures];	// uvs for each texture layer
-	glm::vec3 texBlendFactor;	// 3 texture blend factors: x is between grass1 & grass2,
+	glm::vec4 texBlendFactor;	// 4 texture blend factors: x is between grass1 & grass2,
 								// 							y between rock1 & rock2
 								//							z between grass and rock
+								//							w between everything and sand
 	
 	TerrainVertex() = default;
 };
@@ -114,7 +115,7 @@ Terrain::Terrain()
 	}
 	if (renderData_->iTexBlendF_ > 0) {
 		glEnableVertexAttribArray(renderData_->iTexBlendF_);
-		glVertexAttribPointer(renderData_->iTexBlendF_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+		glVertexAttribPointer(renderData_->iTexBlendF_, 4, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
 			(void*)offsetof(TerrainVertex, texBlendFactor));
 	}
 	glBindVertexArray(0);
@@ -169,6 +170,14 @@ void Terrain::loadTextures() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[3].wWidth = 4.f;
 	renderData_->textures_[3].wHeight = 4.f;
+	
+	renderData_->textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", nullptr, nullptr);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	renderData_->textures_[4].wWidth = 4.f;
+	renderData_->textures_[4].wHeight = 4.f;
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -211,8 +220,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 				topleft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
 				{0.f, 1.f, 0.f},																	// normal
 				{1.f, 1.f, 1.f},																	// color
-				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},									// uvs
-				{0.f, 0.f, 0.f}																		// tex blend factor
+				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},						// uvs
+				{0.f, 0.f, 0.f, 0.f}																// tex blend factor
 			};
 			// compute UVs
 			for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
@@ -225,11 +234,11 @@ void Terrain::generate(TerrainSettings const& settings) {
 		float x = seaBedRadius * cosf(i*skirtVertSector);
 		float z = seaBedRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows*cols+i]) TerrainVertex {
-			{ x, settings_.minElevation, z },					// position
-			{ 0.f, 1.f, 0.f },									// normal
-			{ 1.f, 1.f, 1.f },									// color
-			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
-			{ 0.f, 0.f, 0.f }									// tex blend factor
+			{ x, settings_.minElevation, z },								// position
+			{ 0.f, 1.f, 0.f },												// normal
+			{ 1.f, 1.f, 1.f },												// color
+			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
+			{ 0.f, 0.f, 0.f, 1.f }											// tex blend factor
 		};
 		// compute UVs
 		for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
@@ -334,6 +343,13 @@ void Terrain::computeTextureWeights() {
 		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
 		cutoffY += (1.0 - cutoffY) * hFactor;
 		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
+		
+		// sand factor -> some distance above water level and everything below is sand
+		float beachHeight = 2.f; // meters
+		if (pVertices_[i].pos.y < settings_.seaLevel + beachHeight) {
+			float sandFactor = min(1.f, settings_.seaLevel + beachHeight - pVertices_[i].pos.y);
+			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
+		}
 	}
 }
 
@@ -431,6 +447,8 @@ void Terrain::draw(Viewport* vp) {
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
 	// configure backface culling
 	glFrontFace(GL_CW);
 	glCullFace(GL_BACK);
