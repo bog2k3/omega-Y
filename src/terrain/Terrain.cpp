@@ -23,6 +23,8 @@
 #include <new>
 #include <algorithm>
 
+// TODO: optimize texture mapping with atlas and texture array: https://www.khronos.org/opengl/wiki/Array_Texture
+
 struct Terrain::TerrainVertex {
 	static const unsigned nTextures = 5;
 	
