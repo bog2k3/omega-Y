@@ -345,7 +345,7 @@ void Terrain::computeTextureWeights() {
 		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
 		
 		// sand factor -> some distance above water level and everything below is sand
-		float beachHeight = 2.f; // meters
+		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
 		if (pVertices_[i].pos.y < settings_.seaLevel + beachHeight) {
 			float sandFactor = min(1.f, settings_.seaLevel + beachHeight - pVertices_[i].pos.y);
 			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
