@@ -42,10 +42,9 @@ void main() {
 	//float falloff = 25.0 / lightDist;
 	float falloff = 1.0;
 
-	//tFinal = vec4(1.0, 1.0, 1.0, 1.0);
-
 	vec4 final = vec4(light * falloff * (fColor * tFinal).xyz, 1.0);
-	
+
+	// DEBUG:
 	//final = vec4(t2.xyz, 1.0) + 0.01 * final;
 
 	gl_FragColor = final;

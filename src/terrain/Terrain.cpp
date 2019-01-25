@@ -209,11 +209,16 @@ void Terrain::generate(TerrainSettings const& settings) {
 			}
 		}
 	
-	int trRes = triangulate(pVertices_, nVertices_, triangles_);
+	std::vector<Triangle> tris;
+	int trRes = triangulate(pVertices_, nVertices_, tris);
 	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
 		return;
 	}
+	nUsedTriangles_ = tris.size();
+	triangles_.reserve(nUsedTriangles_);
+	for (auto &t : tris)
+		triangles_.push_back({t, true});
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
 	if (settings_.irregularEdges)
@@ -228,7 +233,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 
 void Terrain::fixTriangleWinding() {
 	// all triangles must be CW as seen from above
-	for (auto &t : triangles_) {
+	for (auto &tp : triangles_) {
+		Triangle &t = tp.first;
 		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
 		if (n.y < 0) {
 			// triangle is CCW, we need to reverse it
@@ -260,6 +266,8 @@ void Terrain::computeDisplacements() {
 						+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 
 		pVertices_[i].pos.y = height.value(u, v) + perlin;
+		
+		// TODO : use vertex colors with perlin noise for more variety
 
 		// debug
 		//float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
@@ -268,7 +276,8 @@ void Terrain::computeDisplacements() {
 }
 
 void Terrain::computeNormals() {
-	for (auto &t : triangles_) {
+	for (auto &tp : triangles_) {
+		Triangle &t = tp.first;
 		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
 		n = glm::normalize(n);
 		pVertices_[t.iV1].normal += n;
@@ -303,14 +312,17 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
-	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
-	for (unsigned i=0; i<triangles_.size(); i++) {
-		indices[i*3 + 0] = triangles_[i].iV1;
-		indices[i*3 + 1] = triangles_[i].iV2;
-		indices[i*3 + 2] = triangles_[i].iV3;
-	}	
+	uint32_t *indices = (uint32_t*)malloc(3 * nUsedTriangles_ * sizeof(uint32_t));
+	for (unsigned i=0, j=0; i<triangles_.size(); i++) {
+		if (triangles_[i].second) {
+			indices[j*3 + 0] = triangles_[i].first.iV1;
+			indices[j*3 + 1] = triangles_[i].first.iV2;
+			indices[j*3 + 2] = triangles_[i].first.iV3;
+			j++;
+		}
+	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * nUsedTriangles_ * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -319,7 +331,7 @@ bool Terrain::isDegenerateTriangle(Triangle const& t) const {
 	glm::vec3	&a = pVertices_[t.iV1].pos, 
 				&b = pVertices_[t.iV2].pos, 
 				&c = pVertices_[t.iV3].pos;
-	const float minAngle = PI / 8;	// minimum acute angle allowed before the triangle is declared 'degenerate'
+	const float minAngle = PI / 16;	// minimum acute angle allowed before the triangle is declared 'degenerate'
 	const float minAngleCos = cosf(minAngle);
 	float ab_i = 1.f / glm::length(a-b);
 	float ac_i = 1.f / glm::length(a-c);
@@ -341,24 +353,45 @@ bool Terrain::isDegenerateTriangle(Triangle const& t) const {
 		return false;
 }
 
+void removeTriNeighbour(Triangle &t, unsigned ni) {
+	if (t.iN12 == (int)ni)
+		t.iN12 = -1;
+	if (t.iN13 == (int)ni)
+		t.iN13 = -1;
+	if (t.iN23 == (int)ni)
+		t.iN23 = -1;
+}
+
 void Terrain::cleanupEdges() {
-	// clean up the edges by removing the degenerate triangles that keep the mesh convex.
-	// We can do this because we don't care about convexity.
+	// clean up the edges by removing the degenerate triangles that keep the lattice convex.
+	// We can do this because we don't care about convexity. and triangles at the edges are stretched and ugly
 	
-	// TODO: this is flawed - must readjust neighbour indexes on all triangles after removing some;
-	// also must reiterate until no degenerate edge triangles are found, because there's more than one layer of them
-	
-	/*triangles_.erase(std::remove_if(triangles_.begin(), triangles_.end(), 
-		[this](auto const& t) {
+	// Reiterate until no degenerate edge triangles are found, because there's more than one layer of them	
+	bool found = true;
+	while (found) {
+		found = false;
+		for (unsigned i=0; i<triangles_.size(); i++) {
+			Triangle &t = triangles_[i].first;
+			if (!triangles_[i].second)
+				continue;	// this triangle has already been discarded
 			// check if t is on the edge:
 			if (t.iN12 >= 0 && t.iN13 >= 0 && t.iN23 >= 0)	// if it has neighbours on all sides then it's not on the edge
-				return false;
-			else
-				// check if t is 'degenerate':
-				return isDegenerateTriangle(t);
-		}),
-		triangles_.end());
-	*/
+				continue;
+			else if (!isDegenerateTriangle(t))	// check if the triangle is too stretched
+				continue;
+			// we discard triangle t
+			found = true;
+			triangles_[i].second = false;
+			nUsedTriangles_--;
+			// remove the reference to this triangle from its neighbours:
+			if (t.iN12 >= 0)
+				removeTriNeighbour(triangles_[t.iN12].first, i);
+			if (t.iN13 >= 0)
+				removeTriNeighbour(triangles_[t.iN13].first, i);
+			if (t.iN23 >= 0)
+				removeTriNeighbour(triangles_[t.iN23].first, i);
+		}
+	}
 }
 
 void Terrain::draw(Viewport* vp) {
@@ -384,7 +417,7 @@ void Terrain::draw(Viewport* vp) {
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
-	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, nUsedTriangles_ * 3, GL_UNSIGNED_INT, nullptr);
 	// unbind stuff
 	glBindVertexArray(0);
 	glUseProgram(0);

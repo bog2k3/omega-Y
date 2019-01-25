@@ -310,6 +310,7 @@ int main(int argc, char* argv[]) {
 		terrainSettings.minElevation = -10;
 		terrainSettings.maxElevation = 30.f;
 		terrainSettings.relativeRandomJitter = 0.8f;
+		terrainSettings.irregularEdges = true;
 		Terrain terrain;
 		pTerrain = &terrain;
 		terrain.generate(terrainSettings);

@@ -47,7 +47,8 @@ public:
 private:
 	TerrainVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
-	std::vector<Triangle> triangles_;
+	std::vector<std::pair<Triangle, bool>> triangles_;	// second indicates if the triangle is in use
+	unsigned nUsedTriangles_ = 0;
 	TerrainSettings settings_;
 	RenderData *renderData_ = nullptr;
 

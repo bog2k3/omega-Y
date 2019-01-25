@@ -24,7 +24,7 @@
 
 struct Triangle {
 	unsigned iV1, iV2, iV3;		// index of 1st, 2nd and 3rd vertices
-	unsigned iN12, iN13, iN23;	// index of neighbour Triangle at edge 1-2, 1-3 and 2-3
+	int iN12, iN13, iN23;		// index of neighbour Triangle at edge 1-2, 1-3 and 2-3 (-1 if no neighbour)
 };
 
 
@@ -118,7 +118,7 @@ int triangulate(VERTEX_TYPE* points, unsigned nPoints, std::vector<Triangle> &tr
 	triangles.clear();
 	triangles.reserve(triads.size());
 	for (auto &t : triads)
-		triangles.emplace_back(Triangle{t.a, t.b, t.c, t.ab, t.ac, t.bc});
+		triangles.emplace_back(Triangle{(unsigned)t.a, (unsigned)t.b, (unsigned)t.c, t.ab, t.ac, t.bc});
 	return ret;
 }
 
