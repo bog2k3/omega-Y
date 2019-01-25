@@ -3,6 +3,7 @@
 #include "triangulation.h"
 #include "HeightMap.h"
 #include "PerlinNoise.h"
+#include "Water.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/shader.h>
@@ -22,7 +23,7 @@
 #include <new>
 #include <algorithm>
 
-struct TerrainVertex {
+struct Terrain::TerrainVertex {
 	static const unsigned nTextures = 4;
 	
 	glm::vec3 pos;
@@ -47,7 +48,7 @@ struct TextureInfo {
 	}
 };
 
-struct RenderData {
+struct Terrain::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
@@ -63,7 +64,7 @@ struct RenderData {
 };
 
 template<>
-float nth_elem(TerrainVertex const& v, unsigned n) {
+float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 	return	n==0 ? v.pos.x : 
 			n==1 ? v.pos.z : 
 			0.f;
@@ -119,12 +120,15 @@ Terrain::Terrain()
 	glBindVertexArray(0);
 
 	loadTextures();
+	
+	pWater_ = new Water();
 }
 
 Terrain::~Terrain()
 {
 	clear();
 	delete renderData_, renderData_ = nullptr;
+	delete pWater_, pWater_ = nullptr;
 }
 
 void Terrain::clear() {
@@ -188,7 +192,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 	
 	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle, 
 	// in order to extend the sea-bed away from the main terrain
-	float seaBedRadius = sqrtf(settings_.width * settings_.width + settings_.length * settings_.length) * 0.8f;
+	float terrainRadius = sqrtf(settings_.width * settings_.width + settings_.length * settings_.length) * 0.5f;
+	float seaBedRadius = terrainRadius * 2.5f;
 	float skirtVertSpacing = 30.f; // meters
 	unsigned nSkirtVerts = (2 * PI * seaBedRadius) / skirtVertSpacing;
 	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
@@ -233,16 +238,11 @@ void Terrain::generate(TerrainSettings const& settings) {
 		}
 	}
 	
-	std::vector<Triangle> tris;
-	int trRes = triangulate(pVertices_, nVertices_, tris);
+	int trRes = triangulate(pVertices_, nVertices_, triangles_);
 	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
 		return;
 	}
-	nUsedTriangles_ = tris.size();
-	triangles_.reserve(nUsedTriangles_);
-	for (auto &t : tris)
-		triangles_.push_back({t, true});
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
 	computeDisplacements();
@@ -250,12 +250,19 @@ void Terrain::generate(TerrainSettings const& settings) {
 	computeTextureWeights();
 	
 	updateRenderBuffers();
+	
+	pWater_->generate(WaterParams {
+		settings_.seaLevel,				// water level
+		terrainRadius,					// inner radius
+		seaBedRadius - terrainRadius,	// outer extent
+		0.05f,							// vertex density
+		false							// constrain to circle
+	});
 }
 
 void Terrain::fixTriangleWinding() {
 	// all triangles must be CW as seen from above
-	for (auto &tp : triangles_) {
-		Triangle &t = tp.first;
+	for (auto &t : triangles_) {
 		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
 		if (n.y < 0) {
 			// triangle is CCW, we need to reverse it
@@ -300,8 +307,7 @@ void Terrain::computeDisplacements() {
 }
 
 void Terrain::computeNormals() {
-	for (auto &tp : triangles_) {
-		Triangle &t = tp.first;
+	for (auto &t : triangles_) {
 		glm::vec3 n = glm::cross(pVertices_[t.iV2].pos - pVertices_[t.iV1].pos, pVertices_[t.iV3].pos - pVertices_[t.iV1].pos);
 		n = glm::normalize(n);
 		pVertices_[t.iV1].normal += n;
@@ -336,17 +342,14 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
-	uint32_t *indices = (uint32_t*)malloc(3 * nUsedTriangles_ * sizeof(uint32_t));
-	for (unsigned i=0, j=0; i<triangles_.size(); i++) {
-		if (triangles_[i].second) {
-			indices[j*3 + 0] = triangles_[i].first.iV1;
-			indices[j*3 + 1] = triangles_[i].first.iV2;
-			indices[j*3 + 2] = triangles_[i].first.iV3;
-			j++;
-		}
+	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
+	for (unsigned i=0; i<triangles_.size(); i++) {
+		indices[i*3 + 0] = triangles_[i].iV1;
+		indices[i*3 + 1] = triangles_[i].iV2;
+		indices[i*3 + 2] = triangles_[i].iV3;
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * nUsedTriangles_ * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -386,7 +389,7 @@ void removeTriNeighbour(Triangle &t, unsigned ni) {
 		t.iN23 = -1;
 }
 
-void Terrain::cleanupEdges() {
+/*void Terrain::cleanupEdges() {
 	// clean up the edges by removing the degenerate triangles that keep the lattice convex.
 	// We can do this because we don't care about convexity. and triangles at the edges are stretched and ugly
 	
@@ -416,7 +419,7 @@ void Terrain::cleanupEdges() {
 				removeTriNeighbour(triangles_[t.iN23].first, i);
 		}
 	}
-}
+}*/
 
 void Terrain::draw(Viewport* vp) {
 	// set-up textures
@@ -439,7 +442,7 @@ void Terrain::draw(Viewport* vp) {
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
-	glDrawElements(GL_TRIANGLES, nUsedTriangles_ * 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
 	// unbind stuff
 	glBindVertexArray(0);
 	glUseProgram(0);
@@ -450,4 +453,6 @@ void Terrain::draw(Viewport* vp) {
 	/*for (unsigned i=0; i<nVertices_; i++) {
 		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
 	}*/
+	
+	pWater_->draw(vp);
 }

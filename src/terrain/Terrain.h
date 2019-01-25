@@ -25,10 +25,9 @@ struct TerrainSettings {
 	float smallRoughness = 1.f;	// roughness of small features (small local variations in terrain)
 };
 
-struct TerrainVertex;
 class Viewport;
 struct Triangle;
-struct RenderData;
+class Water;
 
 class Terrain
 {
@@ -44,20 +43,24 @@ public:
 	
 	void draw(Viewport* vp);
 	
+	struct TerrainVertex;
+	
 private:
+	struct RenderData;
+	
 	TerrainVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
-	std::vector<std::pair<Triangle, bool>> triangles_;	// second indicates if the triangle is in use
-	unsigned nUsedTriangles_ = 0;
+	std::vector<Triangle> triangles_;
 	TerrainSettings settings_;
 	RenderData *renderData_ = nullptr;
+	Water* pWater_ = nullptr;
 
 	void fixTriangleWinding();
 	void computeDisplacements();
 	void computeNormals();
 	void computeTextureWeights();
 	void updateRenderBuffers();
-	void cleanupEdges();
+	//void cleanupEdges();
 	bool isDegenerateTriangle(Triangle const& t) const;
 	void loadTextures();
 };
