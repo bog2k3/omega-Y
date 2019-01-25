@@ -6,8 +6,6 @@ struct HeightmapParams {
 	unsigned length;	// minimum length on Z axis (actual may be greater)
 	float minHeight;	// lower displacement value on Y axis (may be negative)
 	float maxHeight;	// higher displacement value on Y axis (may be negative)
-	float bigRoughness = 1.f;	// roughness of big features (hills, mountains etc)
-	float smallRoughness = 1.f;	// roughness of small features (small local variations in terrain)
 };
 
 class HeightMap

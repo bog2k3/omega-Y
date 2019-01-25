@@ -246,8 +246,8 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = settings_.width / 2;
-	hparam.length = settings_.length / 2;
+	hparam.width = settings_.width / 8;
+	hparam.length = settings_.length / 8;
 	hparam.minHeight = settings_.minElevation;
 	hparam.maxHeight = settings_.maxElevation;
 	HeightMap height(hparam);
@@ -258,14 +258,14 @@ void Terrain::computeDisplacements() {
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
 
-		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.125f;
-		float perlin = pnoise.get(u/16, v/16, 1.f) * perlinAmp * 0.5
-						+ pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
+		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.1f;
+		float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
 						+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
 						+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
 						+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 
-		pVertices_[i].pos.y = height.value(u, v) + perlin;
+		pVertices_[i].pos.y = height.value(u, v) * settings_.bigRoughness
+								+ perlin * settings_.smallRoughness;
 		
 		// TODO : use vertex colors with perlin noise for more variety
 

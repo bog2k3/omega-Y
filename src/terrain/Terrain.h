@@ -22,7 +22,8 @@ struct TerrainSettings {
 										// to the initial distance between vertices;
 										// this has the effect of producing an irregular (less matrix-like) mesh
 
-	// ...
+	float bigRoughness = 1.f;	// roughness of big features (hills, mountains etc)
+	float smallRoughness = 1.f;	// roughness of small features (small local variations in terrain)
 };
 
 struct TerrainVertex;

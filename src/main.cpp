@@ -307,10 +307,12 @@ int main(int argc, char* argv[]) {
 		terrainSettings.vertexDensity = 1.f;	// vertices per meter
 		terrainSettings.width = 200;
 		terrainSettings.length = 200;
-		terrainSettings.minElevation = -10;
+		terrainSettings.minElevation = -20;
 		terrainSettings.maxElevation = 30.f;
 		terrainSettings.relativeRandomJitter = 0.8f;
 		terrainSettings.irregularEdges = true;
+		terrainSettings.bigRoughness = 1.f;
+		terrainSettings.smallRoughness = 1.f;
 		Terrain terrain;
 		pTerrain = &terrain;
 		terrain.generate(terrainSettings);
