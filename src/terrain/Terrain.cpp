@@ -134,23 +134,23 @@ void Terrain::clear() {
 }
 
 void Terrain::loadTextures() {
-	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png");
+	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png", nullptr, nullptr);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[0].wWidth = 3.f;
-	renderData_->textures_[0].wHeight = 3.f;
+	renderData_->textures_[0].wWidth = 2.f;
+	renderData_->textures_[0].wHeight = 2.f;
 
-	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png");
+	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png", nullptr, nullptr);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[1].wWidth = 2.f;
-	renderData_->textures_[1].wHeight = 2.f;
-
-	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png");
+	renderData_->textures_[1].wWidth = 3.f;
+	renderData_->textures_[1].wHeight = 3.f;
+	
+	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", nullptr, nullptr);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -158,7 +158,7 @@ void Terrain::loadTextures() {
 	renderData_->textures_[2].wWidth = 3.f;
 	renderData_->textures_[2].wHeight = 3.f;
 
-	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png");
+	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png", nullptr, nullptr);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -253,11 +253,11 @@ void Terrain::computeDisplacements() {
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
 
 		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.125f;
-		float perlin = pnoise.get(u/16, v/16) * perlinAmp * 0.5
-						+ pnoise.get(u/8, v/8) * perlinAmp * 0.3
-						+ pnoise.get(u/4, v/4) * perlinAmp * 0.2
-						+ pnoise.get(u/2, v/2) * perlinAmp * 0.1
-						+ pnoise.get(u/1, v/1) * perlinAmp * 0.05;
+		float perlin = pnoise.get(u/16, v/16, 1.f) * perlinAmp * 0.5
+						+ pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
+						+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
+						+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
+						+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 
 		pVertices_[i].pos.y = height.value(u, v) + perlin;
 
@@ -287,8 +287,8 @@ void Terrain::computeTextureWeights() {
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length * 0.15;
-		pVertices_[i].texBlendFactor.x = pnoise.getNorm(u, v);	// grass1 / grass2
-		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u);	// rock1 / rock2
+		pVertices_[i].texBlendFactor.x = pnoise.getNorm(u, v, 1.7f);	// dirt / grass
+		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 2.3f);	// rock1 / rock2
 		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
 		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
 		float hFactor = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);

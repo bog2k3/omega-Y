@@ -34,8 +34,18 @@ int wrap(int x, int size) {
 	return x;
 }
 
-float PerlinNoise::get(float u, float v) {
-	glm::vec2 pf {u * width_, v * height_};
+// changes the contrast of a distribution by adjusting the separation between low and high values
+float contrastFn(float x, float c) {
+	if (x > 0)
+		return pow(x, 1.f / c);
+	else if (x == 0)
+		return x;
+	else
+		return -pow(-x, 1.f / c);
+}
+
+float PerlinNoise::get(float u, float v, float contrast) {
+	glm::vec2 pf {u * (width_+1), v * (height_+1)};
 	
 	unsigned c0 = floor(pf.x);	// left column
 	unsigned r0 = floor(pf.y); 	// top row
@@ -56,11 +66,12 @@ float PerlinNoise::get(float u, float v) {
 	float samp01 = (1.f - uF) * glm::dot(g0, pf - p0) + uF * glm::dot(g1, pf - p1);
 	float samp23 = (1.f - uF) * glm::dot(g2, pf - p2) + uF * glm::dot(g3, pf - p3);
 	
-	return (1.f - vF) * samp01 + vF * samp23;
+	float value = (1.f - vF) * samp01 + vF * samp23;
+	return contrastFn(value, contrast);	// adjust contrast
 }
 
-float PerlinNoise::getNorm(float u, float v) {
-	return get(u, v) * 0.5f + 0.5f;
+float PerlinNoise::getNorm(float u, float v, float contrast) {
+	return get(u, v, contrast) * 0.5f + 0.5f;
 }
 
 #ifdef DEBUG

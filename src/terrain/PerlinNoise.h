@@ -20,11 +20,14 @@ public:
 
 	// returns the perlin noise function at (u,v).
 	// coordinates 0.0 and 1.0 correspond to the edges of the noise map and 
-	// coordinates outside of this range are wrapped around automatically
-	float get(float u, float v);
+	// coordinates outside of this range are wrapped around automatically.
+	// return values are mapped to [-1.0, +1.0] interval.
+	// [contrast] controls the steepness of transition between low values and high values.
+	// [contrast] of 1.0 means smooth, linear transition, while > 1.0 means a higher contrast, with more separation between highs and lows
+	float get(float u, float v, float contrast);
 
-	// same as get, except the return value is normalized from interval [-1.0, +1.0] into [0.0, +1.0]
-	float getNorm(float u, float v);
+	// same as get, except the return value is normalized into [0.0, +1.0]
+	float getNorm(float u, float v, float contrast);
 	
 #ifdef DEBUG
 	glm::vec2 getGradientVector(float u, float v);
