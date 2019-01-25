@@ -64,7 +64,7 @@ void FreeCamera::rotate(direction dir, float angle) {
 }
 
 void FreeCamera::update(float dt) {
-	const float maxMoveSpeed = 3.f * (running_ ? 5.f : 1.f); // m/s
+	const float maxMoveSpeed = 3.f * (running_ ? 8.f : 1.f); // m/s
 	const float linearAcceleration = maxMoveSpeed / 0.25f;	// m/s^2	- we want to reach the target speed in 0.25 seconds
 	
 	// compute the speed alteration based on inputs

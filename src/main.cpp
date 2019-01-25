@@ -56,6 +56,7 @@ bool updatePaused = false;
 bool slowMo = false;
 bool captureFrame = false;
 bool signalQuit = false;
+bool renderWireFrame = false;
 
 std::weak_ptr<FreeCamera> freeCam;
 PlayerInputHandler playerInputHandler;
@@ -102,6 +103,11 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	} else if (ev.key == GLFW_KEY_R) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			pTerrain->generate(terrainSettings);
+		}
+	} else if (ev.key == GLFW_KEY_Q) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			renderWireFrame = !renderWireFrame;
+			glPolygonMode(GL_FRONT_AND_BACK, renderWireFrame ? GL_LINE : GL_FILL);
 		}
 	}
 }

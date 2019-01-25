@@ -185,22 +185,29 @@ void Terrain::generate(TerrainSettings const& settings) {
 
 	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
 	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
-	float dx = settings_.width / (cols - 1);
-	float dz = settings_.length / (rows - 1);
 	
-	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
-	nVertices_ = rows * cols;
+	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle, 
+	// in order to extend the sea-bed away from the main terrain
+	float seaBedRadius = sqrtf(settings_.width * settings_.width + settings_.length * settings_.length) * 0.8f;
+	float skirtVertSpacing = 30.f; // meters
+	unsigned nSkirtVerts = (2 * PI * seaBedRadius) / skirtVertSpacing;
+	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
+	nVertices_ = rows * cols + nSkirtVerts;
 	pVertices_ = (TerrainVertex*)malloc(sizeof(TerrainVertex) * nVertices_);
 	
+	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
+	float dx = settings_.width / (cols - 1);
+	float dz = settings_.length / (rows - 1);
+	// compute terrain vertices
 	for (unsigned i=0; i<rows; i++)
 		for (unsigned j=0; j<cols; j++) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*rows + j]) TerrainVertex {
-				topleft + glm::vec3(dx * j + jitter.x, 0.f, dz * i + jitter.y),	// position
-				{0.f, 0.f, 0.f},												// normal
-				{1.f, 1.f, 1.f},												// color
-				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},				// uvs
-				{0.f, 0.f, 0.f}													// tex blend factor
+				topleft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
+				{0.f, 1.f, 0.f},																	// normal
+				{1.f, 1.f, 1.f},																	// color
+				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},									// uvs
+				{0.f, 0.f, 0.f}																		// tex blend factor
 			};
 			// compute UVs
 			for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
@@ -208,6 +215,23 @@ void Terrain::generate(TerrainSettings const& settings) {
 				pVertices_[i*rows + j].uv[t].y = (pVertices_[i*rows + j].pos.z - topleft.z) / renderData_->textures_[t].wHeight;
 			}
 		}
+	// compute skirt vertices
+	for (unsigned i=0; i<nSkirtVerts; i++) {
+		float x = seaBedRadius * cosf(i*skirtVertSector);
+		float z = seaBedRadius * sinf(i*skirtVertSector);
+		new(&pVertices_[rows*cols+i]) TerrainVertex {
+			{ x, settings_.minElevation, z },					// position
+			{ 0.f, 1.f, 0.f },									// normal
+			{ 1.f, 1.f, 1.f },									// color
+			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
+			{ 0.f, 0.f, 0.f }									// tex blend factor
+		};
+		// compute UVs
+		for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
+			pVertices_[rows*cols + i].uv[t].x = (x - topleft.x) / renderData_->textures_[t].wWidth;
+			pVertices_[rows*cols + i].uv[t].y = (z - topleft.z) / renderData_->textures_[t].wHeight;
+		}
+	}
 	
 	std::vector<Triangle> tris;
 	int trRes = triangulate(pVertices_, nVertices_, tris);
@@ -221,8 +245,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 		triangles_.push_back({t, true});
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
-	if (settings_.irregularEdges)
-		cleanupEdges();
+	//if (settings_.irregularEdges)
+	//	cleanupEdges();
 
 	computeDisplacements();
 	computeNormals();
@@ -251,28 +275,31 @@ void Terrain::computeDisplacements() {
 	hparam.minHeight = settings_.minElevation;
 	hparam.maxHeight = settings_.maxElevation;
 	HeightMap height(hparam);
+	height.meltEdges(5);
 	PerlinNoise pnoise(settings_.width, settings_.length);
 
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
-	for (unsigned i=0; i<nVertices_; i++) {
-		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width;
-		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length;
+	for (unsigned i=1; i<settings_.length; i++) 
+		for (unsigned j=1; j<settings_.width; j++) {
+			unsigned k = i*(settings_.width+1) + j;
+			float u = (pVertices_[k].pos.x - topleft.x) / settings_.width;
+			float v = (pVertices_[k].pos.z - topleft.z) / settings_.length;
 
-		float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.1f;
-		float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
-						+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
-						+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
-						+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
+			float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.1f;
+			float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
+							+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
+							+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
+							+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 
-		pVertices_[i].pos.y = height.value(u, v) * settings_.bigRoughness
-								+ perlin * settings_.smallRoughness;
-		
-		// TODO : use vertex colors with perlin noise for more variety
+			pVertices_[k].pos.y = height.value(u, v) * settings_.bigRoughness
+									+ perlin * settings_.smallRoughness;
+			
+			// TODO : use vertex colors with perlin noise for more variety
 
-		// debug
-		//float hr = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
-		//pVertices_[i].color = {1.f - hr, hr, 0};
-	}
+			// debug
+			//float hr = (pVertices_[k].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+			//pVertices_[k].color = {1.f - hr, hr, 0};
+		}
 }
 
 void Terrain::computeNormals() {
@@ -291,7 +318,7 @@ void Terrain::computeNormals() {
 void Terrain::computeTextureWeights() {
 	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
-	for (unsigned i=0; i<nVertices_; i++) {
+	for (unsigned i=0; i<(settings_.width+1)*(settings_.length+1); i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
@@ -395,8 +422,6 @@ void Terrain::cleanupEdges() {
 }
 
 void Terrain::draw(Viewport* vp) {
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
@@ -423,7 +448,6 @@ void Terrain::draw(Viewport* vp) {
 	glUseProgram(0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// draw vertex normals
 	/*for (unsigned i=0; i<nVertices_; i++) {

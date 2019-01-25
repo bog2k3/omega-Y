@@ -2,6 +2,7 @@
 
 #include <boglfw/utils/rand.h>
 #include <boglfw/math/math3D.h>
+#include <boglfw/utils/log.h>
 
 #include <cassert>
 
@@ -105,7 +106,7 @@ void HeightMap::generate(float amplitude) {
 	float jitterAmp = amplitude * jitterReductionFactor;
 	// compute midpoint displacement recursively:
 	computeMidpointStep(0, length_-1, 0, width_-1, jitterAmp);
-	// average out the values compute min/max:
+	// average out the values and compute min/max:
 	float vmin = 1e20f, vmax = -1e20f;
 	for (unsigned i=0; i<width_*length_; i++) {
 		elements_[i].value /= elements_[i].divider, elements_[i].divider = 1;
@@ -118,4 +119,35 @@ void HeightMap::generate(float amplitude) {
 	float scale = amplitude / (vmax - vmin);
 	for (unsigned i=0; i<width_*length_; i++)
 		elements_[i].value = (elements_[i].value - vmin) * scale;
+}
+
+void HeightMap::meltEdges(unsigned radius) {
+	if (radius > width_/2 || radius > length_/2) {
+		ERROR("HeightMap::meltEdges() received invalid parameter");
+		return;
+	}
+	// top edge:
+	for (unsigned i=0; i<radius; i++) {
+		float f = pow((float)i / radius, 2.f);
+		for (unsigned j=0; j<width_; j++)
+			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
+	}
+	// bottom edge:
+	for (unsigned i=length_-radius-1; i<length_; i++) {
+		float f = pow((float)(length_-1-i) / radius, 2.f);
+		for (unsigned j=0; j<width_; j++)
+			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
+	}
+	// left edge:
+	for (unsigned j=0; j<radius; j++) {
+		float f = pow((float)j / radius, 2.f);
+		for (unsigned i=0; i<length_; i++)
+			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
+	}
+	// right edge:
+	for (unsigned j=width_-radius-1; j<width_; j++) {
+		float f = pow((float)(width_-1-j) / radius, 2.f);
+		for (unsigned i=0; i<length_; i++)
+			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
+	}
 }
