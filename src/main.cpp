@@ -10,6 +10,7 @@
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/Mesh.h>
 #include <boglfw/renderOpenGL/MeshRenderer.h>
+#include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
@@ -258,6 +259,68 @@ void drawDebugTexts() {
 	}
 }
 
+struct {
+	unsigned VAO;
+	unsigned VBO;
+	unsigned IBO;
+	unsigned shaderProgram;
+	unsigned iTexSampler;
+} postProcessData;
+
+bool initPostProcessData(unsigned winW, unsigned winH) {
+	checkGLError();
+	// load shader:
+	postProcessData.shaderProgram = Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag");
+	if (!postProcessData.shaderProgram) {
+		ERROR("Unabled to load post-processing shaders!");
+		return false;
+	}
+	unsigned posAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "pos");
+	unsigned uvAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "uv");
+	postProcessData.iTexSampler = glGetUniformLocation(postProcessData.shaderProgram, "texSampler");
+
+	// create screen quad:
+	float screenQuadPosUV[] {
+		-1.f, -1.f, 0.f, 0.f, 	// bottom-left
+		-1.f, +1.f, 0.f, 1.f, 	// top-left
+		+1.f, +1.f, 1.f, 1.f, 	// top-right
+		+1.f, -1.f, 1.f, 0.f, 	// bottom-right
+	};
+	uint16_t screenQuadIdx[] {
+		0, 1, 2, 0, 2, 3
+	};
+	glGenVertexArrays(1, &postProcessData.VAO);
+	glBindVertexArray(postProcessData.VAO);
+	glGenBuffers(1, &postProcessData.VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, postProcessData.VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadPosUV), screenQuadPosUV, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(posAttrIndex);
+	glVertexAttribPointer(posAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0);
+	glEnableVertexAttribArray(uvAttrIndex);
+	glVertexAttribPointer(uvAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*2));
+	glGenBuffers(1, &postProcessData.IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, postProcessData.IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(screenQuadIdx), screenQuadIdx, GL_STATIC_DRAW);
+	glBindVertexArray(0);
+
+	return !checkGLError("initPostProcessData");
+}
+
+void renderPostProcess() {
+	glUseProgram(postProcessData.shaderProgram);
+	glBindVertexArray(postProcessData.VAO);
+	glUniform1i(postProcessData.iTexSampler, 0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+	glUseProgram(0);
+	glBindVertexArray(0);
+}
+
+void deletePostProcessData() {
+	glDeleteBuffers(1, &postProcessData.VBO);
+	glDeleteBuffers(1, &postProcessData.IBO);
+	glDeleteVertexArrays(1, &postProcessData.VAO);
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -268,6 +331,8 @@ int main(int argc, char* argv[]) {
 		int multisamples = 4; // 0 to disable MSAA or >0 to enable it
 		if (!gltInitGLFW(winW, winH, "Omega-Y", multisamples))
 			return -1;
+		if (initPostProcessData(winW, winH))
+			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess);
 
 		GLFWInput::initialize(gltGetWindow());
 		GLFWInput::onInputEvent.add(onInputEventHandler);
@@ -350,6 +415,7 @@ int main(int argc, char* argv[]) {
 
 		float initialTime = glfwGetTime();
 		float t = initialTime;
+		gltBegin();
 		while (!signalQuit && GLFWInput::checkInput()) {
 			if (captureFrame)
 				perf::FrameCapture::start(perf::FrameCapture::AllThreads);
@@ -397,6 +463,7 @@ int main(int argc, char* argv[]) {
 
 		physTestDestroy(physWorld);
 		renderer.unload();
+		deletePostProcessData();
 		Infrastructure::shutDown();
 	} while (0);
 	
