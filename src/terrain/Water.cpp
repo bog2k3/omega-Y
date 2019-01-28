@@ -91,7 +91,7 @@ Water::~Water()
 }
 
 void Water::loadTextures() {
-	renderData_->textureId_ = TextureLoader::loadFromPNG("data/textures/water/water1.png", nullptr, nullptr);
+	renderData_->textureId_ = TextureLoader::loadFromPNG("data/textures/water/water1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureId_);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
