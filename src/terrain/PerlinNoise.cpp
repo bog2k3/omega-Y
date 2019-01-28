@@ -102,7 +102,7 @@ glm::vec2 PerlinNoise::getGradientVector(float u, float v) {
 
 void PerlinNoise::generate() {
 	// generate gradient template vectors
-	const unsigned nTemplates = 64;
+	const unsigned nTemplates = 128;
 	glm::vec2 gradTemplates[nTemplates];
 	for (unsigned i=0; i<nTemplates; i++) {
 		gradTemplates[i] = glm::normalize(glm::vec2(srandf(), srandf()));

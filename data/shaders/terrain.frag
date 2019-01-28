@@ -23,36 +23,38 @@ void main() {
 	vec4 t4low = texture(tex[4], fUV[4] * lowFreqFactor);
 	
 	// mix texture frequencies
-	t0 = (t0 * t0low) * 2;
-	t1 = (t1 * t1low) * 2;
-	t2 = (t2 * t2low) * 2;
-	t3 = (t3 * t3low) * 2;
-	t4 = (t4 * t4low);
+	t0 = t0 * t0low * 2.5;
+	t1 = t1 * t1low * 2.5;
+	t2 = t2 * t2low * 2.5;
+	t3 = t3 * t3low * 2.5;
+	t4 = t4 * t4low * 2.5;
 
 	// blend the textures:
-	vec4 t01 = mix(t0, t1, fTexBlendFactor.x);
-	vec4 t23 = mix(t2, t3, fTexBlendFactor.y);
-	vec4 tGround = vec4(mix(t01, t23, 1.0 - fTexBlendFactor.z).xyz, 1.0);
-	vec4 tFinal = vec4(mix(tGround, t4, fTexBlendFactor.w).xyz, 1.0);
+	vec4 t01 = mix(t0, t1, clamp(fTexBlendFactor.x, 0.0, 1.0));
+	vec4 t23 = mix(t2, t3, clamp(fTexBlendFactor.y, 0.0, 1.0));
+	vec4 tGround = vec4(mix(t01, t23, 1.0 - clamp(fTexBlendFactor.z, 0.0, 1.0)).xyz, 1.0);
+	vec4 tFinal = vec4(mix(tGround, t4, clamp(fTexBlendFactor.w, 0.0, 1.0)).xyz, 1.0);
+	//tFinal = vec4(clamp(fTexBlendFactor.x, 0.0, 1.0)) + tFinal*0.001;
 
 	// compute lighting
 	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);
-	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.5));
+	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.9));
 	//vec3 lightVec = fWPos - lightPoint;
 	//float lightDist = length(lightVec);
 	//vec3 lightDir = lightVec / lightDist;
-	float lightIntensity = 1.0;
-	float light = lightIntensity * max(dot(-lightDir, normalize(fNormal)), 0.0);
-	float ambientLight = 0.05;
-	light += ambientLight;
-	//float falloff = 1000.0 / (lightDist*lightDist);
-	//float falloff = 25.0 / lightDist;
-	float falloff = 1.0;
+	vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
+	float lightIntensity = 2.0;
+	vec3 light = lightColor * lightIntensity * max(dot(-lightDir, normalize(fNormal)), 0.0);
+	float falloff = 1.0; //1.0 / (lightDist*lightDist);
+	vec3 ambientLight = vec3(0.01, 0.02, 0.05);
+	
+	vec3 totalLight = light * falloff + ambientLight;
 
-	vec4 final = vec4(light * falloff * (fColor * tFinal).xyz, 1.0);
+	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
 
 	// DEBUG:
-	//final = vec4(vec3(light), 1.0) + 0.01 * final;
+	//final = vec4(totalLight, 1.0) + 0.01 * final;
+	//final = vec4(tFinal.xyz, 1.0) + 0.001 * final;
 
 	gl_FragColor = final;
 }

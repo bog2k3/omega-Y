@@ -141,7 +141,7 @@ void Terrain::clear() {
 }
 
 void Terrain::loadTextures() {
-	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png", true);
+	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt3.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -332,13 +332,17 @@ void Terrain::computeNormals() {
 void Terrain::computeTextureWeights() {
 	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	const float grassBias = 0.2f; // bias to more grass over dirt
 	for (unsigned i=0; i<(settings_.width+1)*(settings_.length+1); i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length * 0.15;
-		pVertices_[i].texBlendFactor.x = pnoise.getNorm(u, v, 1.7f);	// dirt / grass
-		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 2.3f);	// rock1 / rock2
+		pVertices_[i].texBlendFactor.x = grassBias 
+											+ pnoise.getNorm(u, v, 7.f) 
+											+ 0.3f * pnoise.get(u*2, v*2, 7.f) 
+											+ 0.1 * pnoise.get(u*4, v*4, 2.f);	// dirt / grass
+		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 7.f) + 0.5 * pnoise.get(v*4, u*4, 2.f);	// rock1 / rock2
 		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
 		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
 		float hFactor = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
