@@ -37,11 +37,14 @@ void main() {
 
 	// compute lighting
 	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);
-	vec3 lightDir = normalize(vec3(1.0, -1.5, -0.3));
+	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.5));
 	//vec3 lightVec = fWPos - lightPoint;
 	//float lightDist = length(lightVec);
 	//vec3 lightDir = lightVec / lightDist;
-	float light = dot(-lightDir, normalize(fNormal));
+	float lightIntensity = 1.0;
+	float light = lightIntensity * max(dot(-lightDir, normalize(fNormal)), 0.0);
+	float ambientLight = 0.05;
+	light += ambientLight;
 	//float falloff = 1000.0 / (lightDist*lightDist);
 	//float falloff = 25.0 / lightDist;
 	float falloff = 1.0;
@@ -49,7 +52,7 @@ void main() {
 	vec4 final = vec4(light * falloff * (fColor * tFinal).xyz, 1.0);
 
 	// DEBUG:
-	//final = vec4(t2.xyz, 1.0) + 0.01 * final;
+	//final = vec4(vec3(light), 1.0) + 0.01 * final;
 
 	gl_FragColor = final;
 }

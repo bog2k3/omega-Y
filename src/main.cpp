@@ -376,7 +376,7 @@ int main(int argc, char* argv[]) {
 		float frameRate = 0;
 
 		sigViewer.addSignal("FPS", &frameRate,
-				glm::vec3(1.f, 0.2f, 0.2f), 0.2f, 50, 0, 0, 0);
+				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
 		auto infoTexts = [&](Viewport*) {
 			GLText::get()->print("Omega-Y v0.1",
