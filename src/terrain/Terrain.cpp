@@ -141,7 +141,7 @@ void Terrain::clear() {
 }
 
 void Terrain::loadTextures() {
-	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png", nullptr, nullptr);
+	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt2.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -149,7 +149,7 @@ void Terrain::loadTextures() {
 	renderData_->textures_[0].wWidth = 2.f;
 	renderData_->textures_[0].wHeight = 2.f;
 
-	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png", nullptr, nullptr);
+	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -157,7 +157,7 @@ void Terrain::loadTextures() {
 	renderData_->textures_[1].wWidth = 3.f;
 	renderData_->textures_[1].wHeight = 3.f;
 	
-	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", nullptr, nullptr);
+	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -165,7 +165,7 @@ void Terrain::loadTextures() {
 	renderData_->textures_[2].wWidth = 3.f;
 	renderData_->textures_[2].wHeight = 3.f;
 
-	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png", nullptr, nullptr);
+	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -173,7 +173,7 @@ void Terrain::loadTextures() {
 	renderData_->textures_[3].wWidth = 4.f;
 	renderData_->textures_[3].wHeight = 4.f;
 	
-	renderData_->textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", nullptr, nullptr);
+	renderData_->textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
