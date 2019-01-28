@@ -11,12 +11,15 @@
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>
 #include <boglfw/math/math3D.h>
+#include <boglfw/World.h>
 #include <boglfw/utils/rand.h>
 #include <boglfw/utils/log.h>
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <rp3d/reactphysics3d.h>
 
 #include <GL/glew.h>
 
@@ -198,8 +201,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 	clear();
 	settings_ = settings;
 
-	unsigned rows = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
-	unsigned cols = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
+	rows_ = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
+	cols_ = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
 	
 	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle, 
 	// in order to extend the sea-bed away from the main terrain
@@ -208,17 +211,18 @@ void Terrain::generate(TerrainSettings const& settings) {
 	float skirtVertSpacing = 30.f; // meters
 	unsigned nSkirtVerts = (2 * PI * seaBedRadius) / skirtVertSpacing;
 	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
-	nVertices_ = rows * cols + nSkirtVerts;
+	nVertices_ = rows_ * cols_ + nSkirtVerts;
 	pVertices_ = (TerrainVertex*)malloc(sizeof(TerrainVertex) * nVertices_);
 	
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
-	float dx = settings_.width / (cols - 1);
-	float dz = settings_.length / (rows - 1);
+	float dx = settings_.width / (cols_ - 1);
+	float dz = settings_.length / (rows_ - 1);
+	gridSpacing_ = {dx, dz};
 	// compute terrain vertices
-	for (unsigned i=0; i<rows; i++)
-		for (unsigned j=0; j<cols; j++) {
+	for (unsigned i=0; i<rows_; i++)
+		for (unsigned j=0; j<cols_; j++) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
-			new(&pVertices_[i*rows + j]) TerrainVertex {
+			new(&pVertices_[i*cols_ + j]) TerrainVertex {
 				topleft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
 				{0.f, 1.f, 0.f},																	// normal
 				{1.f, 1.f, 1.f},																	// color
@@ -227,15 +231,15 @@ void Terrain::generate(TerrainSettings const& settings) {
 			};
 			// compute UVs
 			for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
-				pVertices_[i*rows + j].uv[t].x = (pVertices_[i*rows + j].pos.x - topleft.x) / renderData_->textures_[t].wWidth;
-				pVertices_[i*rows + j].uv[t].y = (pVertices_[i*rows + j].pos.z - topleft.z) / renderData_->textures_[t].wHeight;
+				pVertices_[i*cols_ + j].uv[t].x = (pVertices_[i*cols_ + j].pos.x - topleft.x) / renderData_->textures_[t].wWidth;
+				pVertices_[i*cols_ + j].uv[t].y = (pVertices_[i*cols_ + j].pos.z - topleft.z) / renderData_->textures_[t].wHeight;
 			}
 		}
 	// compute skirt vertices
 	for (unsigned i=0; i<nSkirtVerts; i++) {
 		float x = seaBedRadius * cosf(i*skirtVertSector);
 		float z = seaBedRadius * sinf(i*skirtVertSector);
-		new(&pVertices_[rows*cols+i]) TerrainVertex {
+		new(&pVertices_[rows_*cols_+i]) TerrainVertex {
 			{ x, settings_.minElevation, z },								// position
 			{ 0.f, 1.f, 0.f },												// normal
 			{ 1.f, 1.f, 1.f },												// color
@@ -244,8 +248,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 		};
 		// compute UVs
 		for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
-			pVertices_[rows*cols + i].uv[t].x = (x - topleft.x) / renderData_->textures_[t].wWidth;
-			pVertices_[rows*cols + i].uv[t].y = (z - topleft.z) / renderData_->textures_[t].wHeight;
+			pVertices_[rows_*cols_ + i].uv[t].x = (x - topleft.x) / renderData_->textures_[t].wWidth;
+			pVertices_[rows_*cols_ + i].uv[t].y = (z - topleft.z) / renderData_->textures_[t].wHeight;
 		}
 	}
 	
@@ -261,6 +265,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 	computeTextureWeights();
 	
 	updateRenderBuffers();
+	updatePhysics();
 	
 	pWater_->generate(WaterParams {
 		settings_.seaLevel,				// water level
@@ -294,9 +299,9 @@ void Terrain::computeDisplacements() {
 	PerlinNoise pnoise(settings_.width, settings_.length);
 
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
-	for (unsigned i=1; i<settings_.length; i++) 
-		for (unsigned j=1; j<settings_.width; j++) {
-			unsigned k = i*(settings_.width+1) + j;
+	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
+		for (unsigned j=1; j<cols_-1; j++) {
+			unsigned k = i*cols_ + j;
 			float u = (pVertices_[k].pos.x - topleft.x) / settings_.width;
 			float v = (pVertices_[k].pos.z - topleft.z) / settings_.length;
 
@@ -325,15 +330,19 @@ void Terrain::computeNormals() {
 		pVertices_[t.iV2].normal += n;
 		pVertices_[t.iV3].normal += n;
 	}
-	for (unsigned i=0; i<nVertices_; i++)
-		pVertices_[i].normal = glm::normalize(pVertices_[i].normal);
+	for (unsigned i=0; i<nVertices_; i++) {
+		if ((i/cols_) == 0 || (i/cols_) == rows_-1 || (i%cols_) == 0 || (i%cols_) == cols_-1)
+			pVertices_[i].normal = glm::vec3{0.f, 1.f, 0.f};  // we leave the edge vertices at zero to avoid artifacts with the skirt
+		else
+			pVertices_[i].normal = glm::normalize(pVertices_[i].normal);
+	}
 }
 
 void Terrain::computeTextureWeights() {
 	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
 	const float grassBias = 0.2f; // bias to more grass over dirt
-	for (unsigned i=0; i<(settings_.width+1)*(settings_.length+1); i++) {
+	for (unsigned i=0; i<rows_*cols_; i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
@@ -376,74 +385,37 @@ void Terrain::updateRenderBuffers() {
 	free(indices);
 }
 
-bool Terrain::isDegenerateTriangle(Triangle const& t) const {
-	glm::vec3	&a = pVertices_[t.iV1].pos, 
-				&b = pVertices_[t.iV2].pos, 
-				&c = pVertices_[t.iV3].pos;
-	const float minAngle = PI / 16;	// minimum acute angle allowed before the triangle is declared 'degenerate'
-	const float minAngleCos = cosf(minAngle);
-	float ab_i = 1.f / glm::length(a-b);
-	float ac_i = 1.f / glm::length(a-c);
-	float bc_i = 1.f / glm::length(b-c);
-	float cosAng;
-	if (cosAng = glm::dot(b-a, c-a) * ab_i * ac_i, 
-		cosAng > minAngleCos)
-		// angle A too acute
-		return true;
-	else if (cosAng = glm::dot(a-b, c-b) * ab_i * bc_i, 
-		cosAng > minAngleCos)
-		// angle B too acute
-		return true;
-	else if (cosAng = glm::dot(a-c, b-c) * ac_i * bc_i, 
-		cosAng > minAngleCos)
-		// angle C too acute
-		return true;
-	else
-		return false;
-}
-
-void removeTriNeighbour(Triangle &t, unsigned ni) {
-	if (t.iN12 == (int)ni)
-		t.iN12 = -1;
-	if (t.iN13 == (int)ni)
-		t.iN13 = -1;
-	if (t.iN23 == (int)ni)
-		t.iN23 = -1;
-}
-
-/*void Terrain::cleanupEdges() {
-	// clean up the edges by removing the degenerate triangles that keep the lattice convex.
-	// We can do this because we don't care about convexity. and triangles at the edges are stretched and ugly
-	
-	// Reiterate until no degenerate edge triangles are found, because there's more than one layer of them	
-	bool found = true;
-	while (found) {
-		found = false;
-		for (unsigned i=0; i<triangles_.size(); i++) {
-			Triangle &t = triangles_[i].first;
-			if (!triangles_[i].second)
-				continue;	// this triangle has already been discarded
-			// check if t is on the edge:
-			if (t.iN12 >= 0 && t.iN13 >= 0 && t.iN23 >= 0)	// if it has neighbours on all sides then it's not on the edge
-				continue;
-			else if (!isDegenerateTriangle(t))	// check if the triangle is too stretched
-				continue;
-			// we discard triangle t
-			found = true;
-			triangles_[i].second = false;
-			nUsedTriangles_--;
-			// remove the reference to this triangle from its neighbours:
-			if (t.iN12 >= 0)
-				removeTriNeighbour(triangles_[t.iN12].first, i);
-			if (t.iN13 >= 0)
-				removeTriNeighbour(triangles_[t.iN13].first, i);
-			if (t.iN23 >= 0)
-				removeTriNeighbour(triangles_[t.iN23].first, i);
-		}
+void Terrain::updatePhysics() {
+	// create ground body
+	if (!physicsBody_) {
+		rp3d::Vector3 gPos(0.f, 0.f, 0.f);
+		rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
+		physicsBody_ = World::getGlobal<rp3d::DynamicsWorld>()->createRigidBody({gPos, gOrient});
+		physicsBody_->setType(rp3d::BodyType::STATIC);
 	}
-}*/
+	if (physicsShapeProxy_) {
+		physicsBody_->removeCollisionShape(physicsShapeProxy_);
+		delete physicsShape_;
+		free(heightFieldValues_);
+	}
+	// create array of height values:
+	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
+	for (unsigned i=0; i<rows_; i++)
+		for (unsigned j=0; j<cols_; j++)
+			heightFieldValues_[i*cols_+j] = pVertices_[i*cols_+j].pos.y;
+	// create ground shape
+	rp3d::Vector3 vScale {gridSpacing_.first, 1.f, gridSpacing_.second};
+	physicsShape_ = new rp3d::HeightFieldShape(cols_, rows_, settings_.minElevation, settings_.maxElevation,
+								heightFieldValues_, rp3d::HeightFieldShape::HeightDataType::HEIGHT_FLOAT_TYPE,
+								1, 1.f, vScale);
+	rp3d::Vector3 shapeOffs(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
+	rp3d::Quaternion shapeOrient = rp3d::Quaternion::identity();
+	rp3d::Transform shapeTr {shapeOffs, shapeOrient};
+	physicsShapeProxy_ = physicsBody_->addCollisionShape(physicsShape_, shapeTr, 1.f);
+}
 
 void Terrain::draw(Viewport* vp) {
+	glPolygonMode(GL_FRONT_AND_BACK, renderWireframe_ ? GL_LINE : GL_FILL);
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
@@ -478,5 +450,8 @@ void Terrain::draw(Viewport* vp) {
 		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
 	}*/
 	
-	pWater_->draw(vp);
+	if (!renderWireframe_)
+		pWater_->draw(vp);
+	
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

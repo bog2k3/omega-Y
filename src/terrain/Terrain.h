@@ -28,6 +28,11 @@ struct TerrainSettings {
 class Viewport;
 struct Triangle;
 class Water;
+namespace reactphysics3d {
+	class RigidBody;
+	class HeightFieldShape;
+	class ProxyShape;
+}
 
 class Terrain
 {
@@ -42,27 +47,36 @@ public:
 	void clear();
 	
 	void draw(Viewport* vp);
+	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 	
 	struct TerrainVertex;
 	
 private:
 	struct RenderData;
 	
+	unsigned rows_ = 0;
+	unsigned cols_ = 0;
+	std::pair<float, float> gridSpacing_;
 	TerrainVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
 	TerrainSettings settings_;
 	RenderData *renderData_ = nullptr;
+	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
+	
+	reactphysics3d::RigidBody* physicsBody_ = nullptr;
+	reactphysics3d::HeightFieldShape* physicsShape_ = nullptr;
+	reactphysics3d::ProxyShape* physicsShapeProxy_ = nullptr;
+	float *heightFieldValues_ = nullptr;
 
+	void loadTextures();
 	void fixTriangleWinding();
 	void computeDisplacements();
 	void computeNormals();
 	void computeTextureWeights();
 	void updateRenderBuffers();
-	//void cleanupEdges();
-	bool isDegenerateTriangle(Triangle const& t) const;
-	void loadTextures();
+	void updatePhysics();
 };
 
 #endif // TERRAIN_H

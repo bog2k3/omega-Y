@@ -108,7 +108,7 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			renderWireFrame = !renderWireFrame;
-			glPolygonMode(GL_FRONT_AND_BACK, renderWireFrame ? GL_LINE : GL_FILL);
+			pTerrain->setWireframeMode(renderWireFrame);
 		}
 	}
 }
@@ -168,26 +168,14 @@ void initSession(Camera* camera) {
 	playerInputHandler.setTargetObject(freeCam);
 }
 
-rp3d::RigidBody* groundBody = nullptr;
-rp3d::BoxShape* groundShape = nullptr;
 rp3d::RigidBody* boxBody = nullptr;
 rp3d::BoxShape* boxShape = nullptr;
 Mesh* boxMesh = nullptr;
 
-void physTestInit(rp3d::DynamicsWorld &physWld) {
-	return;
-	// create ground body
-	rp3d::Vector3 gPos(0.f, -0.1f, 0.f);
-	rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
-	groundBody = physWld.createRigidBody({gPos, gOrient});
-	groundBody->setType(rp3d::BodyType::STATIC);
-	// create ground shape
-	rp3d::Vector3 groundHalfExt(50, 0.1f, 50);
-	groundShape = new rp3d::BoxShape(groundHalfExt);
-	groundBody->addCollisionShape(groundShape, rp3d::Transform::identity(), 1.f);
-	
+void physTestInit() {
+	rp3d::DynamicsWorld &physWld = *World::getGlobal<rp3d::DynamicsWorld>();
 	// create test body
-	rp3d::Vector3 pos(0.f, 8.f, 0.f);
+	rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
 	rp3d::Quaternion orient({1.f, 0.5f, 1.f}, PI/3);
 	boxBody = physWld.createRigidBody({pos, orient});
 	// create test body shape
@@ -200,19 +188,6 @@ void physTestInit(rp3d::DynamicsWorld &physWld) {
 }
 
 void physTestDebugDraw(Viewport* vp) {
-	return;
-	// draw ground grid
-	float xext = 30;
-	float zext = 30;
-	float step = 0.5f;
-	float y = 0.f;
-	for (float x=-xext; x<xext; x+=step)
-		Shape3D::get()->drawLine({x, y, -zext}, {x, y, +zext}, {1.f, 1.f, 1.f, 0.6f});
-	for (float z=-zext; z<zext; z+=step)
-		Shape3D::get()->drawLine({-xext, y, z}, {+xext, y, z}, {1.f, 1.f, 1.f, 0.6f});
-
-	return;
-		
 	// draw the test body's representation:
 	rp3d::Transform tr = boxBody->getTransform();
 	glm::mat4 matTr;
@@ -225,27 +200,25 @@ void physTestDebugDraw(Viewport* vp) {
 	std::stringstream ss;
 	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
 	GLText::get()->print(ss.str(),
-		{20, 40, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+		{20, 100, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
 		0, 20, glm::vec3(1.f, 1.f, 1.f));
 }
 
 void physTestDestroy(rp3d::DynamicsWorld &physWld) {
 	if (boxBody)
 		physWld.destroyRigidBody(boxBody), boxBody = nullptr;
-	if (groundBody)
-		physWld.destroyRigidBody(groundBody), groundBody = nullptr;
 }
 
 void drawDebugTexts() {
 	GLText::get()->print("TAB : capture/release mouse",
 			{20, 20, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
 	GLText::get()->print("R : regenerate terrain",
 			{20, 40, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
 	GLText::get()->print("Q : toggle wireframe",
 			{20, 60, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
 		
 	if (updatePaused) {
 		GLText::get()->print("PAUSED",
@@ -352,7 +325,9 @@ int main(int argc, char* argv[]) {
 		
 		rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
 		rp3d::DynamicsWorld physWorld(gravity);
-		physTestInit(physWorld);
+		World::setGlobal<rp3d::DynamicsWorld>(&physWorld);
+		
+		physTestInit();
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
