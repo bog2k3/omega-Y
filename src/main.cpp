@@ -71,7 +71,13 @@ template<> void update(std::function<void(float)> *fn, float dt) {
 
 template<> void update(rp3d::DynamicsWorld* wld, float dt) {
 	// TODO fixed time step
-	wld->update(dt);
+	float fixedTimeStep = 1.f / 150;	// 150Hz update rate for physics
+	static float timeAccum = 0;
+	timeAccum += dt;
+	while(timeAccum >= fixedTimeStep) {
+		timeAccum -= fixedTimeStep;
+		wld->update(fixedTimeStep);
+	}
 }
 
 bool toggleMouseCapture();
@@ -301,11 +307,12 @@ int main(int argc, char* argv[]) {
 
 		// initialize stuff:
 		int winW = 1280, winH = 900;
-		int multisamples = 4; // 0 to disable MSAA or >0 to enable it
-		if (!gltInitGLFW(winW, winH, "Omega-Y", multisamples))
+		if (!gltInitGLFW(winW, winH, "Omega-Y", 0, false))
 			return -1;
-		if (initPostProcessData(winW, winH))
-			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess);
+		if (initPostProcessData(winW, winH)) {
+			unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
+			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
+		}
 
 		GLFWInput::initialize(gltGetWindow());
 		GLFWInput::onInputEvent.add(onInputEventHandler);
