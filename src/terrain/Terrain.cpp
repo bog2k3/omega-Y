@@ -392,6 +392,8 @@ void Terrain::updatePhysics() {
 		rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
 		physicsBody_ = World::getGlobal<rp3d::DynamicsWorld>()->createRigidBody({gPos, gOrient});
 		physicsBody_->setType(rp3d::BodyType::STATIC);
+		physicsBody_->getMaterial().setBounciness(0.2f);
+		physicsBody_->getMaterial().setFrictionCoefficient(0.5);
 	}
 	if (physicsShapeProxy_) {
 		physicsBody_->removeCollisionShape(physicsShapeProxy_);
@@ -415,7 +417,10 @@ void Terrain::updatePhysics() {
 }
 
 void Terrain::draw(Viewport* vp) {
-	glPolygonMode(GL_FRONT_AND_BACK, renderWireframe_ ? GL_LINE : GL_FILL);
+	if (renderWireframe_) {
+		glLineWidth(2.f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
@@ -453,5 +458,8 @@ void Terrain::draw(Viewport* vp) {
 	if (!renderWireframe_)
 		pWater_->draw(vp);
 	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (renderWireframe_) {	// reset state
+		glLineWidth(1.f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 }

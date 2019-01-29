@@ -65,6 +65,10 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
 
+rp3d::RigidBody* boxBody = nullptr;
+rp3d::BoxShape* boxShape = nullptr;
+Mesh* boxMesh = nullptr;
+
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
@@ -110,6 +114,11 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	} else if (ev.key == GLFW_KEY_R) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			pTerrain->generate(terrainSettings);
+			// reset the box:
+			rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
+			boxBody->setTransform({pos, rp3d::Quaternion{{1.f, 0.5f, 1.f}, PI/3}});
+			// apply a force to it to wake it up:
+			boxBody->applyForceToCenterOfMass(rp3d::Vector3{0.f, 0.001f, 0.f});
 		}
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
@@ -174,20 +183,20 @@ void initSession(Camera* camera) {
 	playerInputHandler.setTargetObject(freeCam);
 }
 
-rp3d::RigidBody* boxBody = nullptr;
-rp3d::BoxShape* boxShape = nullptr;
-Mesh* boxMesh = nullptr;
-
 void physTestInit() {
 	rp3d::DynamicsWorld &physWld = *World::getGlobal<rp3d::DynamicsWorld>();
 	// create test body
 	rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
 	rp3d::Quaternion orient({1.f, 0.5f, 1.f}, PI/3);
 	boxBody = physWld.createRigidBody({pos, orient});
+	boxBody->getMaterial().setBounciness(0.35f);
+	boxBody->getMaterial().setFrictionCoefficient(0.5);
+	boxBody->setLinearDamping(0.01f);
+	boxBody->setAngularDamping(0.01f);
 	// create test body shape
 	rp3d::Vector3 boxHalfExt(0.5f, 0.5f, 0.5f);
 	boxShape = new rp3d::BoxShape(boxHalfExt);
-	boxBody->addCollisionShape(boxShape, rp3d::Transform::identity(), 10.f);
+	boxBody->addCollisionShape(boxShape, rp3d::Transform::identity(), 100.f);
 	// create test body representation
 	boxMesh = new Mesh();
 	boxMesh->createBox({0.f, 0.f, 0.f}, 1.f, 1.f, 1.f);
