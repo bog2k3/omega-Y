@@ -40,15 +40,14 @@ endif()
 
 # The following folder will be included
 include_directories("${BOGLFW_DIST_DIR}/include" 
-					"${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include" 
-					"${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/include/rp3d")
+					"${CMAKE_SOURCE_DIR}/3rdparty/bullet3/include")
 link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
-	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/lib/mingw")
+	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/mingw")
 	include_directories("C:/mingw64/include")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WIN32__")
 else()
-	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/reactphysics3d/lib/linux")
+	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/linux")
 	include_directories("/usr/include")
 endif()
 
@@ -61,7 +60,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png reactphysics3d)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletDynamics Bullet3Dynamics Bullet3Geometry BulletCollision Bullet3Collision Bullet3Common ConvexDecomposition LinearMath)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()

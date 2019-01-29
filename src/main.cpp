@@ -34,7 +34,7 @@
 #include <boglfw/perf/frameCapture.h>
 #include <boglfw/perf/perfPrint.h>
 
-#include <rp3d/reactphysics3d.h>
+#include <bullet3/btBulletDynamicsCommon.h>
 
 #include <GLFW/glfw3.h>
 
@@ -67,15 +67,15 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
 
-rp3d::RigidBody* boxBody = nullptr;
-rp3d::BoxShape* boxShape = nullptr;
+//rp3d::RigidBody* boxBody = nullptr;
+//rp3d::BoxShape* boxShape = nullptr;
 Mesh* boxMesh = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
 
-template<> void update(rp3d::DynamicsWorld* wld, float dt) {
+/*template<> void update(rp3d::DynamicsWorld* wld, float dt) {
 	// TODO fixed time step
 	float fixedTimeStep = 1.f / 150;	// 150Hz update rate for physics
 	static float timeAccum = 0;
@@ -84,7 +84,7 @@ template<> void update(rp3d::DynamicsWorld* wld, float dt) {
 		timeAccum -= fixedTimeStep;
 		wld->update(fixedTimeStep);
 	}
-}
+}*/
 
 bool toggleMouseCapture();
 
@@ -117,10 +117,10 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			pTerrain->generate(terrainSettings);
 			// reset the box:
-			rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
-			boxBody->setTransform({pos, rp3d::Quaternion{{1.f, 0.5f, 1.f}, PI/3}});
+			//rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
+			//boxBody->setTransform({pos, rp3d::Quaternion{{1.f, 0.5f, 1.f}, PI/3}});
 			// apply a force to it to wake it up:
-			boxBody->applyForceToCenterOfMass(rp3d::Vector3{0.f, 0.001f, 0.f});
+			//boxBody->applyForceToCenterOfMass(rp3d::Vector3{0.f, 0.001f, 0.f});
 		}
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
@@ -193,27 +193,21 @@ void initSession(Camera* camera) {
 }
 
 void physTestInit() {
-	rp3d::DynamicsWorld &physWld = *World::getGlobal<rp3d::DynamicsWorld>();
+	auto collisionConfig = new btDefaultCollisionConfiguration();
+	auto dispatcher = new btCollisionDispatcher(collisionConfig);
+	auto broadphase = new btDbvtBroadphase();
+	auto solver = new btSequentialImpulseConstraintSolver();
+	btDiscreteDynamicsWorld *physWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+	World::setGlobal<btDiscreteDynamicsWorld>(physWorld);
+	//physWorld->setGravity(btVector3(0, -10, 0));
+	
 	// create test body
-	rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
-	rp3d::Quaternion orient({1.f, 0.5f, 1.f}, PI/3);
-	boxBody = physWld.createRigidBody({pos, orient});
-	boxBody->getMaterial().setBounciness(0.35f);
-	boxBody->getMaterial().setFrictionCoefficient(0.5);
-	boxBody->setLinearDamping(0.01f);
-	boxBody->setAngularDamping(0.01f);
-	// create test body shape
-	rp3d::Vector3 boxHalfExt(0.5f, 0.5f, 0.5f);
-	boxShape = new rp3d::BoxShape(boxHalfExt);
-	boxBody->addCollisionShape(boxShape, rp3d::Transform::identity(), 100.f);
-	// create test body representation
-	boxMesh = new Mesh();
-	boxMesh->createBox({0.f, 0.f, 0.f}, 1.f, 1.f, 1.f);
+	// ...
 }
 
 void physTestDebugDraw(Viewport* vp) {
 	// draw the test body's representation:
-	rp3d::Transform tr = boxBody->getTransform();
+	/*rp3d::Transform tr = boxBody->getTransform();
 	glm::mat4 matTr;
 	tr.getOpenGLMatrix(&matTr[0][0]);
 	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
@@ -225,12 +219,14 @@ void physTestDebugDraw(Viewport* vp) {
 	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
 	GLText::get()->print(ss.str(),
 		{20, 100, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-		0, 20, glm::vec3(1.f, 1.f, 1.f));
+		0, 20, glm::vec3(1.f, 1.f, 1.f));*/
 }
 
-void physTestDestroy(rp3d::DynamicsWorld &physWld) {
-	if (boxBody)
-		physWld.destroyRigidBody(boxBody), boxBody = nullptr;
+void physTestDestroy() {
+	delete World::getGlobal<btDiscreteDynamicsWorld>();
+	World::setGlobal<btDiscreteDynamicsWorld>(nullptr);
+	//if (boxBody)
+	//	physWld.destroyRigidBody(boxBody), boxBody = nullptr;
 }
 
 void drawDebugTexts() {
@@ -348,9 +344,9 @@ int main(int argc, char* argv[]) {
 		World::setConfig(wldCfg);
 		World &world = World::getInstance();
 		
-		rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
+		/*rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
 		rp3d::DynamicsWorld physWorld(gravity);
-		World::setGlobal<rp3d::DynamicsWorld>(&physWorld);
+		World::setGlobal<rp3d::DynamicsWorld>(&physWorld);*/
 		
 		physTestInit();
 
@@ -369,7 +365,7 @@ int main(int argc, char* argv[]) {
 		updateList.add(&World::getInstance());
 		updateList.add(&sigViewer);
 		updateList.add(&playerInputHandler);
-		updateList.add(&physWorld);
+		//updateList.add(&physWorld);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -461,7 +457,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		physTestDestroy(physWorld);
+		physTestDestroy();
 		renderer.unload();
 		deletePostProcessData();
 		Infrastructure::shutDown();

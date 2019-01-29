@@ -28,11 +28,6 @@ struct TerrainSettings {
 class Viewport;
 struct Triangle;
 class Water;
-namespace reactphysics3d {
-	class RigidBody;
-	class HeightFieldShape;
-	class ProxyShape;
-}
 
 class Terrain
 {
@@ -65,9 +60,9 @@ private:
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
 	
-	reactphysics3d::RigidBody* physicsBody_ = nullptr;
-	reactphysics3d::HeightFieldShape* physicsShape_ = nullptr;
-	reactphysics3d::ProxyShape* physicsShapeProxy_ = nullptr;
+	//reactphysics3d::RigidBody* physicsBody_ = nullptr;
+	//reactphysics3d::HeightFieldShape* physicsShape_ = nullptr;
+	//reactphysics3d::ProxyShape* physicsShapeProxy_ = nullptr;
 	float *heightFieldValues_ = nullptr;
 
 	void loadTextures();

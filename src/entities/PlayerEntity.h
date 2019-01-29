@@ -5,12 +5,6 @@
 #include "IUserControllable.h"
 #include <boglfw/entities/Entity.h>
 
-namespace reactphysics3d {
-	class RigidBody;
-	class CapsuleShape;
-	class ProxyShape;
-}
-
 class PlayerEntity : public Entity, public IUserControllable
 {
 public:
@@ -39,9 +33,9 @@ private:
 	//mutable glm::mat4 transform_;
 	//mutable bool transformDirty_ = true;
 	
-	reactphysics3d::RigidBody *physBody_ = nullptr;
-	reactphysics3d::CapsuleShape* physShape_ = nullptr;
-	reactphysics3d::ProxyShape* physProxyShape_ = nullptr;
+	//reactphysics3d::RigidBody *physBody_ = nullptr;
+	//reactphysics3d::CapsuleShape* physShape_ = nullptr;
+	//reactphysics3d::ProxyShape* physProxyShape_ = nullptr;
 	
 	//glm::vec3 speed_;
 };

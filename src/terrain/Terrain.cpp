@@ -19,7 +19,7 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <rp3d/reactphysics3d.h>
+//#include <rp3d/reactphysics3d.h>
 
 #include <GL/glew.h>
 
@@ -387,7 +387,7 @@ void Terrain::updateRenderBuffers() {
 
 void Terrain::updatePhysics() {
 	// create ground body
-	if (!physicsBody_) {
+	/*if (!physicsBody_) {
 		rp3d::Vector3 gPos(0.f, 0.f, 0.f);
 		rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
 		physicsBody_ = World::getGlobal<rp3d::DynamicsWorld>()->createRigidBody({gPos, gOrient});
@@ -399,21 +399,21 @@ void Terrain::updatePhysics() {
 		physicsBody_->removeCollisionShape(physicsShapeProxy_);
 		delete physicsShape_;
 		free(heightFieldValues_);
-	}
+	}*/
 	// create array of height values:
 	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
 			heightFieldValues_[i*cols_+j] = pVertices_[i*cols_+j].pos.y;
 	// create ground shape
-	rp3d::Vector3 vScale {gridSpacing_.first, 1.f, gridSpacing_.second};
+	/*rp3d::Vector3 vScale {gridSpacing_.first, 1.f, gridSpacing_.second};
 	physicsShape_ = new rp3d::HeightFieldShape(cols_, rows_, settings_.minElevation, settings_.maxElevation,
 								heightFieldValues_, rp3d::HeightFieldShape::HeightDataType::HEIGHT_FLOAT_TYPE,
 								1, 1.f, vScale);
 	rp3d::Vector3 shapeOffs(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
 	rp3d::Quaternion shapeOrient = rp3d::Quaternion::identity();
 	rp3d::Transform shapeTr {shapeOffs, shapeOrient};
-	physicsShapeProxy_ = physicsBody_->addCollisionShape(physicsShape_, shapeTr, 1.f);
+	physicsShapeProxy_ = physicsBody_->addCollisionShape(physicsShape_, shapeTr, 1.f);*/
 }
 
 void Terrain::draw(Viewport* vp) {
