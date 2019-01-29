@@ -1,4 +1,5 @@
 #include "entities/FreeCamera.h"
+#include "entities/PlayerEntity.h"
 #include "PlayerInputHandler.h"
 #include "terrain/Terrain.h"
 
@@ -60,6 +61,7 @@ bool signalQuit = false;
 bool renderWireFrame = false;
 
 std::weak_ptr<FreeCamera> freeCam;
+std::weak_ptr<PlayerEntity> player;
 PlayerInputHandler playerInputHandler;
 
 Terrain* pTerrain = nullptr;
@@ -168,19 +170,26 @@ bool toggleMouseCapture() {
 }
 
 void initSession(Camera* camera) {
+	// origin gizmo
 	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
-	//World::getInstance().takeOwnershipOf(std::make_shared<Box>(0.3f, 0.3f, 0.3f, glm::vec3{1.f, 0.5f, 0.f}));
 
+	// free camera
 	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -0.5f, -4.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 	
+	// camera controller (this one moves the render camera to the position of the target entity)
 	auto sCamCtrl = std::make_shared<CameraController>(camera);
 	World::getInstance().takeOwnershipOf(sCamCtrl);
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
 	
-	playerInputHandler.setTargetObject(freeCam);
+	// player 
+	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, glm::vec3{0.f, 0.f, 1.f});
+	player = sPlayer;
+	World::getInstance().takeOwnershipOf(sPlayer);
+	sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
+	
+	playerInputHandler.setTargetObject(player);
 }
 
 void physTestInit() {
