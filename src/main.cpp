@@ -1,3 +1,4 @@
+#include "physics/DebugDrawer.h"
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
 #include "PlayerInputHandler.h"
@@ -60,6 +61,8 @@ bool captureFrame = false;
 bool signalQuit = false;
 bool renderWireFrame = false;
 
+physics::DebugDrawer* physDebugDraw = nullptr;
+
 std::weak_ptr<FreeCamera> freeCam;
 std::weak_ptr<PlayerEntity> player;
 PlayerInputHandler playerInputHandler;
@@ -67,24 +70,19 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
 
-//rp3d::RigidBody* boxBody = nullptr;
-//rp3d::BoxShape* boxShape = nullptr;
+btRigidBody* boxBody = nullptr;
+btBoxShape* boxShape = nullptr;
 Mesh* boxMesh = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
 
-/*template<> void update(rp3d::DynamicsWorld* wld, float dt) {
-	// TODO fixed time step
-	float fixedTimeStep = 1.f / 150;	// 150Hz update rate for physics
-	static float timeAccum = 0;
-	timeAccum += dt;
-	while(timeAccum >= fixedTimeStep) {
-		timeAccum -= fixedTimeStep;
-		wld->update(fixedTimeStep);
-	}
-}*/
+template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
+	const float fixedTimeStep = 1.f / 150;	// 150Hz update rate for physics
+	const int max_substeps = 10;
+	wld->stepSimulation(dt, max_substeps, fixedTimeStep);
+}
 
 bool toggleMouseCapture();
 
@@ -169,6 +167,25 @@ bool toggleMouseCapture() {
 	return isCaptured;
 }
 
+void physTestInit() {
+	// create test body
+	boxShape = new btBoxShape({0.5f, 0.5f, 0.5f});
+	btQuaternion qOrient{0.5f, 0.13f, 1.2f};
+	btVector3 vPos{0.f, terrainSettings.maxElevation + 10, 0.f};
+	float mass = 100.f;
+	btRigidBody::btRigidBodyConstructionInfo cinfo {
+		mass,
+		nullptr,
+		boxShape
+	};
+	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
+	cinfo.m_linearDamping = 0.1f;
+	cinfo.m_angularDamping = 0.01f;
+	cinfo.m_friction = 0.4f;
+
+	boxBody = new btRigidBody(cinfo);
+}
+
 void initSession(Camera* camera) {
 	// origin gizmo
 	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
@@ -178,31 +195,20 @@ void initSession(Camera* camera) {
 	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -0.5f, -4.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
-	
+
 	// camera controller (this one moves the render camera to the position of the target entity)
 	auto sCamCtrl = std::make_shared<CameraController>(camera);
 	World::getInstance().takeOwnershipOf(sCamCtrl);
-	
-	// player 
+
+	// player
 	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, glm::vec3{0.f, 0.f, 1.f});
 	player = sPlayer;
 	World::getInstance().takeOwnershipOf(sPlayer);
 	sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
-	
-	playerInputHandler.setTargetObject(player);
-}
 
-void physTestInit() {
-	auto collisionConfig = new btDefaultCollisionConfiguration();
-	auto dispatcher = new btCollisionDispatcher(collisionConfig);
-	auto broadphase = new btDbvtBroadphase();
-	auto solver = new btSequentialImpulseConstraintSolver();
-	btDiscreteDynamicsWorld *physWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-	World::setGlobal<btDiscreteDynamicsWorld>(physWorld);
-	//physWorld->setGravity(btVector3(0, -10, 0));
-	
-	// create test body
-	// ...
+	playerInputHandler.setTargetObject(player);
+
+	physTestInit();
 }
 
 void physTestDebugDraw(Viewport* vp) {
@@ -211,7 +217,7 @@ void physTestDebugDraw(Viewport* vp) {
 	glm::mat4 matTr;
 	tr.getOpenGLMatrix(&matTr[0][0]);
 	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
-		
+
 	// draw info about simulated body
 	rp3d::Transform bodyTr = boxBody->getTransform();
 	auto pos = bodyTr.getPosition();
@@ -223,8 +229,6 @@ void physTestDebugDraw(Viewport* vp) {
 }
 
 void physTestDestroy() {
-	delete World::getGlobal<btDiscreteDynamicsWorld>();
-	World::setGlobal<btDiscreteDynamicsWorld>(nullptr);
 	//if (boxBody)
 	//	physWld.destroyRigidBody(boxBody), boxBody = nullptr;
 }
@@ -239,7 +243,7 @@ void drawDebugTexts() {
 	GLText::get()->print("Q : toggle wireframe",
 			{20, 60, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
 			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-		
+
 	if (updatePaused) {
 		GLText::get()->print("PAUSED",
 				{50, 50, ViewportCoord::percent},
@@ -314,6 +318,49 @@ void deletePostProcessData() {
 	glDeleteVertexArrays(1, &postProcessData.VAO);
 }
 
+void initPhysics() {
+	// collision configuration contains default setup for memory , collision setup . Advanced users can create their own configuration .
+	auto collisionConfig = new btDefaultCollisionConfiguration();
+	// use the default collision dispatcher . For parallel processing you can use a diffent dispatcher ( see Extras / BulletMultiThreaded )
+	auto dispatcher = new btCollisionDispatcher(collisionConfig);
+	// btDbvtBroadphase is a good general purpose broadphase . You can also try out btAxis3Sweep
+	auto broadphase = new btDbvtBroadphase();
+	// the default constraint solver . For parallel processing you can use a different solver ( see Extras / BulletMultiThreaded )
+	auto solver = new btSequentialImpulseConstraintSolver();
+	btDiscreteDynamicsWorld *physWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+	physWorld->setDebugDrawer(physDebugDraw = new physics::DebugDrawer());
+	physWorld->setGravity(btVector3(0, -9.8f, 0));
+
+	World::setGlobal<btDiscreteDynamicsWorld>(physWorld);
+}
+
+void destroyPhysics() {
+	delete World::getGlobal<btDiscreteDynamicsWorld>();
+	World::setGlobal<btDiscreteDynamicsWorld>(nullptr);
+}
+
+void initWorld() {
+	WorldConfig wldCfg;
+	wldCfg.drawBoundaries = false;
+	World::setConfig(wldCfg);
+
+	initPhysics();
+}
+
+void initTerrain() {
+	terrainSettings.vertexDensity = 1.f;	// vertices per meter
+	terrainSettings.width = 200;
+	terrainSettings.length = 200;
+	terrainSettings.minElevation = -20;
+	terrainSettings.maxElevation = 30.f;
+	terrainSettings.seaLevel = -10.f;
+	terrainSettings.relativeRandomJitter = 0.8f;
+	terrainSettings.bigRoughness = 1.f;
+	terrainSettings.smallRoughness = 1.f;
+	pTerrain = new Terrain();
+	pTerrain->generate(terrainSettings);
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -339,16 +386,8 @@ int main(int argc, char* argv[]) {
 		vp1->camera()->setZPlanes(0.15f, 250.f);
 		renderer.addViewport("main", std::move(vp));
 
-		WorldConfig wldCfg;
-		wldCfg.drawBoundaries = false;
-		World::setConfig(wldCfg);
+		initWorld();
 		World &world = World::getInstance();
-		
-		/*rp3d::Vector3 gravity(0.f, -9.81f, 0.f);
-		rp3d::DynamicsWorld physWorld(gravity);
-		World::setGlobal<rp3d::DynamicsWorld>(&physWorld);*/
-		
-		physTestInit();
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
@@ -365,7 +404,7 @@ int main(int argc, char* argv[]) {
 		updateList.add(&World::getInstance());
 		updateList.add(&sigViewer);
 		updateList.add(&playerInputHandler);
-		//updateList.add(&physWorld);
+		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -380,29 +419,18 @@ int main(int argc, char* argv[]) {
 					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
 			drawDebugTexts();
 		};
-		
-		terrainSettings.vertexDensity = 1.f;	// vertices per meter
-		terrainSettings.width = 200;
-		terrainSettings.length = 200;
-		terrainSettings.minElevation = -20;
-		terrainSettings.maxElevation = 30.f;
-		terrainSettings.seaLevel = -10.f;
-		terrainSettings.relativeRandomJitter = 0.8f;
-		terrainSettings.bigRoughness = 1.f;
-		terrainSettings.smallRoughness = 1.f;
-		Terrain terrain;
-		pTerrain = &terrain;
-		terrain.generate(terrainSettings);
-		
+
+		initTerrain();
+
 		std::vector<drawable> drawList;
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
 		drawList.push_back(&physTestDebugDraw);
-		drawList.push_back(&terrain);
-		
+		drawList.push_back(pTerrain);
+
 		vp1->setDrawList(drawList);
-		
+
 		initSession(vp1->camera());
 
 		// initial update:
@@ -458,11 +486,13 @@ int main(int argc, char* argv[]) {
 		}
 
 		physTestDestroy();
+		destroyPhysics();
+		world.reset();
 		renderer.unload();
 		deletePostProcessData();
 		Infrastructure::shutDown();
 	} while (0);
-	
+
 	if (false) {
 		// print profiling stats
 		for (unsigned i=0; i<perf::Results::getNumberOfThreads(); i++) {
@@ -478,4 +508,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-

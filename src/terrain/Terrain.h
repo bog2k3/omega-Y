@@ -10,14 +10,14 @@ struct TerrainSettings {
 	float minElevation = -5.f;	// minimum Y axis value
 	float maxElevation = 15.f;	// maximum Y axis value
 	float seaLevel = 0.f;
-	
+
 	// structure settings
 	float vertexDensity = 2.f;	// vertices per meter (actual density may be slightly higher due to rounding,
 								// but is guaranteed to always be at least the specified value)
-	
+
 	// generation parameters
 	float relativeRandomJitter = 0.5f;	// random jitter applied to the vertex mesh in the XoZ plane;
-										// a value of 1.0 means the amplitude of the jitter is equal 
+										// a value of 1.0 means the amplitude of the jitter is equal
 										// to the initial distance between vertices;
 										// this has the effect of producing an irregular (less matrix-like) mesh
 
@@ -28,6 +28,8 @@ struct TerrainSettings {
 class Viewport;
 struct Triangle;
 class Water;
+class btHeightfieldTerrainShape;
+class btRigidBody;
 
 class Terrain
 {
@@ -37,18 +39,18 @@ public:
 
 	// generate the terrain mesh according to specified settings. This will overwrite the existing data.
 	void generate(TerrainSettings const& settings);
-	
+
 	// clear all terrain data
 	void clear();
-	
+
 	void draw(Viewport* vp);
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
-	
+
 	struct TerrainVertex;
-	
+
 private:
 	struct RenderData;
-	
+
 	unsigned rows_ = 0;
 	unsigned cols_ = 0;
 	std::pair<float, float> gridSpacing_;
@@ -59,10 +61,9 @@ private:
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
-	
-	//reactphysics3d::RigidBody* physicsBody_ = nullptr;
-	//reactphysics3d::HeightFieldShape* physicsShape_ = nullptr;
-	//reactphysics3d::ProxyShape* physicsShapeProxy_ = nullptr;
+
+	btRigidBody* physicsBody_ = nullptr;
+	btHeightfieldTerrainShape* physicsShape_ = nullptr;
 	float *heightFieldValues_ = nullptr;
 
 	void loadTextures();

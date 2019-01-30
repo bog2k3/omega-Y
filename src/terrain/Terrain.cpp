@@ -19,7 +19,8 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-//#include <rp3d/reactphysics3d.h>
+#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
+#include <bullet3/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include <GL/glew.h>
 
@@ -30,7 +31,7 @@
 
 struct Terrain::TerrainVertex {
 	static const unsigned nTextures = 5;
-	
+
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec3 color;
@@ -39,7 +40,7 @@ struct Terrain::TerrainVertex {
 								// 							y between rock1 & rock2
 								//							z between grass and rock
 								//							w between everything and sand
-	
+
 	TerrainVertex() = default;
 };
 
@@ -71,8 +72,8 @@ struct Terrain::RenderData {
 
 template<>
 float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
-	return	n==0 ? v.pos.x : 
-			n==1 ? v.pos.z : 
+	return	n==0 ? v.pos.x :
+			n==1 ? v.pos.z :
 			0.f;
 }
 
@@ -94,7 +95,7 @@ Terrain::Terrain()
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
-	
+
 	glBindVertexArray(renderData_->VAO_);
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
@@ -114,7 +115,7 @@ Terrain::Terrain()
 	if (renderData_->iUV_ > 0) {
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
 			glEnableVertexAttribArray(renderData_->iUV_ + i);
-			glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), 
+			glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
 				(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
 		}
 	}
@@ -126,7 +127,7 @@ Terrain::Terrain()
 	glBindVertexArray(0);
 
 	loadTextures();
-	
+
 	pWater_ = new Water();
 }
 
@@ -159,7 +160,7 @@ void Terrain::loadTextures() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[1].wWidth = 3.f;
 	renderData_->textures_[1].wHeight = 3.f;
-	
+
 	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -175,7 +176,7 @@ void Terrain::loadTextures() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	renderData_->textures_[3].wWidth = 4.f;
 	renderData_->textures_[3].wHeight = 4.f;
-	
+
 	renderData_->textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -203,8 +204,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 
 	rows_ = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
 	cols_ = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
-	
-	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle, 
+
+	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle,
 	// in order to extend the sea-bed away from the main terrain
 	float terrainRadius = sqrtf(settings_.width * settings_.width + settings_.length * settings_.length) * 0.5f;
 	float seaBedRadius = terrainRadius * 2.5f;
@@ -213,7 +214,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
 	nVertices_ = rows_ * cols_ + nSkirtVerts;
 	pVertices_ = (TerrainVertex*)malloc(sizeof(TerrainVertex) * nVertices_);
-	
+
 	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
 	float dx = settings_.width / (cols_ - 1);
 	float dz = settings_.length / (rows_ - 1);
@@ -252,7 +253,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 			pVertices_[rows_*cols_ + i].uv[t].y = (z - topleft.z) / renderData_->textures_[t].wHeight;
 		}
 	}
-	
+
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
 	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
@@ -263,10 +264,10 @@ void Terrain::generate(TerrainSettings const& settings) {
 	computeDisplacements();
 	computeNormals();
 	computeTextureWeights();
-	
+
 	updateRenderBuffers();
 	updatePhysics();
-	
+
 	pWater_->generate(WaterParams {
 		settings_.seaLevel,				// water level
 		terrainRadius,					// inner radius
@@ -313,7 +314,7 @@ void Terrain::computeDisplacements() {
 
 			pVertices_[k].pos.y = height.value(u, v) * settings_.bigRoughness
 									+ perlin * settings_.smallRoughness;
-			
+
 			// TODO : use vertex colors with perlin noise for more variety
 
 			// debug
@@ -347,9 +348,9 @@ void Terrain::computeTextureWeights() {
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
 		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
 		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length * 0.15;
-		pVertices_[i].texBlendFactor.x = grassBias 
-											+ pnoise.getNorm(u, v, 7.f) 
-											+ 0.3f * pnoise.get(u*2, v*2, 7.f) 
+		pVertices_[i].texBlendFactor.x = grassBias
+											+ pnoise.getNorm(u, v, 7.f)
+											+ 0.3f * pnoise.get(u*2, v*2, 7.f)
 											+ 0.1 * pnoise.get(u*4, v*4, 2.f);	// dirt / grass
 		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 7.f) + 0.5 * pnoise.get(v*4, u*4, 2.f);	// rock1 / rock2
 		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
@@ -358,7 +359,7 @@ void Terrain::computeTextureWeights() {
 		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
 		cutoffY += (1.0 - cutoffY) * hFactor;
 		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
-		
+
 		// sand factor -> some distance above water level and everything below is sand
 		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
 		if (pVertices_[i].pos.y < settings_.seaLevel + beachHeight) {
@@ -372,7 +373,7 @@ void Terrain::updateRenderBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
+
 	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		indices[i*3 + 0] = triangles_[i].iV1;
@@ -386,34 +387,29 @@ void Terrain::updateRenderBuffers() {
 }
 
 void Terrain::updatePhysics() {
-	// create ground body
-	/*if (!physicsBody_) {
-		rp3d::Vector3 gPos(0.f, 0.f, 0.f);
-		rp3d::Quaternion gOrient = rp3d::Quaternion::identity();
-		physicsBody_ = World::getGlobal<rp3d::DynamicsWorld>()->createRigidBody({gPos, gOrient});
-		physicsBody_->setType(rp3d::BodyType::STATIC);
-		physicsBody_->getMaterial().setBounciness(0.2f);
-		physicsBody_->getMaterial().setFrictionCoefficient(0.5);
-	}
-	if (physicsShapeProxy_) {
-		physicsBody_->removeCollisionShape(physicsShapeProxy_);
-		delete physicsShape_;
-		free(heightFieldValues_);
-	}*/
 	// create array of height values:
 	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
 			heightFieldValues_[i*cols_+j] = pVertices_[i*cols_+j].pos.y;
 	// create ground shape
-	/*rp3d::Vector3 vScale {gridSpacing_.first, 1.f, gridSpacing_.second};
-	physicsShape_ = new rp3d::HeightFieldShape(cols_, rows_, settings_.minElevation, settings_.maxElevation,
-								heightFieldValues_, rp3d::HeightFieldShape::HeightDataType::HEIGHT_FLOAT_TYPE,
-								1, 1.f, vScale);
-	rp3d::Vector3 shapeOffs(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
-	rp3d::Quaternion shapeOrient = rp3d::Quaternion::identity();
-	rp3d::Transform shapeTr {shapeOffs, shapeOrient};
-	physicsShapeProxy_ = physicsBody_->addCollisionShape(physicsShape_, shapeTr, 1.f);*/
+	physicsShape_ = new btHeightfieldTerrainShape{cols_, rows_, heightFieldValues_, 1.f,
+							settings_.minElevation, settings_.maxElevation, 1, PHY_FLOAT, false};
+
+	// create ground body
+	if (!physicsBody_) {
+		btVector3 vPos(0.f, 0.f, 0.f);
+		btQuaternion qOrient = btQuaternion::getIdentity();
+		btRigidBody::btRigidBodyConstructionInfo cinfo {
+			0.f,		// mass
+			nullptr,
+			physicsShape_
+		};
+		cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
+		cinfo.m_friction = 0.5f;
+
+		physicsBody_ = new btRigidBody(cinfo);
+	}
 }
 
 void Terrain::draw(Viewport* vp) {
@@ -454,10 +450,10 @@ void Terrain::draw(Viewport* vp) {
 	/*for (unsigned i=0; i<nVertices_; i++) {
 		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
 	}*/
-	
+
 	if (!renderWireframe_)
 		pWater_->draw(vp);
-	
+
 	if (renderWireframe_) {	// reset state
 		glLineWidth(1.f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

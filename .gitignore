@@ -4,3 +4,5 @@ build/
 .codelite
 *.project
 *.workspace 
+.vscode 
+*.code-workspace 
