@@ -39,7 +39,7 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include" 
+include_directories("${BOGLFW_DIST_DIR}/include"
 					"${CMAKE_SOURCE_DIR}/3rdparty/bullet3/include")
 link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
@@ -60,7 +60,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletDynamics Bullet3Dynamics Bullet3Geometry BulletCollision Bullet3Collision Bullet3Common ConvexDecomposition LinearMath)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletDynamics Bullet3Dynamics Bullet3Geometry BulletCollision Bullet3Collision Bullet3Common LinearMath)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()
@@ -72,7 +72,7 @@ endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS "${BOGLFW_DIST_DIR}/lib/libboglfw.a")
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIANS -DWITH_GLFW)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIANS -DWITH_GLFW -DBT_USE_DOUBLE_PRECISION)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
