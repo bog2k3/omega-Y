@@ -43,11 +43,11 @@ include_directories("${BOGLFW_DIST_DIR}/include"
 					"${CMAKE_SOURCE_DIR}/3rdparty/bullet3/include")
 link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
-	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/mingw")
+	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/mingw/${CMAKE_BUILD_TYPE}")
 	include_directories("C:/mingw64/include")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WIN32__")
 else()
-	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/linux")
+	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/linux/${CMAKE_BUILD_TYPE}")
 	include_directories("/usr/include")
 endif()
 
@@ -72,7 +72,10 @@ endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS "${BOGLFW_DIST_DIR}/lib/libboglfw.a")
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIANS -DWITH_GLFW -DBT_USE_DOUBLE_PRECISION)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIANS -DWITH_GLFW)
+
+# add this flag to enable profiling with perfMarkers
+# target_compile_options(${PROJECT_NAME} PUBLIC -DENABLE_PERF_MARKERS)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 

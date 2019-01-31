@@ -19,6 +19,7 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 #include <bullet3/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
@@ -142,6 +143,14 @@ void Terrain::clear() {
 	if (pVertices_)
 		free(pVertices_), pVertices_ = nullptr, nVertices_ = 0;
 	triangles_.clear();
+	if (physicsBody_) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBody_);
+		delete physicsBody_, physicsBody_ = nullptr;
+	}
+	if (physicsShape_)
+		delete physicsShape_, physicsShape_ = nullptr;
+	if (heightFieldValues_)
+		free(heightFieldValues_), heightFieldValues_ = nullptr;
 }
 
 void Terrain::loadTextures() {
@@ -198,6 +207,9 @@ void validateSettings(TerrainSettings const& s) {
 }
 
 void Terrain::generate(TerrainSettings const& settings) {
+#ifdef DEBUG
+	World::assertOnMainThread();
+#endif
 	validateSettings(settings);
 	clear();
 	settings_ = settings;
@@ -272,7 +284,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 		settings_.seaLevel,				// water level
 		terrainRadius,					// inner radius
 		seaBedRadius - terrainRadius,	// outer extent
-		0.05f,							// vertex density
+		max(0.05f, 2.f / terrainRadius),// vertex density
 		false							// constrain to circle
 	});
 }
@@ -370,6 +382,9 @@ void Terrain::computeTextureWeights() {
 }
 
 void Terrain::updateRenderBuffers() {
+#ifdef DEBUG
+	World::assertOnMainThread();
+#endif
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -387,29 +402,39 @@ void Terrain::updateRenderBuffers() {
 }
 
 void Terrain::updatePhysics() {
+#ifdef DEBUG
+	World::assertOnMainThread();
+#endif
 	// create array of height values:
-	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
+	if (heightFieldValues_)
+		free(heightFieldValues_), heightFieldValues_ = nullptr;
+	heightFieldValues_ = (btScalar*)malloc(sizeof(btScalar) * rows_ * cols_);
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
 			heightFieldValues_[i*cols_+j] = pVertices_[i*cols_+j].pos.y;
 	// create ground shape
+	if (physicsShape_)
+		delete physicsShape_, physicsShape_ = nullptr;
 	physicsShape_ = new btHeightfieldTerrainShape{cols_, rows_, heightFieldValues_, 1.f,
 							settings_.minElevation, settings_.maxElevation, 1, PHY_FLOAT, false};
 
 	// create ground body
-	if (!physicsBody_) {
-		btVector3 vPos(0.f, 0.f, 0.f);
-		btQuaternion qOrient = btQuaternion::getIdentity();
-		btRigidBody::btRigidBodyConstructionInfo cinfo {
-			0.f,		// mass
-			nullptr,
-			physicsShape_
-		};
-		cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
-		cinfo.m_friction = 0.5f;
-
-		physicsBody_ = new btRigidBody(cinfo);
+	if (physicsBody_) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBody_);
+		delete physicsBody_, physicsBody_ = nullptr;
 	}
+	btVector3 vPos(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
+	btQuaternion qOrient = btQuaternion::getIdentity();
+	btRigidBody::btRigidBodyConstructionInfo cinfo {
+		0.f,		// mass
+		nullptr,
+		physicsShape_
+	};
+	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
+	cinfo.m_friction = 0.5f;
+
+	physicsBody_ = new btRigidBody(cinfo);
+	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBody_);
 }
 
 void Terrain::draw(Viewport* vp) {

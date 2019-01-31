@@ -1,6 +1,8 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
+#include <bullet3/LinearMath/btScalar.h>
+
 #include <vector>
 
 struct TerrainSettings {
@@ -64,7 +66,7 @@ private:
 
 	btRigidBody* physicsBody_ = nullptr;
 	btHeightfieldTerrainShape* physicsShape_ = nullptr;
-	float *heightFieldValues_ = nullptr;
+	btScalar *heightFieldValues_ = nullptr;
 
 	void loadTextures();
 	void fixTriangleWinding();

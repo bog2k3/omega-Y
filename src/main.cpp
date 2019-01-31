@@ -60,6 +60,7 @@ bool slowMo = false;
 bool captureFrame = false;
 bool signalQuit = false;
 bool renderWireFrame = false;
+bool renderPhysicsDebug = false;
 
 physics::DebugDrawer* physDebugDraw = nullptr;
 
@@ -115,15 +116,20 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			pTerrain->generate(terrainSettings);
 			// reset the box:
-			//rp3d::Vector3 pos(0.f, terrainSettings.maxElevation + 10, 0.f);
-			//boxBody->setTransform({pos, rp3d::Quaternion{{1.f, 0.5f, 1.f}, PI/3}});
-			// apply a force to it to wake it up:
-			//boxBody->applyForceToCenterOfMass(rp3d::Vector3{0.f, 0.001f, 0.f});
+			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
+			btVector3 vPos{0.f, terrainSettings.maxElevation + 10, 0.f};
+			boxBody->setWorldTransform(btTransform{qOrient, vPos});
+			// wake up the box:
+			boxBody->activate(true);
 		}
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			renderWireFrame = !renderWireFrame;
 			pTerrain->setWireframeMode(renderWireFrame);
+		}
+	} else if (ev.key == GLFW_KEY_E) {
+		if (ev.type == InputEvent::EV_KEY_DOWN) {
+			renderPhysicsDebug = !renderPhysicsDebug;
 		}
 	}
 }
@@ -170,20 +176,27 @@ bool toggleMouseCapture() {
 void physTestInit() {
 	// create test body
 	boxShape = new btBoxShape({0.5f, 0.5f, 0.5f});
+	float mass = 100.f;
+	btVector3 boxInertia;
+	boxShape->calculateLocalInertia(mass, boxInertia);
 	btQuaternion qOrient{0.5f, 0.13f, 1.2f};
 	btVector3 vPos{0.f, terrainSettings.maxElevation + 10, 0.f};
-	float mass = 100.f;
 	btRigidBody::btRigidBodyConstructionInfo cinfo {
 		mass,
 		nullptr,
-		boxShape
+		boxShape,
+		boxInertia
 	};
 	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
-	cinfo.m_linearDamping = 0.1f;
+	cinfo.m_linearDamping = 0.01f;
 	cinfo.m_angularDamping = 0.01f;
 	cinfo.m_friction = 0.4f;
 
 	boxBody = new btRigidBody(cinfo);
+	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBody);
+
+	boxMesh = new Mesh();
+	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
 }
 
 void initSession(Camera* camera) {
@@ -204,22 +217,26 @@ void initSession(Camera* camera) {
 	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, glm::vec3{0.f, 0.f, 1.f});
 	player = sPlayer;
 	World::getInstance().takeOwnershipOf(sPlayer);
-	sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
 
-	playerInputHandler.setTargetObject(player);
+	//sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
+	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
+	//playerInputHandler.setTargetObject(player);
+	playerInputHandler.setTargetObject(freeCam);
 
 	physTestInit();
 }
 
 void physTestDebugDraw(Viewport* vp) {
+	if (renderPhysicsDebug)
+		World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
 	// draw the test body's representation:
-	/*rp3d::Transform tr = boxBody->getTransform();
+	btTransform tr = boxBody->getWorldTransform();
 	glm::mat4 matTr;
 	tr.getOpenGLMatrix(&matTr[0][0]);
 	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
 
 	// draw info about simulated body
-	rp3d::Transform bodyTr = boxBody->getTransform();
+	/*rp3d::Transform bodyTr = boxBody->getTransform();
 	auto pos = bodyTr.getPosition();
 	std::stringstream ss;
 	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
@@ -229,8 +246,12 @@ void physTestDebugDraw(Viewport* vp) {
 }
 
 void physTestDestroy() {
-	//if (boxBody)
-	//	physWld.destroyRigidBody(boxBody), boxBody = nullptr;
+	if (boxBody) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBody);
+		delete boxBody, boxBody = nullptr;
+		delete boxShape, boxShape = nullptr;
+	}
+	delete boxMesh;
 }
 
 void drawDebugTexts() {
@@ -242,6 +263,9 @@ void drawDebugTexts() {
 			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
 	GLText::get()->print("Q : toggle wireframe",
 			{20, 60, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
+	GLText::get()->print("E : toggle debug drawing of physics",
+			{20, 80, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
 			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
 
 	if (updatePaused) {
@@ -351,10 +375,10 @@ void initTerrain() {
 	terrainSettings.vertexDensity = 1.f;	// vertices per meter
 	terrainSettings.width = 200;
 	terrainSettings.length = 200;
-	terrainSettings.minElevation = -20;
+	terrainSettings.minElevation = -10;
 	terrainSettings.maxElevation = 30.f;
-	terrainSettings.seaLevel = -10.f;
-	terrainSettings.relativeRandomJitter = 0.8f;
+	terrainSettings.seaLevel = 0.f;
+	terrainSettings.relativeRandomJitter = 0.f;//0.8f;
 	terrainSettings.bigRoughness = 1.f;
 	terrainSettings.smallRoughness = 1.f;
 	pTerrain = new Terrain();
