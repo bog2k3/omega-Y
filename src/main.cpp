@@ -116,11 +116,15 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			pTerrain->generate(terrainSettings);
 			// reset the box:
-			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-			btVector3 vPos{0.f, terrainSettings.maxElevation + 10, 0.f};
-			boxBody->setWorldTransform(btTransform{qOrient, vPos});
+			//btQuaternion qOrient{0.5f, 0.13f, 1.2f};
+			//btVector3 vPos{0.f, terrainSettings.maxElevation + 10, 0.f};
+			//boxBody->setWorldTransform(btTransform{qOrient, vPos});
 			// wake up the box:
-			boxBody->activate(true);
+			//boxBody->activate(true);
+
+			auto sPlayer = player.lock();
+			if (sPlayer)
+				sPlayer->moveTo({0.f, terrainSettings.maxElevation + 10, 0.f});
 		}
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
@@ -193,7 +197,7 @@ void physTestInit() {
 	cinfo.m_friction = 0.4f;
 
 	boxBody = new btRigidBody(cinfo);
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBody);
+	//World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBody);
 
 	boxMesh = new Mesh();
 	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
@@ -218,10 +222,10 @@ void initSession(Camera* camera) {
 	player = sPlayer;
 	World::getInstance().takeOwnershipOf(sPlayer);
 
-	//sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
-	//playerInputHandler.setTargetObject(player);
-	playerInputHandler.setTargetObject(freeCam);
+	sCamCtrl->attachToEntity(player, {0.f, 0.f, 0.f});
+	playerInputHandler.setTargetObject(player);
+	//sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
+	//playerInputHandler.setTargetObject(freeCam);
 
 	physTestInit();
 }
@@ -378,7 +382,7 @@ void initTerrain() {
 	terrainSettings.minElevation = -10;
 	terrainSettings.maxElevation = 30.f;
 	terrainSettings.seaLevel = 0.f;
-	terrainSettings.relativeRandomJitter = 0.f;//0.8f;
+	terrainSettings.relativeRandomJitter = 0.8f;
 	terrainSettings.bigRoughness = 1.f;
 	terrainSettings.smallRoughness = 1.f;
 	pTerrain = new Terrain();
@@ -509,9 +513,9 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		world.reset();
 		physTestDestroy();
 		destroyPhysics();
-		world.reset();
 		renderer.unload();
 		deletePostProcessData();
 		Infrastructure::shutDown();

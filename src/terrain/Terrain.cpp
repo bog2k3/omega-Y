@@ -80,6 +80,8 @@ float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 
 Terrain::Terrain()
 {
+	LOGPREFIX("Terrain");
+
 	renderData_ = new RenderData();
 	renderData_->shaderProgram_ = Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag");
 	if (!renderData_->shaderProgram_) {
@@ -154,6 +156,7 @@ void Terrain::clear() {
 }
 
 void Terrain::loadTextures() {
+	LOGLN("Loading textures . . .");
 	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt3.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -195,6 +198,8 @@ void Terrain::loadTextures() {
 	renderData_->textures_[4].wHeight = 4.f;
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	LOGLN("Textures loaded.");
 }
 
 void validateSettings(TerrainSettings const& s) {
@@ -210,6 +215,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 #ifdef DEBUG
 	World::assertOnMainThread();
 #endif
+	LOGLN("Generating terrain . . .");
 	validateSettings(settings);
 	clear();
 	settings_ = settings;
@@ -266,6 +272,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 		}
 	}
 
+	LOGLN("Triangulating . . .");
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
 	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
@@ -273,13 +280,18 @@ void Terrain::generate(TerrainSettings const& settings) {
 	}
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
+	LOGLN("Computing displacements . . .");
 	computeDisplacements();
+	LOGLN("Computing normals . . .");
 	computeNormals();
+	LOGLN("Computing texture weights . . .");
 	computeTextureWeights();
 
+	LOGLN("Updating render and physics objects . . .");
 	updateRenderBuffers();
 	updatePhysics();
 
+	LOGLN("Generating water . . .");
 	pWater_->generate(WaterParams {
 		settings_.seaLevel,				// water level
 		terrainRadius,					// inner radius
@@ -287,6 +299,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 		max(0.05f, 2.f / terrainRadius),// vertex density
 		false							// constrain to circle
 	});
+	LOGLN("Done generating.");
 }
 
 void Terrain::fixTriangleWinding() {
