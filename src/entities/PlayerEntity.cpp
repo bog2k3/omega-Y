@@ -9,6 +9,8 @@
 #include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 #include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
+#include <bullet3/BulletDynamics/Character/btKinematicCharacterController.h>
+
 PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 direction)
 {
 #ifdef DEBUG
@@ -33,6 +35,7 @@ PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 direction)
 	cinfo.m_friction = 0.5f;
 
 	physicsBody_ = new btRigidBody(cinfo);
+	physicsBody_->setAngularFactor(0.f);
 	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBody_);
 }
 
