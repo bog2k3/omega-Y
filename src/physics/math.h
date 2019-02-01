@@ -16,7 +16,7 @@ inline glm::vec3 b2g(btVector3 const& v) {
 }
 
 inline glm::quat b2g(btQuaternion const& q) {
-	return glm::quat{q.x(), q.y(), q.z(), q.w()};
+	return glm::quat{q.w(), q.x(), q.y(), q.z()};
 }
 
 // GLM to Bullet functions -----------------------------------------------------------

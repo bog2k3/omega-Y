@@ -71,6 +71,7 @@ void FreeCamera::update(float dt) {
 
 	// compute rotation alteration based on inputs
 	auto deltaRot = frameRotateValues_;
-	transform_.rotateLocal(glm::quat(glm::vec3(deltaRot.y, deltaRot.x, 0.f)));
+	transform_.rotateWorld(glm::quat(glm::vec3(deltaRot.x, 0.f, 0.f)));
+	transform_.rotateLocal(glm::quat(glm::vec3(0.f, deltaRot.y, 0.f)));
 	frameRotateValues_ = glm::vec3(0.f);
 }

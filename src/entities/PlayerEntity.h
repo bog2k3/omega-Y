@@ -12,7 +12,8 @@ class btMotionState;
 class PlayerEntity : public Entity, public IUserControllable
 {
 public:
-	PlayerEntity(glm::vec3 position, glm::vec3 direction);
+	// heading is measured CCW from +Z axis (0.0 means looking down +Z)
+	PlayerEntity(glm::vec3 position, float heading);
 	virtual ~PlayerEntity() override;
 	virtual FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE | FunctionalityFlags::UPDATABLE; }
 	virtual unsigned getEntityType() const override { return EntityTypes::PLAYER; }

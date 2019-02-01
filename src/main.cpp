@@ -228,7 +228,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 
 	// free camera
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -0.5f, -4.f});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -1.5f, -4.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 
@@ -238,7 +238,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(sCamCtrl);
 
 	// player
-	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, glm::vec3{0.f, 0.f, 1.f});
+	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, 0.f);
 	player = sPlayer;
 	World::getInstance().takeOwnershipOf(sPlayer);
 
