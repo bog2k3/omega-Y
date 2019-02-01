@@ -6,32 +6,15 @@
 #include <glm/gtx/transform.hpp>
 
 FreeCamera::FreeCamera(glm::vec3 position, glm::vec3 direction)
-	: position_(position)
-	, direction_(direction)
 {
+	transform_.setPosition(position);
+	glm::vec3 up {0.f, 1.f, 0.f};
+	glm::mat4 mRot = buildMatrixFromOrientation(glm::vec3{0.f}, direction, up);
+	transform_.setOrientation(glm::quat(mRot));
 }
 
 FreeCamera::~FreeCamera()
 {
-}
-
-aabb FreeCamera::getAABB(bool requirePrecise) const {
-	glm::vec3 halfSize {0.5f, 0.5f, 0.5f};
-	return {position_ - halfSize, position_ + halfSize};
-}
-
-glm::mat4 FreeCamera::getTransform() const {
-	if (transformDirty_) {
-		// build local-to-world transformation matrix
-		glm::vec3 up {0.f, 1.f, 0.f};
-		glm::vec3 right = glm::cross(up, direction_);
-		transform_ = glm::transpose(buildMatrix(right, up, direction_, glm::vec3(0.f)));
-		transform_[3][0] = position_.x;
-		transform_[3][1] = position_.y;
-		transform_[3][2] = position_.z;
-		transformDirty_ = false;
-	}
-	return transform_;
 }
 
 void FreeCamera::move(direction dir) {
@@ -78,21 +61,16 @@ void FreeCamera::update(float dt) {
 		frameMoveValues_ /= fmv_len;	// normalize direction vector
 	frameMoveValues_ *= maxMoveSpeed;	// this vector now represents our target speed in camera space
 	// transform it into world space:
-	frameMoveValues_ = vec4xyz(getTransform() * glm::vec4(frameMoveValues_, 0.f));
+	frameMoveValues_ = transform_.orientation() * frameMoveValues_;
 	// how much ground we have to cover to reach that speed
 	glm::vec3 delta = frameMoveValues_ - speed_;
 	float factor = clamp(linearAcceleration * dt, 0.f, 1.f);
 	speed_ += delta * factor;
-	position_ += speed_ * dt;
+	transform_.moveWorld(speed_ * dt);
 	frameMoveValues_ = glm::vec3(0.f);
 
 	// compute rotation alteration based on inputs
-	glm::vec3 xAxisW = m4row(transform_, 0);	// camera's x-axis in world space
-	glm::vec3 yAxisW = {0.f, 1.f, 0.f};			// camera's y-axis in world space
 	auto deltaRot = frameRotateValues_;
-	auto rotMat = glm::rotate(deltaRot.x, xAxisW) * glm::rotate(deltaRot.y, yAxisW);
-	direction_ = glm::normalize(vec4xyz(rotMat * glm::vec4(direction_, 0)));
+	transform_.rotateLocal(glm::quat(glm::vec3(deltaRot.y, deltaRot.x, 0.f)));
 	frameRotateValues_ = glm::vec3(0.f);
-
-	transformDirty_ = true;
 }

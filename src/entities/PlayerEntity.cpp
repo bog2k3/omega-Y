@@ -54,28 +54,18 @@ void PlayerEntity::draw(Viewport* vp) {
 
 }
 
-aabb PlayerEntity::getAABB(bool requirePrecise) const {
-	// TODO base this on the model
-	//glm::vec3 halfSize {0.5f, 0.5f, 0.5f};
-	//return {position_ - halfSize, position_ + halfSize};
-	return aabb();
-}
-
-glm::mat4 PlayerEntity::getTransform() const {
-	glm::mat4 m;
-	btTransform btTrans;
-	physMotionState_->getWorldTransform(btTrans);
-	btTrans.getOpenGLMatrix(&m[0][0]);
-	return m;
-}
-
 void PlayerEntity::moveTo(glm::vec3 where) {
 	physicsBody_->setWorldTransform(btTransform{btQuaternion::getIdentity(), g2b(where)});
 	physicsBody_->activate();
 }
 
 void PlayerEntity::update(float dt) {
-	glm::mat4 crtTransf = getTransform();
+	// update transform from physics:
+	btTransform wTrans;
+	physMotionState_->getWorldTransform(wTrans);
+	transform_.setPosition(b2g(wTrans.getOrigin()));
+	transform_.setOrientation(b2g(wTrans.getRotation()));
+
 	// compute movement based on inputs
 	const float moveSpeed = 2.f * (running_ ? 2.f : 1.f); // m/s
 	const float jumpSpeed = 2.5f; // m/s
@@ -87,7 +77,7 @@ void PlayerEntity::update(float dt) {
 		verticalSpeed += jumpSpeed, jump_ = false;
 	glm::vec3 vSpeed = {vDir.x * moveSpeed, verticalSpeed, vDir.y * moveSpeed};
 	// transform speed in world space
-	vSpeed  = vec4xyz(crtTransf * glm::vec4(vSpeed, 0.f));
+	vSpeed = transform_.orientation() * vSpeed;
 	// apply it to the body:
 	physicsBody_->setLinearVelocity(g2b(vSpeed));
 	frameMoveValues_ = glm::vec2{0.f};

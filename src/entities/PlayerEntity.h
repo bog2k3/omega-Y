@@ -19,8 +19,6 @@ public:
 
 	virtual void update(float dt) override;
 	virtual void draw(Viewport* vp) override;
-	virtual aabb getAABB(bool requirePrecise=false) const override;
-	virtual glm::mat4 getTransform() const override;
 
 	virtual void move(direction dir) override;
 	virtual void toggleRun(bool on) override;
@@ -34,10 +32,6 @@ public:
 
 private:
 	//Mesh mesh_;
-	//glm::vec3 position_;
-	//glm::vec3 direction_;
-	//mutable glm::mat4 transform_;
-	//mutable bool transformDirty_ = true;
 
 	btRigidBody* physicsBody_ = nullptr;
 	btCapsuleShape* physicsShape_ = nullptr;
