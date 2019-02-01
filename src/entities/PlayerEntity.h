@@ -43,6 +43,11 @@ private:
 	btCapsuleShape* physicsShape_ = nullptr;
 	btMotionState* physMotionState_ = nullptr;
 
+	bool running_ = false;
+	bool jump_ = false;
+	glm::vec2 frameMoveValues_ {0.f};
+	glm::vec2 frameRotateValues_ {0.f};
+
 	//glm::vec3 speed_;
 };
 
