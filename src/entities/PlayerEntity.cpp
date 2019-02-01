@@ -7,6 +7,7 @@
 
 #include <bullet3/BulletCollision/CollisionShapes/btCapsuleShape.h>
 #include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
+#include <bullet3/LinearMath/btDefaultMotionState.h>
 #include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
 #include <bullet3/BulletDynamics/Character/btKinematicCharacterController.h>
@@ -25,13 +26,13 @@ PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 direction)
 	// create player body
 	btVector3 vPos = g2b(position);
 	btQuaternion qOrient = btQuaternion::getIdentity();
+	physMotionState_ = new btDefaultMotionState(btTransform{qOrient, vPos});
 	btRigidBody::btRigidBodyConstructionInfo cinfo {
 		mass,
-		nullptr,
+		physMotionState_,
 		physicsShape_,
 		inertia
 	};
-	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
 	cinfo.m_friction = 0.5f;
 
 	physicsBody_ = new btRigidBody(cinfo);
@@ -59,7 +60,9 @@ aabb PlayerEntity::getAABB(bool requirePrecise) const {
 
 glm::mat4 PlayerEntity::getTransform() const {
 	glm::mat4 m;
-	physicsBody_->getWorldTransform().getOpenGLMatrix(&m[0][0]);
+	btTransform btTrans;
+	physMotionState_->getWorldTransform(btTrans);
+	btTrans.getOpenGLMatrix(&m[0][0]);
 	return m;
 }
 

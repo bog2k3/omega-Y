@@ -36,6 +36,7 @@
 #include <boglfw/perf/perfPrint.h>
 
 #include <bullet3/btBulletDynamicsCommon.h>
+#include <bullet3/LinearMath/btDefaultMotionState.h>
 
 #include <GLFW/glfw3.h>
 
@@ -74,6 +75,7 @@ TerrainSettings terrainSettings;
 
 btRigidBody* boxBody = nullptr;
 btBoxShape* boxShape = nullptr;
+btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
@@ -81,7 +83,7 @@ template<> void update(std::function<void(float)> *fn, float dt) {
 }
 
 template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
-	const float fixedTimeStep = 1.f / 100;	// 100Hz update rate for physics
+	const float fixedTimeStep = 1.f / 120;	// 120Hz update rate for physics
 	const int max_substeps = 10;
 	wld->stepSimulation(dt, max_substeps, fixedTimeStep);
 }
@@ -202,13 +204,13 @@ void physTestInit() {
 	boxShape->calculateLocalInertia(mass, boxInertia);
 	btQuaternion qOrient{0.5f, 0.13f, 1.2f};
 	btVector3 vPos{2.f, terrainSettings.maxElevation + 10, 2.f};
+	boxMotionState = new btDefaultMotionState(btTransform{qOrient, vPos});
 	btRigidBody::btRigidBodyConstructionInfo cinfo {
 		mass,
-		nullptr,
+		boxMotionState,
 		boxShape,
 		boxInertia
 	};
-	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
 	cinfo.m_linearDamping = 0.01f;
 	cinfo.m_angularDamping = 0.01f;
 	cinfo.m_friction = 0.4f;
@@ -250,7 +252,8 @@ void physTestDebugDraw(Viewport* vp) {
 	if (renderPhysicsDebug)
 		World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
 	// draw the test body's representation:
-	btTransform tr = boxBody->getWorldTransform();
+	btTransform tr;
+	boxMotionState->getWorldTransform(tr);
 	glm::mat4 matTr;
 	tr.getOpenGLMatrix(&matTr[0][0]);
 	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
@@ -270,6 +273,7 @@ void physTestDestroy() {
 		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBody);
 		delete boxBody, boxBody = nullptr;
 		delete boxShape, boxShape = nullptr;
+		delete boxMotionState, boxMotionState = nullptr;
 	}
 	delete boxMesh;
 }
@@ -486,6 +490,13 @@ int main(int argc, char* argv[]) {
 
 		initSession(vp1->camera());
 
+		// precache GPU resources by rendering the first frame before first update
+		LOGLN("Precaching . . .");
+		gltBegin();
+		renderer.render();
+		gltEnd();
+		LOGLN("Done, we're now live.");
+
 		// initial update:
 		updateList.update(0);
 		GLFWInput::resetInputQueue();	// purge any input events that occured during window creation
@@ -506,7 +517,8 @@ int main(int argc, char* argv[]) {
 				realTime = newTime - initialTime;
 
 				// time step for simulation
-				float simDT = updatePaused ? 0 : realDT;
+				float maxFrameDT = 0.1f;	// cap the dt to avoid unwanted artifacts when framerate drops too much
+				float simDT = min(maxFrameDT, updatePaused ? 0 : realDT);
 				if (slowMo) {
 					simDT *= 0.1f;	// 10x slow-down factor
 				}

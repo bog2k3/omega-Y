@@ -7,6 +7,7 @@
 
 class btCapsuleShape;
 class btRigidBody;
+class btMotionState;
 
 class PlayerEntity : public Entity, public IUserControllable
 {
@@ -40,6 +41,7 @@ private:
 
 	btRigidBody* physicsBody_ = nullptr;
 	btCapsuleShape* physicsShape_ = nullptr;
+	btMotionState* physMotionState_ = nullptr;
 
 	//glm::vec3 speed_;
 };
