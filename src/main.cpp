@@ -1,4 +1,6 @@
 #include "physics/DebugDrawer.h"
+#include "physics/CollisionChecker.h"
+#include "physics/PhysBodyMeta.h"
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
 #include "PlayerInputHandler.h"
@@ -73,7 +75,7 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
 
-btRigidBody* boxBody = nullptr;
+PhysBodyMeta boxBodyMeta;
 btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
@@ -134,9 +136,9 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 			// reset the box:
 			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
 			btVector3 vPos{2.f, terrainSettings.maxElevation + 10, 2.f};
-			boxBody->setWorldTransform(btTransform{qOrient, vPos});
+			boxBodyMeta.bodyPtr->setWorldTransform(btTransform{qOrient, vPos});
 			// wake up the box:
-			boxBody->activate(true);
+			boxBodyMeta.bodyPtr->activate(true);
 
 			// reset player
 			auto sPlayer = player.lock();
@@ -215,8 +217,9 @@ void physTestInit() {
 	cinfo.m_angularDamping = 0.01f;
 	cinfo.m_friction = 0.4f;
 
-	boxBody = new btRigidBody(cinfo);
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBody);
+	boxBodyMeta.bodyPtr = new btRigidBody(cinfo);
+	boxBodyMeta.bodyPtr->setUserPointer(&boxBodyMeta);
+	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBodyMeta.bodyPtr);
 
 	boxMesh = new Mesh();
 	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
@@ -228,7 +231,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 
 	// free camera
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 1, 4}, glm::vec3{-4.3f, -1.5f, -4.f});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 20, 4}, glm::vec3{-4.3f, -1.5f, -4.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 
@@ -269,9 +272,9 @@ void physTestDebugDraw(Viewport* vp) {
 }
 
 void physTestDestroy() {
-	if (boxBody) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBody);
-		delete boxBody, boxBody = nullptr;
+	if (boxBodyMeta.bodyPtr) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBodyMeta.bodyPtr);
+		delete boxBodyMeta.bodyPtr, boxBodyMeta.bodyPtr = nullptr;
 		delete boxShape, boxShape = nullptr;
 		delete boxMotionState, boxMotionState = nullptr;
 	}
@@ -458,10 +461,11 @@ int main(int argc, char* argv[]) {
 		UpdateList continuousUpdateList;
 
 		UpdateList updateList;
+		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
+		updateList.add(&CollisionChecker::update);
+		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
 		updateList.add(&sigViewer);
-		updateList.add(&playerInputHandler);
-		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo

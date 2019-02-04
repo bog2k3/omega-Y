@@ -3,6 +3,7 @@
 
 #include "enttypes.h"
 #include "IUserControllable.h"
+#include "../physics/PhysBodyMeta.h"
 #include <boglfw/entities/Entity.h>
 
 class btCapsuleShape;
@@ -34,7 +35,7 @@ public:
 private:
 	//Mesh mesh_;
 
-	btRigidBody* physicsBody_ = nullptr;
+	PhysBodyMeta physicsBodyMeta_;
 	btCapsuleShape* physicsShape_ = nullptr;
 	btMotionState* physMotionState_ = nullptr;
 
@@ -42,6 +43,8 @@ private:
 	bool jump_ = false;
 	glm::vec2 frameMoveValues_ {0.f};
 	glm::vec2 frameRotateValues_ {0.f};
+
+	void onCollision(CollisionEvent const& ev);
 
 	//glm::vec3 speed_;
 };

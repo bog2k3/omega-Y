@@ -1,6 +1,11 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
+#include "../physics/PhysBodyMeta.h"
+#include "../entities/enttypes.h"
+
+#include <boglfw/entities/Entity.h>
+
 #include <bullet3/LinearMath/btScalar.h>
 
 #include <vector>
@@ -33,11 +38,14 @@ class Water;
 class btHeightfieldTerrainShape;
 class btRigidBody;
 
-class Terrain
+class Terrain : public Entity
 {
 public:
 	Terrain();
 	virtual ~Terrain();
+
+	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
+	unsigned getEntityType() const override { return EntityTypes::TERRAIN; }
 
 	// generate the terrain mesh according to specified settings. This will overwrite the existing data.
 	void generate(TerrainSettings const& settings);
@@ -64,7 +72,7 @@ private:
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
 
-	btRigidBody* physicsBody_ = nullptr;
+	PhysBodyMeta physicsBodyMeta_;
 	btHeightfieldTerrainShape* physicsShape_ = nullptr;
 	btScalar *heightFieldValues_ = nullptr;
 

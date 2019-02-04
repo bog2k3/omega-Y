@@ -2,9 +2,10 @@
 #define __ENTTYPES_H__
 
 namespace EntityTypes {
-	enum GameEntityTypes {
-		FREE_CAMERA				= 101,
+	enum GameEntityTypes : unsigned {
+		FREE_CAMERA				= 101,	// we start at 101 to avoid collision with EntityTypes::EType from boglfw
 		PLAYER					= 102,
+		TERRAIN					= 103,
 	};
 } // namespace
 

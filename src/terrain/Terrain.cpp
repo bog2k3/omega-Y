@@ -78,8 +78,7 @@ float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 			0.f;
 }
 
-Terrain::Terrain()
-{
+Terrain::Terrain() {
 	LOGPREFIX("Terrain");
 
 	renderData_ = new RenderData();
@@ -131,6 +130,9 @@ Terrain::Terrain()
 
 	loadTextures();
 
+	physicsBodyMeta_.entityPtr = this;
+	physicsBodyMeta_.entityType = this->getEntityType();
+
 	pWater_ = new Water();
 }
 
@@ -145,9 +147,9 @@ void Terrain::clear() {
 	if (pVertices_)
 		free(pVertices_), pVertices_ = nullptr, nVertices_ = 0;
 	triangles_.clear();
-	if (physicsBody_) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBody_);
-		delete physicsBody_, physicsBody_ = nullptr;
+	if (physicsBodyMeta_.bodyPtr) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
+		delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
 	}
 	if (physicsShape_)
 		delete physicsShape_, physicsShape_ = nullptr;
@@ -432,9 +434,9 @@ void Terrain::updatePhysics() {
 							settings_.minElevation, settings_.maxElevation, 1, PHY_FLOAT, false};
 
 	// create ground body
-	if (physicsBody_) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBody_);
-		delete physicsBody_, physicsBody_ = nullptr;
+	if (physicsBodyMeta_.bodyPtr) {
+		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
+		delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
 	}
 	btVector3 vPos(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
 	btQuaternion qOrient = btQuaternion::getIdentity();
@@ -446,8 +448,9 @@ void Terrain::updatePhysics() {
 	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
 	cinfo.m_friction = 0.5f;
 
-	physicsBody_ = new btRigidBody(cinfo);
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBody_);
+	physicsBodyMeta_.bodyPtr = new btRigidBody(cinfo);
+	physicsBodyMeta_.bodyPtr->setUserPointer(&physicsBodyMeta_);
+	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBodyMeta_.bodyPtr);
 }
 
 void Terrain::draw(Viewport* vp) {

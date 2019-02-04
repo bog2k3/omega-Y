@@ -36,16 +36,22 @@ PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
 	};
 	cinfo.m_friction = 0.5f;
 
-	physicsBody_ = new btRigidBody(cinfo);
-	physicsBody_->setAngularFactor(0.f);
-	physicsBody_->setSleepingThresholds(0.f, 0.f);	// prevent player body from falling asleep
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBody_);
+	physicsBodyMeta_.entityPtr = this;
+	physicsBodyMeta_.entityType = getEntityType();
+	physicsBodyMeta_.bodyPtr = new btRigidBody(cinfo);
+	physicsBodyMeta_.bodyPtr->setUserPointer(&physicsBodyMeta_);
+	physicsBodyMeta_.bodyPtr->setAngularFactor(0.f);
+	physicsBodyMeta_.bodyPtr->setSleepingThresholds(0.f, 0.f);	// prevent player body from falling asleep
+	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBodyMeta_.bodyPtr);
+
+	physicsBodyMeta_.collisionCfg[EntityTypes::TERRAIN] = true;
+	physicsBodyMeta_.onCollision.add(std::bind(&PlayerEntity::onCollision, this, std::placeholders::_1));
 }
 
 PlayerEntity::~PlayerEntity()
 {
-	World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBody_);
-	delete physicsBody_, physicsBody_ = nullptr;
+	World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
+	delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
 	delete physicsShape_, physicsShape_ = nullptr;
 	delete physMotionState_, physMotionState_ = nullptr;
 }
@@ -55,8 +61,8 @@ void PlayerEntity::draw(Viewport* vp) {
 }
 
 void PlayerEntity::moveTo(glm::vec3 where) {
-	physicsBody_->setWorldTransform(btTransform{btQuaternion::getIdentity(), g2b(where)});
-	physicsBody_->activate();
+	physicsBodyMeta_.bodyPtr->setWorldTransform(btTransform{btQuaternion::getIdentity(), g2b(where)});
+	physicsBodyMeta_.bodyPtr->activate();
 }
 
 void PlayerEntity::update(float dt) {
@@ -72,7 +78,7 @@ void PlayerEntity::update(float dt) {
 
 	float len = glm::length(frameMoveValues_);
 	glm::vec2 vDir = len > 0 ? frameMoveValues_ / len : glm::vec2{0.f, 0.f};
-	float verticalSpeed = physicsBody_->getLinearVelocity().getY();
+	float verticalSpeed = physicsBodyMeta_.bodyPtr->getLinearVelocity().getY();
 	if (jump_)
 		verticalSpeed += jumpSpeed, jump_ = false;
 	glm::vec3 vSpeed = {vDir.x * moveSpeed, 0.f, vDir.y * moveSpeed};
@@ -80,17 +86,17 @@ void PlayerEntity::update(float dt) {
 	vSpeed = transform_.orientation() * vSpeed;
 	vSpeed.y = verticalSpeed;
 	// apply it to the body:
-	physicsBody_->setLinearVelocity(g2b(vSpeed));
+	physicsBodyMeta_.bodyPtr->setLinearVelocity(g2b(vSpeed));
 	frameMoveValues_ = glm::vec2{0.f};
 
 	// compute rotation alteration based on inputs
-	btTransform realTr = physicsBody_->getWorldTransform();	// we need to operate on the 'real' (non-interpolated) transform here
+	btTransform realTr = physicsBodyMeta_.bodyPtr->getWorldTransform();	// we need to operate on the 'real' (non-interpolated) transform here
 	auto lRot = glm::quat(glm::vec3(0.f, frameRotateValues_.y, 0.f));
 	auto wRot = glm::quat(glm::vec3(frameRotateValues_.x, 0.f, 0.f));
 	auto rot = b2g(realTr.getRotation());
 	rot = lRot * rot * wRot;
 	realTr.setRotation(g2b(rot));
-	physicsBody_->setWorldTransform(realTr);
+	physicsBodyMeta_.bodyPtr->setWorldTransform(realTr);
 	frameRotateValues_ = glm::vec2{0.f};
 }
 
@@ -134,4 +140,12 @@ void PlayerEntity::rotate(direction dir, float angle) {
 
 void PlayerEntity::setActionState(int actionId, bool on) {
 
+}
+
+void PlayerEntity::onCollision(CollisionEvent const& ev) {
+	switch (ev.pOtherMeta->entityType) {
+		case EntityTypes::TERRAIN:
+			LOGLN("collision with terrain");
+			break;
+	}
 }
