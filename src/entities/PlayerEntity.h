@@ -41,12 +41,11 @@ private:
 
 	bool running_ = false;
 	bool jump_ = false;
+	bool canJump_ = false;
 	glm::vec2 frameMoveValues_ {0.f};
 	glm::vec2 frameRotateValues_ {0.f};
 
 	void onCollision(CollisionEvent const& ev);
-
-	//glm::vec3 speed_;
 };
 
 #endif // PLAYERENTITY_H

@@ -66,6 +66,8 @@ void PlayerEntity::moveTo(glm::vec3 where) {
 }
 
 void PlayerEntity::update(float dt) {
+	canJump_ = false;
+
 	// update transform from physics:
 	btTransform wTrans;
 	physMotionState_->getWorldTransform(wTrans);	// we get the interpolated transform here
@@ -111,7 +113,8 @@ void PlayerEntity::move(direction dir) {
 		case IUserControllable::RIGHT:
 			frameMoveValues_.x += 1.f; break;
 		case IUserControllable::UP:
-			jump_ = true; break;
+			if (canJump_)
+				jump_ = true, canJump_ = false; break;
 		case IUserControllable::DOWN:
 			break;
 		default:
@@ -145,7 +148,7 @@ void PlayerEntity::setActionState(int actionId, bool on) {
 void PlayerEntity::onCollision(CollisionEvent const& ev) {
 	switch (ev.pOtherMeta->entityType) {
 		case EntityTypes::TERRAIN:
-			LOGLN("collision with terrain");
+			canJump_ = true;
 			break;
 	}
 }
