@@ -5,6 +5,7 @@
 #include "entities/PlayerEntity.h"
 #include "PlayerInputHandler.h"
 #include "terrain/Terrain.h"
+#include "sky/SkyBox.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Renderer.h>
@@ -74,6 +75,7 @@ PlayerInputHandler playerInputHandler;
 
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
+SkyBox* pSkyBox = nullptr;
 
 PhysBodyMeta boxBodyMeta(nullptr, 0);
 btBoxShape* boxShape = nullptr;
@@ -421,6 +423,11 @@ void initTerrain() {
 	pTerrain->generate(terrainSettings);
 }
 
+void initSky() {
+	pSkyBox = new SkyBox();
+	pSkyBox->load("data/textures/sky/1");
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -453,6 +460,9 @@ int main(int argc, char* argv[]) {
 		randSeed(time(NULL));
 		LOGLN("RAND seed: " << rand_seed);
 
+		initTerrain();
+		initSky();
+
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
 				-0.1f, 																		// z
@@ -466,6 +476,7 @@ int main(int argc, char* argv[]) {
 		updateList.add(&CollisionChecker::update);
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
+		updateList.add(pSkyBox);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -481,14 +492,13 @@ int main(int argc, char* argv[]) {
 			drawDebugTexts();
 		};
 
-		initTerrain();
-
 		std::vector<drawable> drawList;
+		drawList.push_back(pSkyBox);
+		drawList.push_back(&physTestDebugDraw);
+		drawList.push_back(pTerrain);
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
-		drawList.push_back(&physTestDebugDraw);
-		drawList.push_back(pTerrain);
 
 		vp1->setDrawList(drawList);
 
