@@ -3,11 +3,9 @@
 
 #include <bullet3/LinearMath/btIDebugDraw.h>
 
-namespace physics
-{
+namespace physics {
 
-class DebugDrawer : public btIDebugDraw
-{
+class DebugDrawer : public btIDebugDraw {
 public:
 	DebugDrawer();
 	virtual ~DebugDrawer() override;
@@ -31,6 +29,6 @@ private:
 	DefaultColors colors_;
 };
 
-}
+} // namespace
 
 #endif // DebugDrawer_H

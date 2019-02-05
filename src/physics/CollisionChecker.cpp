@@ -37,7 +37,7 @@ void checkCollision(PhysBodyMeta* pA, PhysBodyMeta* pB, btPersistentManifold* co
 void CollisionChecker::update(float dt) {
 	auto physWld = World::getGlobal<btDiscreteDynamicsWorld>();
 	// Browse all collision pairs
-    int numManifolds = physWld->getDispatcher()->getNumManifolds();
+	int numManifolds = physWld->getDispatcher()->getNumManifolds();
 	for (int i=0; i<numManifolds; i++) {
 		btPersistentManifold* contactManifold = physWld->getDispatcher()->getManifoldByIndexInternal(i);
 		PhysBodyMeta* pMetaA = (PhysBodyMeta*)contactManifold->getBody0()->getUserPointer();

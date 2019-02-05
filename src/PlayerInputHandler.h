@@ -6,8 +6,7 @@
 class InputEvent;
 class IUserControllable;
 
-class PlayerInputHandler
-{
+class PlayerInputHandler {
 public:
 	PlayerInputHandler();
 	~PlayerInputHandler();
@@ -22,13 +21,13 @@ public:
 		RUN,
 		ROTATE_YAW,
 		ROTATE_PITCH,
-		
+
 		CUSTOM_ACTION_1,
 		CUSTOM_ACTION_2,
 		CUSTOM_ACTION_3,
 		CUSTOM_ACTION_4,
 		CUSTOM_ACTION_5,
-		
+
 		CUSTOM_ACTION_LAST,
 
 		ALL_ACTIONS
@@ -53,7 +52,7 @@ public:
 
 	void handleInputEvent(InputEvent& ev);
 	void update(float dt);
-	
+
 	void setTargetObject(std::weak_ptr<IUserControllable> target) { targetObj_ = target; }
 
 private:

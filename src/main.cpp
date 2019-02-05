@@ -85,7 +85,7 @@ template<> void update(std::function<void(float)> *fn, float dt) {
 }
 
 template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
-	const float fixedTimeStep = 1.f / 120;	// 120Hz update rate for physics
+	const float fixedTimeStep = 1.f / 60;	// 120Hz update rate for physics
 	const int max_substeps = 10;
 	wld->stepSimulation(dt, max_substeps, fixedTimeStep);
 }
@@ -459,13 +459,13 @@ int main(int argc, char* argv[]) {
 				{20, 10, ViewportCoord::percent}); 											// size
 
 		UpdateList continuousUpdateList;
+		continuousUpdateList.add(&sigViewer);
 
 		UpdateList updateList;
 		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 		updateList.add(&CollisionChecker::update);
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
-		updateList.add(&sigViewer);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo

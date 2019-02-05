@@ -5,8 +5,7 @@
 #include "enttypes.h"
 #include <boglfw/entities/Entity.h>
 
-class FreeCamera : public Entity, public IUserControllable
-{
+class FreeCamera : public Entity, public IUserControllable {
 public:
 	FreeCamera(glm::vec3 position, glm::vec3 direction);
 	virtual ~FreeCamera() override;

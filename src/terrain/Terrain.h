@@ -38,8 +38,7 @@ class Water;
 class btHeightfieldTerrainShape;
 class btRigidBody;
 
-class Terrain : public Entity
-{
+class Terrain : public Entity {
 public:
 	Terrain();
 	virtual ~Terrain();

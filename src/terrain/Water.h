@@ -16,28 +16,27 @@ class Viewport;
 struct RenderData;
 struct Triangle;
 
-class Water
-{
+class Water {
 public:
 	Water();
 	virtual ~Water();
-	
+
 	void generate(WaterParams params);
-	
+
 	void update(float dt);
 	void draw(Viewport* v);
-	
+
 	struct WaterVertex;
 
 private:
 	struct RenderData;
-	
+
 	WaterParams params_;
 	RenderData *renderData_ = nullptr;
 	WaterVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
-	
+
 	void loadTextures();
 	void validateParams(WaterParams const& p);
 	void clear();

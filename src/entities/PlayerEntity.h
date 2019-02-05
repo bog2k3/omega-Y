@@ -10,8 +10,7 @@ class btCapsuleShape;
 class btRigidBody;
 class btMotionState;
 
-class PlayerEntity : public Entity, public IUserControllable
-{
+class PlayerEntity : public Entity, public IUserControllable {
 public:
 	// heading is measured CCW from +Z axis (0.0 means looking down +Z)
 	PlayerEntity(glm::vec3 position, float heading);
