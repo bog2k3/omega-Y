@@ -450,7 +450,7 @@ int main(int argc, char* argv[]) {
 		auto vp1 = vp.get();
 		vp1->setBkColor({0.f, 0.f, 0.f});
 		vp1->camera()->setFOV(PI/2.5f);
-		vp1->camera()->setZPlanes(0.15f, 250.f);
+		vp1->camera()->setZPlanes(0.15f, 500.f);
 		renderer.addViewport("main", std::move(vp));
 
 		initWorld();
