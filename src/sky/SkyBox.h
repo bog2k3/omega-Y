@@ -11,6 +11,8 @@ struct SkyBoxGenerationParams {
 struct CloudsGenerationParams {
 };
 
+// TODO - generate dynamic sky and clouds https://gamedev.stackexchange.com/questions/35724/how-can-i-easily-create-cloud-texture-maps?newreg=ad99d92c77b84ac496492f507a7151c4
+
 class SkyBox {
 public:
 	SkyBox();

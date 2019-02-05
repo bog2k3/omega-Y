@@ -3,6 +3,7 @@
 
 #include "../physics/PhysBodyMeta.h"
 #include "../entities/enttypes.h"
+#include "../BSP/BSP.h"
 
 #include <boglfw/entities/Entity.h>
 
