@@ -75,7 +75,7 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainSettings terrainSettings;
 
-PhysBodyMeta boxBodyMeta;
+PhysBodyMeta boxBodyMeta(nullptr, 0);
 btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;

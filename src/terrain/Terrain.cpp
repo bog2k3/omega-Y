@@ -78,7 +78,9 @@ float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 			0.f;
 }
 
-Terrain::Terrain() {
+Terrain::Terrain()
+	: physicsBodyMeta_(this, EntityTypes::TERRAIN)
+{
 	LOGPREFIX("Terrain");
 
 	renderData_ = new RenderData();
@@ -129,9 +131,6 @@ Terrain::Terrain() {
 	glBindVertexArray(0);
 
 	loadTextures();
-
-	physicsBodyMeta_.entityPtr = this;
-	physicsBodyMeta_.entityType = this->getEntityType();
 
 	pWater_ = new Water();
 }

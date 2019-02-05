@@ -13,6 +13,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
+	: physicsBodyMeta_(this, EntityTypes::PLAYER)
 {
 #ifdef DEBUG
 	World::assertOnMainThread();
@@ -36,8 +37,6 @@ PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
 	};
 	cinfo.m_friction = 0.5f;
 
-	physicsBodyMeta_.entityPtr = this;
-	physicsBodyMeta_.entityType = getEntityType();
 	physicsBodyMeta_.bodyPtr = new btRigidBody(cinfo);
 	physicsBodyMeta_.bodyPtr->setUserPointer(&physicsBodyMeta_);
 	physicsBodyMeta_.bodyPtr->setAngularFactor(0.f);

@@ -28,8 +28,12 @@ struct CollisionEvent {
 
 // every btCollisionObject in the world has a userPointer to this struct:
 struct PhysBodyMeta {
-	unsigned entityType = 0;		// type of associated entity
-	Entity* entityPtr = nullptr;	// pointer to associated entity
+	PhysBodyMeta(Entity* entityPtr, unsigned entityType)
+		: entityType(entityType), entityPtr(entityPtr) {
+	}
+
+	const unsigned entityType;		// type of associated entity
+	const Entity* entityPtr;		// pointer to associated entity
 	btRigidBody* bodyPtr = nullptr;	// pointer to the rigid body (or nullptr if the btCollisionObject is not a btRigidBody)
 
 	// enables generating collision events of the associated body against other entities bodies
