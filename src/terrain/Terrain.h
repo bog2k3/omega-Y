@@ -36,6 +36,7 @@ struct TerrainSettings {
 class Viewport;
 struct Triangle;
 class Water;
+class TriangleAABBGenerator;
 class btHeightfieldTerrainShape;
 class btRigidBody;
 
@@ -72,6 +73,7 @@ private:
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
+	TriangleAABBGenerator* aabbGenerator_ = nullptr;
 	BSPTree<unsigned, false> *pBSP_ = nullptr;
 
 	PhysBodyMeta physicsBodyMeta_;

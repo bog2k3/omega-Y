@@ -80,7 +80,7 @@ float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 
 class TriangleAABBGenerator : public AABBGeneratorInterface<unsigned> {
 public:
-	Terrain* pTerrain_;
+	TriangleAABBGenerator(Terrain* terrain) : pTerrain_(terrain) {}
 	virtual AABB getAABB(unsigned const& i) override {
 		// compute the AABB for terrain triangle at index i;
 		// TODO: speed up by caching AABBs for triangles
@@ -92,6 +92,8 @@ public:
 		ret.expand(*p3);
 		return ret;
 	}
+private:
+	Terrain* pTerrain_;
 };
 
 Terrain::Terrain()
@@ -149,6 +151,8 @@ Terrain::Terrain()
 	loadTextures();
 
 	pWater_ = new Water();
+
+	aabbGenerator_ = new TriangleAABBGenerator(this);
 }
 
 Terrain::~Terrain()
@@ -156,6 +160,7 @@ Terrain::~Terrain()
 	clear();
 	delete renderData_, renderData_ = nullptr;
 	delete pWater_, pWater_ = nullptr;
+	delete aabbGenerator_, aabbGenerator_ = nullptr;
 }
 
 void Terrain::clear() {
@@ -170,6 +175,8 @@ void Terrain::clear() {
 		delete physicsShape_, physicsShape_ = nullptr;
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
+	if (pBSP_)
+		delete pBSP_, pBSP_ = nullptr;
 }
 
 void Terrain::loadTextures() {
@@ -303,6 +310,15 @@ void Terrain::generate(TerrainSettings const& settings) {
 	computeNormals();
 	LOGLN("Computing texture weights . . .");
 	computeTextureWeights();
+
+	LOGLN("Creating Binary Space Partitioning tree . . .")
+	std::vector<unsigned> triIndices;
+	triIndices.reserve(triangles_.size());
+	for (unsigned i=0; i<triangles_.size(); i++)
+		triIndices.push_back(i);
+	glm::ivec3 bspMaxLayers { 100, 1, 100 };
+	glm::vec3 bspMinCellSize { 2.f, 1000.f, 2.f };
+	pBSP_ = new BSPTree<unsigned, false>(aabbGenerator_, bspMaxLayers, bspMinCellSize, triIndices.data(), triIndices.size());
 
 	LOGLN("Updating render and physics objects . . .");
 	updateRenderBuffers();

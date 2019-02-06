@@ -13,6 +13,13 @@
 
 // ----------------------------- Helper declarations here --------------------------------------------//
 
+template<class ValueType>
+class AABBGeneratorInterface {
+public:
+	// return the axis-aligned bounding box for a given value
+	virtual AABB getAABB(ValueType const& v) = 0;
+};
+
 template<class ValueType, bool dynamic>
 class BSPTree;
 
@@ -27,26 +34,17 @@ public:
 protected:
 	friend class BSPTree<ValueType, dynamic>;
 
-	BSPNode(node_type* parent, AABB aabb, std::vector<ValueType> &&values);
-	void split(int splitDirection, glm::ivec3 const& maxLayers, glm::vec3 const& minCellSize);
+	BSPNode(AABBGeneratorInterface<ValueType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ValueType> &&values);
+	void split(glm::ivec3 const& maxLayers, glm::vec3 const& minCellSize);
 
+	AABBGeneratorInterface<ValueType>* aabbGenerator_ = nullptr;
 	AABB aabb_;
 	std::vector<ValueType> values_;
 	node_type *negative_ = nullptr;
 	node_type *positive_ = nullptr;
 	node_type *parent_ = nullptr;
-	glm::ivec3 depth_ {0};
-	int splitDirection_ = 0;	// 1=X, 2=Y, 3=Z
+	glm::ivec3 depth_ {1, 1, 1};
 	glm::vec4 splitPlane_ {0.f};	//x=a, y=b, z=c, w=d
-};
-
-// ----------------------------- AABBGeneratorInterface --------------------------------------------//
-
-template<class ValueType>
-class AABBGeneratorInterface {
-public:
-	// return the axis-aligned bounding box for a given value
-	virtual AABB getAABB(ValueType const& v) = 0;
 };
 
 // -------------------------------------------------------------------------------------------------//
