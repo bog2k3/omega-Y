@@ -78,6 +78,22 @@ float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
 			0.f;
 }
 
+class TriangleAABBGenerator : public AABBGeneratorInterface<unsigned> {
+public:
+	Terrain* pTerrain_;
+	virtual AABB getAABB(unsigned const& i) override {
+		// compute the AABB for terrain triangle at index i;
+		// TODO: speed up by caching AABBs for triangles
+		glm::vec3* p1 = &pTerrain_->pVertices_[pTerrain_->triangles_[i].iV1].pos;
+		glm::vec3* p2 = &pTerrain_->pVertices_[pTerrain_->triangles_[i].iV2].pos;
+		glm::vec3* p3 = &pTerrain_->pVertices_[pTerrain_->triangles_[i].iV3].pos;
+		AABB ret(*p1, *p1);
+		ret.expand(*p2);
+		ret.expand(*p3);
+		return ret;
+	}
+};
+
 Terrain::Terrain()
 	: physicsBodyMeta_(this, EntityTypes::TERRAIN)
 {

@@ -60,6 +60,7 @@ public:
 
 private:
 	struct RenderData;
+	friend class TriangleAABBGenerator;
 
 	unsigned rows_ = 0;
 	unsigned cols_ = 0;
@@ -71,6 +72,7 @@ private:
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
+	BSPTree<unsigned, false> *pBSP_ = nullptr;
 
 	PhysBodyMeta physicsBodyMeta_;
 	btHeightfieldTerrainShape* physicsShape_ = nullptr;
