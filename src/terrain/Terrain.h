@@ -3,6 +3,8 @@
 
 #include "../physics/PhysBodyMeta.h"
 #include "../entities/enttypes.h"
+
+#define ENABLE_BSP_DEBUG_DRAW
 #include "../BSP/BSP.h"
 
 #include <boglfw/entities/Entity.h>

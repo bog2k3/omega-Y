@@ -534,4 +534,6 @@ void Terrain::draw(Viewport* vp) {
 		glLineWidth(1.f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
+
+	BSPDebugDraw::draw(*pBSP_);
 }
