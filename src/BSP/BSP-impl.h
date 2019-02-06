@@ -7,34 +7,36 @@
 // ----------------------------- Template implementation follows --------------------------------------------//
 // ----------------------------------------------------------------------------------------------------------//
 
-template<class ValueType, bool dynamic>
-BSPTree<ValueType, dynamic>
-::BSPTree(AABBGeneratorInterface<ValueType> *pAABBGenerator, glm::ivec3 const& maxLayers,
-			glm::vec3 const& minCellSize, ValueType* pValues, unsigned nValues) {
-	const float inf = 1.e10f;
-	AABB rootAABB(glm::vec3(-inf, -inf, -inf), glm::vec3(inf, inf, inf));
-	std::vector<ValueType> values;
-	values.reserve(nValues);
-	for (unsigned i=0; i<nValues; i++)
-		values.push_back(pValues[i]);
-	root_ = new node_type(pAABBGenerator, (node_type*)nullptr, rootAABB, std::move(values));
-	root_->split(maxLayers, minCellSize);
+template<class ObjectType, bool dynamic>
+BSPTree<ObjectType, dynamic>
+::BSPTree(BSPConfig const& config, AABBGeneratorInterface<object_type>* pAABBGenerator, std::vector<object_type> &&objects) {
+	AABB rootAABB;
+	if (config.targetVolume.isEmpty()) {
+		// compute from objects
+		for (auto &obj : objects)
+			rootAABB.expand(pAABBGenerator->getAABB(obj));
+	} else
+		rootAABB = config.targetVolume;
+
+	root_ = new node_type(pAABBGenerator, nullptr, rootAABB, std::move(objects));
+	root_->split(config);
 }
 
-template<class ValueType, bool dynamic>
-BSPNode<ValueType, dynamic>
-::BSPNode(AABBGeneratorInterface<ValueType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ValueType> &&values)
+template<class ObjectType, bool dynamic>
+BSPNode<ObjectType, dynamic>
+::BSPNode(AABBGeneratorInterface<ObjectType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ObjectType> &&objects)
 	: aabbGenerator_(aabbGenerator)
-	, parent_(parent)
 	, aabb_(aabb)
-	, values_(std::move(values))
+	, objects_(std::move(objects))
+	, parent_(parent)
 {
 }
 
-template<class ValueType, bool dynamic>
+template<class ObjectType, bool dynamic>
 void
-BSPNode<ValueType, dynamic>
-::split(glm::ivec3 const& maxLayers, glm::vec3 const& minCellSize) {
+BSPNode<ObjectType, dynamic>::split(BSPConfig const& config) {
+	if (objects_.size() <= config.minObjects)
+		return; // too few objects to split
 	// determine the potential split axes:
 	glm::vec3 crtCellSize = aabb_.size();
 	int splitAxes[3] {0, 1, 2};
@@ -47,10 +49,8 @@ BSPNode<ValueType, dynamic>
 	for (int i=0; i<3; i++) {
 		int splitAxis = splitAxes[i];
 		// we must decide if the split on the current axis is actually possible according to the rules
-		glm::ivec3 addedDepth {0};
-		addedDepth[splitAxis] = 1;
-		if ((depth_ + addedDepth)[splitAxis] > maxLayers[splitAxis])
-			continue; // we would exceed maxLayers in the requested direction so we don't split on this axis
+		if (config.maxDepth[splitAxis] != 0 && (depth_[splitAxis] + 1) > config.maxDepth[splitAxis])
+			continue; // we would exceed maxDepth in the requested direction so we don't split on this axis
 		// compute the new AABBs of the would-be child nodes
 		float splitCoord = (aabb_.vMin[splitAxis] + aabb_.vMax[splitAxis]) * 0.5f;
 		AABB aabbNegative(aabb_);
@@ -58,36 +58,36 @@ BSPNode<ValueType, dynamic>
 		AABB aabbPositive(aabb_);
 		aabbPositive.vMin[splitAxis] = splitCoord;
 		// check if the AABBs of the children are not smaller than the minCellSize
-		if (aabbNegative.size()[splitAxis] < minCellSize[splitAxis]
-			|| aabbPositive.size()[splitAxis] < minCellSize[splitAxis])
+		if (aabbNegative.size()[splitAxis] < config.minCellSize[splitAxis]
+			|| aabbPositive.size()[splitAxis] < config.minCellSize[splitAxis])
 			continue; // too small would-be cells, we don't split on this axis
 
 		// all right, now we split
 		splitPlane_[splitAxis] = 1.f;
 		splitPlane_.w = -splitCoord;
-		std::vector<ValueType> valuesNeg;
-		std::vector<ValueType> valuesPos;
-		for (unsigned k=0; k<values_.size(); k++) {
-			switch(aabbGenerator_->getAABB(values_[k]).qualifyPlane(splitPlane_)) {
+		std::vector<ObjectType> objectsNeg;
+		std::vector<ObjectType> objectsPos;
+		for (unsigned k=0; k<objects_.size(); k++) {
+			switch(aabbGenerator_->getAABB(objects_[k]).qualifyPlane(splitPlane_)) {
 				case 0:
-					valuesNeg.push_back(values_[k]);
-					valuesPos.push_back(values_[k]);
+					objectsNeg.push_back(objects_[k]);
+					objectsPos.push_back(objects_[k]);
 					break;
 				case 1:
-					valuesPos.push_back(values_[k]);
+					objectsPos.push_back(objects_[k]);
 					break;
 				case -1:
-					valuesNeg.push_back(values_[k]);
+					objectsNeg.push_back(objects_[k]);
 					break;
 				default:
 					assertDbg("wtf");
 					break;
 			}
 		}
-		negative_ = new BSPNode<ValueType, dynamic>(aabbGenerator_, this, aabbNegative, std::move(valuesNeg));
-		positive_ = new BSPNode<ValueType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(valuesPos));
-		negative_->split(maxLayers, minCellSize);
-		positive_->split(maxLayers, minCellSize);
+		negative_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbNegative, std::move(objectsNeg));
+		positive_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
+		negative_->split(config);
+		positive_->split(config);
 
 		break; // we're done splitting, we don't care about the remaining potential axes
 	}

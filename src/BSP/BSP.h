@@ -13,33 +13,47 @@
 
 // ----------------------------- Helper declarations here --------------------------------------------//
 
-template<class ValueType>
+template<class ObjectType>
 class AABBGeneratorInterface {
 public:
-	// return the axis-aligned bounding box for a given value
-	virtual AABB getAABB(ValueType const& v) = 0;
+	// return the axis-aligned bounding box for a given object
+	virtual AABB getAABB(ObjectType const&) = 0;
 };
 
-template<class ValueType, bool dynamic>
+struct BSPConfig {
+	AABB targetVolume;		// [targetVolume] is an AABB that encompasses all of the objects (the entire space that will be partitioned).
+							// if [targetVolume] is empty, then BSPTree will compute it automatically as the reunion of the AABBs of all objects.
+	glm::ivec3 maxDepth;	// [maxDepth] specifies the maximum number of divisions in each spatial direction
+							// a value of 0 for an axis means unlimitted depth in that direction.
+							// If a split would result in depth increasing beyond maxDepth, the split is not performed.
+	glm::vec3 minCellSize;	// [minCellSize] specifies the minimum cell size for each spatial direction
+							// a value of 0.f for an axis means no limit on the cell size on that axis. If a split would result in cells
+							// less than the minCellSize, then the split is not performed.
+	unsigned minObjects;	// number of objects in a cell above which splits are enabled. A split will only be performed on the cell
+							// if the number of objects within is strictly greater than [minObjects].
+							// There can exist cells with less than the minObjects number of objects.
+};
+
+template<class ObjectType, bool dynamic>
 class BSPTree;
 
-template<class ValueType, bool dynamic>
+template<class ObjectType, bool dynamic>
 class BSPNode {
 public:
-	using node_type = BSPNode<ValueType, dynamic>;
-	using value_type = ValueType;
+	using node_type = BSPNode<ObjectType, dynamic>;
+	using object_type = ObjectType;
 
-	const std::vector<ValueType>& values() { return values_; }
+	const std::vector<object_type>& objects() { return objects_; }
 
 protected:
-	friend class BSPTree<ValueType, dynamic>;
+	friend class BSPTree<object_type, dynamic>;
 
-	BSPNode(AABBGeneratorInterface<ValueType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ValueType> &&values);
-	void split(glm::ivec3 const& maxLayers, glm::vec3 const& minCellSize);
+	BSPNode(AABBGeneratorInterface<object_type>* aabbGenerator, node_type* parent, AABB aabb, std::vector<object_type> &&objects);
+	void split(BSPConfig const& config);
 
-	AABBGeneratorInterface<ValueType>* aabbGenerator_ = nullptr;
+	AABBGeneratorInterface<object_type>* aabbGenerator_ = nullptr;
 	AABB aabb_;
-	std::vector<ValueType> values_;
+	std::vector<object_type> objects_;
 	node_type *negative_ = nullptr;
 	node_type *positive_ = nullptr;
 	node_type *parent_ = nullptr;
@@ -47,27 +61,23 @@ protected:
 	glm::vec4 splitPlane_ {0.f};	//x=a, y=b, z=c, w=d
 };
 
+
 // -------------------------------------------------------------------------------------------------//
 // ----------------------------- BSPTree main class ------------------------------------------------//
 // -------------------------------------------------------------------------------------------------//
 
-// BSPTree that contains elements of type ValueType.
-// You must provide an implementation of AABBGeneratorInterface that returns axis-aligned bounding boxes for your elements.
-// [dynamic] template parameter enables the ability to dynamically add and remove elements from the BSPTree after it has been created.
+// BSPTree that contains objects of type ObjectType.
+// You must provide an implementation of AABBGeneratorInterface that returns axis-aligned bounding boxes for your objects.
+// [dynamic] template parameter enables the ability to dynamically add to and remove objects from the BSPTree after it has been created.
 // Only use [dynamic] when you really need it, because it implies a performance cost.
-template<class ValueType, bool dynamic = false>
+template<class ObjectType, bool dynamic = false>
 class BSPTree {
 public:
-	using value_type = ValueType;
-	using node_type = BSPNode<ValueType, dynamic>;
+	using object_type = ObjectType;
+	using node_type = BSPNode<object_type, dynamic>;
 
-	// [maxLayers] specifies the maximum number of layers in each spatial direction
-	// a value of 0 for an axis means unlimitted layers in that direction.
-	// [minCellSize] specifies the minimum cell size for each spatial direction
-	// a value of 0.f for an axis means no limit on the cell size on that axis.
 	// The aabbGenerator object must exist throughout the lifetime of this BSPTree; the caller is responsible for this.
-	BSPTree(AABBGeneratorInterface<ValueType>* aabbGenerator,
-		glm::ivec3 const& maxLayers, glm::vec3 const& minCellSize, ValueType* pValues, unsigned nValues);
+	BSPTree(BSPConfig const& config, AABBGeneratorInterface<object_type>* aabbGenerator, std::vector<object_type> &&objects);
 
 	// Returns a list of leaf nodes that are intersected by or contained within a given AABB
 	// If one or more vertices of the AABB lie strictly on the boundary of some nodes, those nodes are not returned.
@@ -80,7 +90,7 @@ public:
 
 private:
 	node_type *root_ = nullptr;
-	std::map<ValueType, node_type*> valueNodes_; // maps values back to the nodes they belong to (only for dynamic usage)
+	std::map<object_type, node_type*> valueNodes_; // maps objects back to the nodes they belong to (only for dynamic usage)
 };
 
 #include "BSP-impl.h"

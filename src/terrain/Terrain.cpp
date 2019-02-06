@@ -316,9 +316,13 @@ void Terrain::generate(TerrainSettings const& settings) {
 	triIndices.reserve(triangles_.size());
 	for (unsigned i=0; i<triangles_.size(); i++)
 		triIndices.push_back(i);
-	glm::ivec3 bspMaxLayers { 100, 1, 100 };
-	glm::vec3 bspMinCellSize { 2.f, 1000.f, 2.f };
-	pBSP_ = new BSPTree<unsigned, false>(aabbGenerator_, bspMaxLayers, bspMinCellSize, triIndices.data(), triIndices.size());
+	BSPConfig bspConfig;
+	bspConfig.maxDepth = glm::ivec3{ 100, 1, 100 };
+	bspConfig.minCellSize = glm::vec3{ 2.f, 1000.f, 2.f };
+	bspConfig.minObjects = 5;
+	bspConfig.targetVolume = AABB({-settings_.width*0.5f, settings_.minElevation - 10.f, -settings_.length * 0.5f},
+								{+settings_.width*0.5f, settings_.maxElevation + 10.f, +settings_.length * 0.5f});
+	pBSP_ = new BSPTree<unsigned, false>(bspConfig, aabbGenerator_, std::move(triIndices));
 
 	LOGLN("Updating render and physics objects . . .");
 	updateRenderBuffers();
