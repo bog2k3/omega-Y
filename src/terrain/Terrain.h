@@ -51,7 +51,13 @@ public:
 	unsigned getEntityType() const override { return EntityTypes::TERRAIN; }
 
 	// generate the terrain mesh according to specified settings. This will overwrite the existing data.
+	// Render buffers and Physics data structures will not be generated at this point, thus allowing the user to make modifications
+	// to the terrain geometry before that.
+	// Call finishGenerate() to generate these objects after you're done.
 	void generate(TerrainSettings const& settings);
+
+	// Generate the render buffers and physics data structures
+	void finishGenerate();
 
 	// clear all terrain data
 	void clear();
@@ -77,7 +83,7 @@ private:
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
-	TriangleAABBGenerator* aabbGenerator_ = nullptr;
+	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;
 	BSPTree<unsigned, false> *pBSP_ = nullptr;
 
 	PhysBodyMeta physicsBodyMeta_;

@@ -154,7 +154,7 @@ Terrain::Terrain()
 
 	pWater_ = new Water();
 
-	aabbGenerator_ = new TriangleAABBGenerator(this);
+	triangleAABBGenerator_ = new TriangleAABBGenerator(this);
 }
 
 Terrain::~Terrain()
@@ -162,7 +162,7 @@ Terrain::~Terrain()
 	clear();
 	delete renderData_, renderData_ = nullptr;
 	delete pWater_, pWater_ = nullptr;
-	delete aabbGenerator_, aabbGenerator_ = nullptr;
+	delete triangleAABBGenerator_, triangleAABBGenerator_ = nullptr;
 }
 
 void Terrain::clear() {
@@ -324,11 +324,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 	bspConfig.minObjects = 5;
 	bspConfig.targetVolume = AABB({-settings_.width*0.5f, settings_.minElevation - 10.f, -settings_.length * 0.5f},
 								{+settings_.width*0.5f, settings_.maxElevation + 10.f, +settings_.length * 0.5f});
-	pBSP_ = new BSPTree<unsigned, false>(bspConfig, aabbGenerator_, std::move(triIndices));
-
-	LOGLN("Updating render and physics objects . . .");
-	updateRenderBuffers();
-	updatePhysics();
+	pBSP_ = new BSPTree<unsigned, false>(bspConfig, triangleAABBGenerator_, std::move(triIndices));
 
 	LOGLN("Generating water . . .");
 	pWater_->generate(WaterParams {
@@ -339,6 +335,13 @@ void Terrain::generate(TerrainSettings const& settings) {
 		false							// constrain to circle
 	});
 	LOGLN("Done generating.");
+}
+
+void Terrain::finishGenerate() {
+	LOGPREFIX("Terrain");
+	LOGLN("Updating render and physics objects . . .");
+	updateRenderBuffers();
+	updatePhysics();
 }
 
 void Terrain::fixTriangleWinding() {
@@ -542,6 +545,8 @@ void Terrain::draw(Viewport* vp) {
 	}
 
 	//BSPDebugDraw::draw(*pBSP_);
+	//for (unsigned i=0; i<triangles_.size() / 10; i++)
+	//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
 }
 
 float Terrain::getHeightValue(glm::vec3 const& where) const {

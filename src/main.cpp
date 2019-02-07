@@ -135,6 +135,7 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			ev.consume();
 			pTerrain->generate(terrainSettings);
+			pTerrain->finishGenerate();
 			// reset the box:
 			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
 			btVector3 vPos{2.f, terrainSettings.maxElevation + 10, 2.f};
@@ -421,6 +422,7 @@ void initTerrain() {
 	terrainSettings.smallRoughness = 1.f;
 	pTerrain = new Terrain();
 	pTerrain->generate(terrainSettings);
+	pTerrain->finishGenerate();
 }
 
 void initSky() {

@@ -98,10 +98,13 @@ BSPNode<ObjectType, dynamic>::split(BSPConfig const& config) {
 					break;
 			}
 		}
+		decltype(objects_){}.swap(objects_); // reset the vector
+
 		negative_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbNegative, std::move(objectsNeg));
 		negative_->depth_ = depth_;
 		negative_->depth_[splitAxis]++;
 		negative_->split(config);
+
 		positive_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
 		positive_->depth_ = depth_;
 		positive_->depth_[splitAxis]++;
