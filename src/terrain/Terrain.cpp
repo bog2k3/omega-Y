@@ -5,6 +5,8 @@
 #include "PerlinNoise.h"
 #include "Water.h"
 
+#include "../BSP/BSPDebugDraw.h"
+
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -257,7 +259,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 	nVertices_ = rows_ * cols_ + nSkirtVerts;
 	pVertices_ = (TerrainVertex*)malloc(sizeof(TerrainVertex) * nVertices_);
 
-	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
+	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
 	float dx = settings_.width / (cols_ - 1);
 	float dz = settings_.length / (rows_ - 1);
 	gridSpacing_ = {dx, dz};
@@ -266,7 +268,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 		for (unsigned j=0; j<cols_; j++) {
 			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
 			new(&pVertices_[i*cols_ + j]) TerrainVertex {
-				topleft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
+				bottomLeft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
 				{0.f, 1.f, 0.f},																	// normal
 				{1.f, 1.f, 1.f},																	// color
 				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},						// uvs
@@ -274,8 +276,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 			};
 			// compute UVs
 			for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
-				pVertices_[i*cols_ + j].uv[t].x = (pVertices_[i*cols_ + j].pos.x - topleft.x) / renderData_->textures_[t].wWidth;
-				pVertices_[i*cols_ + j].uv[t].y = (pVertices_[i*cols_ + j].pos.z - topleft.z) / renderData_->textures_[t].wHeight;
+				pVertices_[i*cols_ + j].uv[t].x = (pVertices_[i*cols_ + j].pos.x - bottomLeft.x) / renderData_->textures_[t].wWidth;
+				pVertices_[i*cols_ + j].uv[t].y = (pVertices_[i*cols_ + j].pos.z - bottomLeft.z) / renderData_->textures_[t].wHeight;
 			}
 		}
 	// compute skirt vertices
@@ -291,8 +293,8 @@ void Terrain::generate(TerrainSettings const& settings) {
 		};
 		// compute UVs
 		for (unsigned t=0; t<TerrainVertex::nTextures; t++) {
-			pVertices_[rows_*cols_ + i].uv[t].x = (x - topleft.x) / renderData_->textures_[t].wWidth;
-			pVertices_[rows_*cols_ + i].uv[t].y = (z - topleft.z) / renderData_->textures_[t].wHeight;
+			pVertices_[rows_*cols_ + i].uv[t].x = (x - bottomLeft.x) / renderData_->textures_[t].wWidth;
+			pVertices_[rows_*cols_ + i].uv[t].y = (z - bottomLeft.z) / renderData_->textures_[t].wHeight;
 		}
 	}
 
@@ -361,12 +363,12 @@ void Terrain::computeDisplacements() {
 	height.meltEdges(5);
 	PerlinNoise pnoise(settings_.width, settings_.length);
 
-	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
 		for (unsigned j=1; j<cols_-1; j++) {
 			unsigned k = i*cols_ + j;
-			float u = (pVertices_[k].pos.x - topleft.x) / settings_.width;
-			float v = (pVertices_[k].pos.z - topleft.z) / settings_.length;
+			float u = (pVertices_[k].pos.x - bottomLeft.x) / settings_.width;
+			float v = (pVertices_[k].pos.z - bottomLeft.z) / settings_.length;
 
 			float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.1f;
 			float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
@@ -403,13 +405,13 @@ void Terrain::computeNormals() {
 
 void Terrain::computeTextureWeights() {
 	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
-	glm::vec3 topleft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
 	const float grassBias = 0.2f; // bias to more grass over dirt
 	for (unsigned i=0; i<rows_*cols_; i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
-		float u = (pVertices_[i].pos.x - topleft.x) / settings_.width * 0.15;
-		float v = (pVertices_[i].pos.z - topleft.z) / settings_.length * 0.15;
+		float u = (pVertices_[i].pos.x - bottomLeft.x) / settings_.width * 0.15;
+		float v = (pVertices_[i].pos.z - bottomLeft.z) / settings_.length * 0.15;
 		pVertices_[i].texBlendFactor.x = grassBias
 											+ pnoise.getNorm(u, v, 7.f)
 											+ 0.3f * pnoise.get(u*2, v*2, 7.f)
@@ -459,9 +461,13 @@ void Terrain::updatePhysics() {
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
 	heightFieldValues_ = (btScalar*)malloc(sizeof(btScalar) * rows_ * cols_);
+	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	float dx = settings_.width / (cols_ - 1);
+	float dz = settings_.length / (rows_ - 1);
+	const float heightOffset = 0.1f;	// offset physics geometry slightly higher
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
-			heightFieldValues_[i*cols_+j] = pVertices_[i*cols_+j].pos.y;
+			heightFieldValues_[i*cols_+j] = getHeightValue(bottomLeft + glm::vec3{j*dx, 0, i*dz}) + heightOffset;
 	// create ground shape
 	if (physicsShape_)
 		delete physicsShape_, physicsShape_ = nullptr;
@@ -535,5 +541,20 @@ void Terrain::draw(Viewport* vp) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	BSPDebugDraw::draw(*pBSP_);
+	//BSPDebugDraw::draw(*pBSP_);
+}
+
+float Terrain::getHeightValue(glm::vec3 const& where) const {
+	auto *node = pBSP_->getNodeAtPoint(where);
+	glm::vec3 intersectionPoint;
+	glm::vec3 rayStart{where.x, settings_.maxElevation + 100, where.z};
+	glm::vec3 rayDir{0.f, -1.f, 0.f};
+	for (unsigned tIndex : node->objects()) {
+		glm::vec3 &p1 = pVertices_[triangles_[tIndex].iV1].pos;
+		glm::vec3 &p2 = pVertices_[triangles_[tIndex].iV2].pos;
+		glm::vec3 &p3 = pVertices_[triangles_[tIndex].iV3].pos;
+		if (rayIntersectTri(rayStart, rayDir, p1, p2, p3, intersectionPoint))
+			return intersectionPoint.y;
+	}
+	return settings_.minElevation;	// no triangles exist at the given location
 }

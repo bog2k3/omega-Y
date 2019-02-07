@@ -59,6 +59,8 @@ public:
 	void draw(Viewport* vp);
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 
+	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point
+
 	struct TerrainVertex;
 
 private:

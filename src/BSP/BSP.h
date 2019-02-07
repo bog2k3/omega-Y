@@ -9,9 +9,6 @@
 #include <vector>
 #include <map>
 
-// #define ENABLE_BSP_DEBUG_DRAW before including this to enable BSPDebugDraw class
-
-
 // Scroll down to BSPTree main class for the main interface.
 
 // ----------------------------- Helper declarations here --------------------------------------------//
@@ -43,18 +40,7 @@ class BSPTree;
 template<class ObjectType, bool dynamic>
 class BSPNode;
 
-// ------------------------------ BSPDebugDraw ---------------------------------------------//
-#ifdef ENABLE_BSP_DEBUG_DRAW
-class BSPDebugDraw
-{
-public:
-	template<class ObjectType, bool dynamic>
-	static void draw(BSPTree<ObjectType, dynamic> const& tree);
-
-	template<class ObjectType, bool dynamic>
-	static void drawNode(BSPNode<ObjectType, dynamic> const& node);
-};
-#endif
+class BSPDebugDraw;
 
 // --------------------------------- BSPNode -----------------------------------------------//
 
@@ -118,9 +104,5 @@ private:
 };
 
 #include "BSP-impl.h"
-
-#ifdef ENABLE_BSP_DEBUG_DRAW
-#include "BSPDebugDraw-impl.h"
-#endif
 
 #endif // __BSP_H__

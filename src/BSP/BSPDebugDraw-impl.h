@@ -1,7 +1,7 @@
 #ifndef __BSP_DEBUG_DRAW_IMPL_H__
 #define __BSP_DEBUG_DRAW_IMPL_H__
 
-#include "BSP.h"
+#include "BSPDebugDraw.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 

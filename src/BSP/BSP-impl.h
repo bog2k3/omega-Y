@@ -23,6 +23,20 @@ BSPTree<ObjectType, dynamic>
 }
 
 template<class ObjectType, bool dynamic>
+typename BSPTree<ObjectType, dynamic>::node_type*
+BSPTree<ObjectType, dynamic>::getNodeAtPoint(glm::vec3 const& p) const {
+	node_type* n = root_;
+	while (n->positive_) {
+		float q = n->splitPlane_.x * p.x + n->splitPlane_.y * p.y + n->splitPlane_.z * p.z + n->splitPlane_.w;
+		if (q >= 0)
+			n = n->positive_;
+		else
+			n = n->negative_;
+	}
+	return n;
+}
+
+template<class ObjectType, bool dynamic>
 BSPNode<ObjectType, dynamic>
 ::BSPNode(AABBGeneratorInterface<ObjectType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ObjectType> &&objects)
 	: aabbGenerator_(aabbGenerator)
@@ -85,8 +99,12 @@ BSPNode<ObjectType, dynamic>::split(BSPConfig const& config) {
 			}
 		}
 		negative_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbNegative, std::move(objectsNeg));
-		positive_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
+		negative_->depth_ = depth_;
+		negative_->depth_[splitAxis]++;
 		negative_->split(config);
+		positive_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
+		positive_->depth_ = depth_;
+		positive_->depth_[splitAxis]++;
 		positive_->split(config);
 
 		break; // we're done splitting, we don't care about the remaining potential axes
