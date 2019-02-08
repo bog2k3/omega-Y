@@ -5,11 +5,11 @@
 
 #include <boglfw/renderOpenGL/Shape3D.h>
 
-template<class ObjectType, bool dynamic>
-void BSPDebugDraw::drawNode(BSPNode<ObjectType, dynamic> const& node) {
+template<class ObjectType>
+void BSPDebugDraw::drawNode(BSPNode<ObjectType> const& node) {
 	if (node.positive_) {
-		drawNode<ObjectType, dynamic>(*node.positive_);
-		drawNode<ObjectType, dynamic>(*node.negative_);
+		drawNode<ObjectType>(*node.positive_);
+		drawNode<ObjectType>(*node.negative_);
 		return;
 		// this was not a leaf node
 	}
@@ -17,9 +17,9 @@ void BSPDebugDraw::drawNode(BSPNode<ObjectType, dynamic> const& node) {
 	Shape3D::get()->drawAABB(node.aabb_, glm::vec3(0.f, 1.f, 0.f));
 }
 
-template<class ObjectType, bool dynamic>
-void BSPDebugDraw::draw(BSPTree<ObjectType, dynamic> const& tree) {
-	drawNode<ObjectType, dynamic>(*tree.root_);
+template<class ObjectType>
+void BSPDebugDraw::draw(BSPTree<ObjectType> const& tree) {
+	drawNode<ObjectType>(*tree.root_);
 }
 
 #endif // __BSP_DEBUG_DRAW_IMPL_H__

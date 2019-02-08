@@ -32,28 +32,30 @@ struct BSPConfig {
 	unsigned minObjects;	// number of objects in a cell above which splits are enabled. A split will only be performed on the cell
 							// if the number of objects within is strictly greater than [minObjects].
 							// There can exist cells with less than the minObjects number of objects.
+	bool dynamic = false;	// This parameter enables the ability to dynamically add to and remove objects from the BSPTree after it has been created.
+							// Only use it when you really need it, because it implies a performance cost.
 };
 
-template<class ObjectType, bool dynamic>
+template<class ObjectType>
 class BSPTree;
 
-template<class ObjectType, bool dynamic>
+template<class ObjectType>
 class BSPNode;
 
 class BSPDebugDraw;
 
 // --------------------------------- BSPNode -----------------------------------------------//
 
-template<class ObjectType, bool dynamic>
+template<class ObjectType>
 class BSPNode {
 public:
-	using node_type = BSPNode<ObjectType, dynamic>;
+	using node_type = BSPNode<ObjectType>;
 	using object_type = ObjectType;
 
 	const std::vector<object_type>& objects() { return objects_; }
 
 protected:
-	friend class BSPTree<object_type, dynamic>;
+	friend class BSPTree<object_type>;
 	friend class BSPDebugDraw;
 
 	BSPNode(AABBGeneratorInterface<object_type>* aabbGenerator, node_type* parent, AABB aabb, std::vector<object_type> &&objects);
@@ -76,13 +78,11 @@ protected:
 
 // BSPTree that contains objects of type ObjectType.
 // You must provide an implementation of AABBGeneratorInterface that returns axis-aligned bounding boxes for your objects.
-// [dynamic] template parameter enables the ability to dynamically add to and remove objects from the BSPTree after it has been created.
-// Only use [dynamic] when you really need it, because it implies a performance cost.
-template<class ObjectType, bool dynamic = false>
+template<class ObjectType>
 class BSPTree {
 public:
 	using object_type = ObjectType;
-	using node_type = BSPNode<object_type, dynamic>;
+	using node_type = BSPNode<object_type>;
 
 	// The aabbGenerator object must exist throughout the lifetime of this BSPTree; the caller is responsible for this.
 	BSPTree(BSPConfig const& config, AABBGeneratorInterface<object_type>* aabbGenerator, std::vector<object_type> &&objects);

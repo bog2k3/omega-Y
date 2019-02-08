@@ -5,11 +5,11 @@
 
 class BSPDebugDraw {
 public:
-	template<class ObjectType, bool dynamic>
-	static void draw(BSPTree<ObjectType, dynamic> const& tree);
+	template<class ObjectType>
+	static void draw(BSPTree<ObjectType> const& tree);
 
-	template<class ObjectType, bool dynamic>
-	static void drawNode(BSPNode<ObjectType, dynamic> const& node);
+	template<class ObjectType>
+	static void drawNode(BSPNode<ObjectType> const& node);
 };
 
 #include "BSPDebugDraw-impl.h"

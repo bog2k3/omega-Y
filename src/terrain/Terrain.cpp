@@ -228,7 +228,7 @@ void Terrain::loadTextures() {
 	LOGLN("Textures loaded.");
 }
 
-void validateSettings(TerrainSettings const& s) {
+void validateSettings(TerrainConfig const& s) {
 	assert(s.width > 0);
 	assert(s.length > 0);
 	assert(s.maxElevation > s.minElevation);
@@ -237,21 +237,21 @@ void validateSettings(TerrainSettings const& s) {
 	assert(s.length >= 1.f / s.vertexDensity);
 }
 
-void Terrain::generate(TerrainSettings const& settings) {
+void Terrain::generate(TerrainConfig const& settings) {
 #ifdef DEBUG
 	World::assertOnMainThread();
 #endif
 	LOGLN("Generating terrain . . .");
 	validateSettings(settings);
 	clear();
-	settings_ = settings;
+	config_ = settings;
 
-	rows_ = (unsigned)ceil(settings_.length * settings_.vertexDensity) + 1;
-	cols_ = (unsigned)ceil(settings_.width * settings_.vertexDensity) + 1;
+	rows_ = (unsigned)ceil(config_.length * config_.vertexDensity) + 1;
+	cols_ = (unsigned)ceil(config_.width * config_.vertexDensity) + 1;
 
 	// we need to generate some 'skirt' vertices that will encompass the entire terrain in a circle,
 	// in order to extend the sea-bed away from the main terrain
-	float terrainRadius = sqrtf(settings_.width * settings_.width + settings_.length * settings_.length) * 0.5f;
+	float terrainRadius = sqrtf(config_.width * config_.width + config_.length * config_.length) * 0.5f;
 	float seaBedRadius = terrainRadius * 2.5f;
 	float skirtVertSpacing = 30.f; // meters
 	unsigned nSkirtVerts = (2 * PI * seaBedRadius) / skirtVertSpacing;
@@ -259,16 +259,16 @@ void Terrain::generate(TerrainSettings const& settings) {
 	nVertices_ = rows_ * cols_ + nSkirtVerts;
 	pVertices_ = (TerrainVertex*)malloc(sizeof(TerrainVertex) * nVertices_);
 
-	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings.length * 0.5f};
-	float dx = settings_.width / (cols_ - 1);
-	float dz = settings_.length / (rows_ - 1);
+	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -settings.length * 0.5f};
+	float dx = config_.width / (cols_ - 1);
+	float dz = config_.length / (rows_ - 1);
 	gridSpacing_ = {dx, dz};
 	// compute terrain vertices
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++) {
-			glm::vec2 jitter { randf() * settings_.relativeRandomJitter * dx, randf() * settings_.relativeRandomJitter * dz };
+			glm::vec2 jitter { randf() * config_.relativeRandomJitter * dx, randf() * config_.relativeRandomJitter * dz };
 			new(&pVertices_[i*cols_ + j]) TerrainVertex {
-				bottomLeft + glm::vec3(dx * j + jitter.x, settings_.minElevation, dz * i + jitter.y),	// position
+				bottomLeft + glm::vec3(dx * j + jitter.x, config_.minElevation, dz * i + jitter.y),	// position
 				{0.f, 1.f, 0.f},																	// normal
 				{1.f, 1.f, 1.f},																	// color
 				{{0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}},						// uvs
@@ -285,7 +285,7 @@ void Terrain::generate(TerrainSettings const& settings) {
 		float x = seaBedRadius * cosf(i*skirtVertSector);
 		float z = seaBedRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows_*cols_+i]) TerrainVertex {
-			{ x, settings_.minElevation, z },								// position
+			{ x, config_.minElevation, z },								// position
 			{ 0.f, 1.f, 0.f },												// normal
 			{ 1.f, 1.f, 1.f },												// color
 			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
@@ -322,13 +322,14 @@ void Terrain::generate(TerrainSettings const& settings) {
 	bspConfig.maxDepth = glm::ivec3{ 100, 1, 100 };
 	bspConfig.minCellSize = glm::vec3{ 2.f, 1000.f, 2.f };
 	bspConfig.minObjects = 5;
-	bspConfig.targetVolume = AABB({-settings_.width*0.5f, settings_.minElevation - 10.f, -settings_.length * 0.5f},
-								{+settings_.width*0.5f, settings_.maxElevation + 10.f, +settings_.length * 0.5f});
-	pBSP_ = new BSPTree<unsigned, false>(bspConfig, triangleAABBGenerator_, std::move(triIndices));
+	bspConfig.targetVolume = AABB({-config_.width*0.5f, config_.minElevation - 10.f, -config_.length * 0.5f},
+								{+config_.width*0.5f, config_.maxElevation + 10.f, +config_.length * 0.5f});
+	bspConfig.dynamic = false;
+	pBSP_ = new BSPTree<unsigned>(bspConfig, triangleAABBGenerator_, std::move(triIndices));
 
 	LOGLN("Generating water . . .");
 	pWater_->generate(WaterParams {
-		settings_.seaLevel,				// water level
+		config_.seaLevel,				// water level
 		terrainRadius,					// inner radius
 		seaBedRadius - terrainRadius,	// outer extent
 		max(0.05f, 2.f / terrainRadius),// vertex density
@@ -358,34 +359,34 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = settings_.width / 8;
-	hparam.length = settings_.length / 8;
-	hparam.minHeight = settings_.minElevation;
-	hparam.maxHeight = settings_.maxElevation;
+	hparam.width = config_.width / 8;
+	hparam.length = config_.length / 8;
+	hparam.minHeight = config_.minElevation;
+	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
 	height.meltEdges(5);
-	PerlinNoise pnoise(settings_.width, settings_.length);
+	PerlinNoise pnoise(config_.width, config_.length);
 
-	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
 		for (unsigned j=1; j<cols_-1; j++) {
 			unsigned k = i*cols_ + j;
-			float u = (pVertices_[k].pos.x - bottomLeft.x) / settings_.width;
-			float v = (pVertices_[k].pos.z - bottomLeft.z) / settings_.length;
+			float u = (pVertices_[k].pos.x - bottomLeft.x) / config_.width;
+			float v = (pVertices_[k].pos.z - bottomLeft.z) / config_.length;
 
-			float perlinAmp = (settings_.maxElevation - settings_.minElevation) * 0.1f;
+			float perlinAmp = (config_.maxElevation - config_.minElevation) * 0.1f;
 			float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
 							+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
 							+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
 							+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 
-			pVertices_[k].pos.y = height.value(u, v) * settings_.bigRoughness
-									+ perlin * settings_.smallRoughness;
+			pVertices_[k].pos.y = height.value(u, v) * config_.bigRoughness
+									+ perlin * config_.smallRoughness;
 
 			// TODO : use vertex colors with perlin noise for more variety
 
 			// debug
-			//float hr = (pVertices_[k].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+			//float hr = (pVertices_[k].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
 			//pVertices_[k].color = {1.f - hr, hr, 0};
 		}
 }
@@ -407,14 +408,14 @@ void Terrain::computeNormals() {
 }
 
 void Terrain::computeTextureWeights() {
-	PerlinNoise pnoise(settings_.width/2, settings_.length/2);
-	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
+	PerlinNoise pnoise(config_.width/2, config_.length/2);
+	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	const float grassBias = 0.2f; // bias to more grass over dirt
 	for (unsigned i=0; i<rows_*cols_; i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
-		float u = (pVertices_[i].pos.x - bottomLeft.x) / settings_.width * 0.15;
-		float v = (pVertices_[i].pos.z - bottomLeft.z) / settings_.length * 0.15;
+		float u = (pVertices_[i].pos.x - bottomLeft.x) / config_.width * 0.15;
+		float v = (pVertices_[i].pos.z - bottomLeft.z) / config_.length * 0.15;
 		pVertices_[i].texBlendFactor.x = grassBias
 											+ pnoise.getNorm(u, v, 7.f)
 											+ 0.3f * pnoise.get(u*2, v*2, 7.f)
@@ -422,15 +423,15 @@ void Terrain::computeTextureWeights() {
 		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 7.f) + 0.5 * pnoise.get(v*4, u*4, 2.f);	// rock1 / rock2
 		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
 		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
-		float hFactor = (pVertices_[i].pos.y - settings_.minElevation) / (settings_.maxElevation - settings_.minElevation);
+		float hFactor = (pVertices_[i].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
 		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
 		cutoffY += (1.0 - cutoffY) * hFactor;
 		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
 
 		// sand factor -> some distance above water level and everything below is sand
 		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
-		if (pVertices_[i].pos.y < settings_.seaLevel + beachHeight) {
-			float sandFactor = min(1.f, settings_.seaLevel + beachHeight - pVertices_[i].pos.y);
+		if (pVertices_[i].pos.y < config_.seaLevel + beachHeight) {
+			float sandFactor = min(1.f, config_.seaLevel + beachHeight - pVertices_[i].pos.y);
 			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
 		}
 	}
@@ -464,9 +465,9 @@ void Terrain::updatePhysics() {
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
 	heightFieldValues_ = (btScalar*)malloc(sizeof(btScalar) * rows_ * cols_);
-	glm::vec3 bottomLeft {-settings_.width * 0.5f, 0.f, -settings_.length * 0.5f};
-	float dx = settings_.width / (cols_ - 1);
-	float dz = settings_.length / (rows_ - 1);
+	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
+	float dx = config_.width / (cols_ - 1);
+	float dz = config_.length / (rows_ - 1);
 	const float heightOffset = 0.1f;	// offset physics geometry slightly higher
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
@@ -475,14 +476,14 @@ void Terrain::updatePhysics() {
 	if (physicsShape_)
 		delete physicsShape_, physicsShape_ = nullptr;
 	physicsShape_ = new btHeightfieldTerrainShape{cols_, rows_, heightFieldValues_, 1.f,
-							settings_.minElevation, settings_.maxElevation, 1, PHY_FLOAT, false};
+							config_.minElevation, config_.maxElevation, 1, PHY_FLOAT, false};
 
 	// create ground body
 	if (physicsBodyMeta_.bodyPtr) {
 		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
 		delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
 	}
-	btVector3 vPos(0.f, (settings_.maxElevation + settings_.minElevation)*0.5f, 0.f);
+	btVector3 vPos(0.f, (config_.maxElevation + config_.minElevation)*0.5f, 0.f);
 	btQuaternion qOrient = btQuaternion::getIdentity();
 	btRigidBody::btRigidBodyConstructionInfo cinfo {
 		0.f,		// mass
@@ -552,7 +553,7 @@ void Terrain::draw(Viewport* vp) {
 float Terrain::getHeightValue(glm::vec3 const& where) const {
 	auto *node = pBSP_->getNodeAtPoint(where);
 	glm::vec3 intersectionPoint;
-	glm::vec3 rayStart{where.x, settings_.maxElevation + 100, where.z};
+	glm::vec3 rayStart{where.x, config_.maxElevation + 100, where.z};
 	glm::vec3 rayDir{0.f, -1.f, 0.f};
 	for (unsigned tIndex : node->objects()) {
 		glm::vec3 &p1 = pVertices_[triangles_[tIndex].iV1].pos;
@@ -561,5 +562,5 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 		if (rayIntersectTri(rayStart, rayDir, p1, p2, p3, intersectionPoint))
 			return intersectionPoint.y;
 	}
-	return settings_.minElevation;	// no triangles exist at the given location
+	return config_.minElevation;	// no triangles exist at the given location
 }

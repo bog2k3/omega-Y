@@ -20,7 +20,7 @@ PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
 #endif
 	transform_.setPosition(position);
 	// create player shape
-	physicsShape_ = new btCapsuleShape{0.3f, 1.7f};
+	physicsShape_ = new btCapsuleShape{0.3f, 1.5f};
 	btVector3 inertia;
 	float mass = 70.f;
 	physicsShape_->calculateLocalInertia(mass, inertia);
@@ -74,8 +74,8 @@ void PlayerEntity::update(float dt) {
 	transform_.setOrientation(b2g(wTrans.getRotation()));
 
 	// compute movement based on inputs
-	const float moveSpeed = 2.f * (running_ ? 2.f : 1.f); // m/s
-	const float jumpSpeed = 2.5f; // m/s
+	const float moveSpeed = 1.5f * (running_ ? 4.f : 1.f); // m/s
+	const float jumpSpeed = 2.f; // m/s
 
 	float len = glm::length(frameMoveValues_);
 	glm::vec2 vDir = len > 0 ? frameMoveValues_ / len : glm::vec2{0.f, 0.f};

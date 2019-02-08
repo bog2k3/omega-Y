@@ -13,7 +13,7 @@
 
 #include <vector>
 
-struct TerrainSettings {
+struct TerrainConfig {
 	// size settings
 	float width = 100.f;	// X axis
 	float length = 100.f;	// Z axis
@@ -50,11 +50,11 @@ public:
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
 	unsigned getEntityType() const override { return EntityTypes::TERRAIN; }
 
-	// generate the terrain mesh according to specified settings. This will overwrite the existing data.
+	// generate the terrain mesh according to specified config. This will overwrite the existing data.
 	// Render buffers and Physics data structures will not be generated at this point, thus allowing the user to make modifications
 	// to the terrain geometry before that.
 	// Call finishGenerate() to generate these objects after you're done.
-	void generate(TerrainSettings const& settings);
+	void generate(TerrainConfig const& config);
 
 	// Generate the render buffers and physics data structures
 	void finishGenerate();
@@ -66,6 +66,9 @@ public:
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 
 	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point
+	TerrainConfig const& getConfig() const { return config_; }
+	const float* getHeightField() const { return heightFieldValues_; }
+	glm::ivec2 getGridSize() const { return {cols_, rows_}; }
 
 	struct TerrainVertex;
 
@@ -79,16 +82,16 @@ private:
 	TerrainVertex* pVertices_ = nullptr;
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
-	TerrainSettings settings_;
+	TerrainConfig config_;
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	Water* pWater_ = nullptr;
 	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;
-	BSPTree<unsigned, false> *pBSP_ = nullptr;
+	BSPTree<unsigned> *pBSP_ = nullptr;
 
 	PhysBodyMeta physicsBodyMeta_;
 	btHeightfieldTerrainShape* physicsShape_ = nullptr;
-	btScalar *heightFieldValues_ = nullptr;
+	float *heightFieldValues_ = nullptr;
 
 	void loadTextures();
 	void fixTriangleWinding();

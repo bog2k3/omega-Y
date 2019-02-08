@@ -7,8 +7,8 @@
 // ----------------------------- Template implementation follows --------------------------------------------//
 // ----------------------------------------------------------------------------------------------------------//
 
-template<class ObjectType, bool dynamic>
-BSPTree<ObjectType, dynamic>
+template<class ObjectType>
+BSPTree<ObjectType>
 ::BSPTree(BSPConfig const& config, AABBGeneratorInterface<object_type>* pAABBGenerator, std::vector<object_type> &&objects) {
 	AABB rootAABB;
 	if (config.targetVolume.isEmpty()) {
@@ -22,9 +22,9 @@ BSPTree<ObjectType, dynamic>
 	root_->split(config);
 }
 
-template<class ObjectType, bool dynamic>
-typename BSPTree<ObjectType, dynamic>::node_type*
-BSPTree<ObjectType, dynamic>::getNodeAtPoint(glm::vec3 const& p) const {
+template<class ObjectType>
+typename BSPTree<ObjectType>::node_type*
+BSPTree<ObjectType>::getNodeAtPoint(glm::vec3 const& p) const {
 	node_type* n = root_;
 	while (n->positive_) {
 		float q = n->splitPlane_.x * p.x + n->splitPlane_.y * p.y + n->splitPlane_.z * p.z + n->splitPlane_.w;
@@ -36,8 +36,8 @@ BSPTree<ObjectType, dynamic>::getNodeAtPoint(glm::vec3 const& p) const {
 	return n;
 }
 
-template<class ObjectType, bool dynamic>
-BSPNode<ObjectType, dynamic>
+template<class ObjectType>
+BSPNode<ObjectType>
 ::BSPNode(AABBGeneratorInterface<ObjectType>* aabbGenerator, node_type* parent, AABB aabb, std::vector<ObjectType> &&objects)
 	: aabbGenerator_(aabbGenerator)
 	, aabb_(aabb)
@@ -46,9 +46,9 @@ BSPNode<ObjectType, dynamic>
 {
 }
 
-template<class ObjectType, bool dynamic>
+template<class ObjectType>
 void
-BSPNode<ObjectType, dynamic>::split(BSPConfig const& config) {
+BSPNode<ObjectType>::split(BSPConfig const& config) {
 	if (objects_.size() <= config.minObjects)
 		return; // too few objects to split
 	// determine the potential split axes:
@@ -76,36 +76,29 @@ BSPNode<ObjectType, dynamic>::split(BSPConfig const& config) {
 			|| aabbPositive.size()[splitAxis] < config.minCellSize[splitAxis])
 			continue; // too small would-be cells, we don't split on this axis
 
-		// all right, now we split
+		// all right, split is acceptable.
+		// distribute objects between the two sides:
 		splitPlane_[splitAxis] = 1.f;
 		splitPlane_.w = -splitCoord;
 		std::vector<ObjectType> objectsNeg;
 		std::vector<ObjectType> objectsPos;
 		for (unsigned k=0; k<objects_.size(); k++) {
-			switch(aabbGenerator_->getAABB(objects_[k]).qualifyPlane(splitPlane_)) {
-				case 0:
-					objectsNeg.push_back(objects_[k]);
-					objectsPos.push_back(objects_[k]);
-					break;
-				case 1:
-					objectsPos.push_back(objects_[k]);
-					break;
-				case -1:
-					objectsNeg.push_back(objects_[k]);
-					break;
-				default:
-					assertDbg("wtf");
-					break;
-			}
+			int q = aabbGenerator_->getAABB(objects_[k]).qualifyPlane(splitPlane_);
+			if (q >= 0)
+				objectsPos.push_back(objects_[k]);
+			if (q <= 0)
+				objectsNeg.push_back(objects_[k]);
 		}
-		decltype(objects_){}.swap(objects_); // reset the vector
+		// we no longer need to keep the vector of objects:
+		decltype(objects_){}.swap(objects_);
 
-		negative_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbNegative, std::move(objectsNeg));
+		// and do the split now:
+		negative_ = new BSPNode<ObjectType>(aabbGenerator_, this, aabbNegative, std::move(objectsNeg));
 		negative_->depth_ = depth_;
 		negative_->depth_[splitAxis]++;
 		negative_->split(config);
 
-		positive_ = new BSPNode<ObjectType, dynamic>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
+		positive_ = new BSPNode<ObjectType>(aabbGenerator_, this, aabbPositive, std::move(objectsPos));
 		positive_->depth_ = depth_;
 		positive_->depth_[splitAxis]++;
 		positive_->split(config);

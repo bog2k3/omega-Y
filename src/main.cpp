@@ -6,6 +6,7 @@
 #include "PlayerInputHandler.h"
 #include "terrain/Terrain.h"
 #include "sky/SkyBox.h"
+#include "buildings/BuildingGenerator.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Renderer.h>
@@ -74,7 +75,7 @@ std::weak_ptr<CameraController> cameraCtrl;
 PlayerInputHandler playerInputHandler;
 
 Terrain* pTerrain = nullptr;
-TerrainSettings terrainSettings;
+TerrainConfig terrainConfig;
 SkyBox* pSkyBox = nullptr;
 
 PhysBodyMeta boxBodyMeta(nullptr, 0);
@@ -134,11 +135,11 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	} else if (ev.key == GLFW_KEY_R) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
 			ev.consume();
-			pTerrain->generate(terrainSettings);
+			pTerrain->generate(terrainConfig);
 			pTerrain->finishGenerate();
 			// reset the box:
 			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-			btVector3 vPos{2.f, terrainSettings.maxElevation + 10, 2.f};
+			btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
 			boxBodyMeta.bodyPtr->setWorldTransform(btTransform{qOrient, vPos});
 			// wake up the box:
 			boxBodyMeta.bodyPtr->activate(true);
@@ -146,7 +147,7 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 			// reset player
 			auto sPlayer = player.lock();
 			if (sPlayer)
-				sPlayer->moveTo({0.f, terrainSettings.maxElevation + 10, 0.f});
+				sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
 		}
 	} else if (ev.key == GLFW_KEY_Q) {
 		if (ev.type == InputEvent::EV_KEY_DOWN) {
@@ -208,7 +209,7 @@ void physTestInit() {
 	btVector3 boxInertia;
 	boxShape->calculateLocalInertia(mass, boxInertia);
 	btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-	btVector3 vPos{2.f, terrainSettings.maxElevation + 10, 2.f};
+	btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
 	boxMotionState = new btDefaultMotionState(btTransform{qOrient, vPos});
 	btRigidBody::btRigidBodyConstructionInfo cinfo {
 		mass,
@@ -244,7 +245,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(sCamCtrl);
 
 	// player
-	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainSettings.maxElevation + 10, 0.f}, 0.f);
+	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
 	player = sPlayer;
 	World::getInstance().takeOwnershipOf(sPlayer);
 
@@ -411,18 +412,19 @@ void initWorld() {
 }
 
 void initTerrain() {
-	terrainSettings.vertexDensity = 1.f;	// vertices per meter
-	terrainSettings.width = 200;
-	terrainSettings.length = 200;
-	terrainSettings.minElevation = -10;
-	terrainSettings.maxElevation = 30.f;
-	terrainSettings.seaLevel = 0.f;
-	terrainSettings.relativeRandomJitter = 0.8f;
-	terrainSettings.bigRoughness = 1.f;
-	terrainSettings.smallRoughness = 1.f;
+	terrainConfig.vertexDensity = 1.f;	// vertices per meter
+	terrainConfig.width = 200;
+	terrainConfig.length = 200;
+	terrainConfig.minElevation = -10;
+	terrainConfig.maxElevation = 30.f;
+	terrainConfig.seaLevel = 0.f;
+	terrainConfig.relativeRandomJitter = 0.8f;
+	terrainConfig.bigRoughness = 1.f;
+	terrainConfig.smallRoughness = 1.f;
 	pTerrain = new Terrain();
-	pTerrain->generate(terrainSettings);
+	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
+	BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
 
 void initSky() {
