@@ -359,12 +359,12 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = config_.width / 8;
-	hparam.length = config_.length / 8;
+	hparam.width = config_.width / 4;
+	hparam.length = config_.length / 4;
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
-	height.meltEdges(5);
+	height.meltEdges(10);
 	PerlinNoise pnoise(config_.width, config_.length);
 
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};

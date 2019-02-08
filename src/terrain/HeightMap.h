@@ -36,7 +36,7 @@ private:
 	};
 	element *elements_ = nullptr;
 
-	void computeMidpointStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp);
+	void computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp);
 	void generate(float amplitude);
 	float getSample(int r, int c) const;
 };

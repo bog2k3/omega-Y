@@ -34,6 +34,7 @@ struct TerrainConfig {
 	float roughness = 1.f;		// roughness of small features (small local variations in terrain)
 	// TODO idea: reintroduce big-roughness to bias between a perlin-based low-freq height (which is very smooth hills)
 	// versus regular heightMap which is rough
+	// also this bigRoughness can control the jitterReductionFactor param in heightmap
 };
 
 class Viewport;

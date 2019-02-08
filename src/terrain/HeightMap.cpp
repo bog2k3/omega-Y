@@ -61,51 +61,68 @@ float HeightMap::value(float u, float v) const {
 	return baseY_ + f1 * (1.f - vWeight) + f2 * vWeight;
 }
 
-void HeightMap::computeMidpointStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp) {
+void HeightMap::computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp) {
 	unsigned midR = (r1 + r2) / 2;
 	unsigned midC = (c1 + c2) / 2;
+	// center (diamond step)
+	elements_[midR * width_ + midC] += 0.25f * (
+		elements_[r1 * width_ + c1].get() +
+		elements_[r1 * width_ + c2].get() +
+		elements_[r2 * width_ + c1].get() +
+		elements_[r2 * width_ + c2].get()
+	) + srandf() * jitterAmp;
+	float centerValue = elements_[midR * width_ + midC].get();
+	// now square step:
 	// top midpoint:
 	if (c2 > c1+1)
-		elements_[r1 * width_ + midC] += 0.5f * (elements_[r1 * width_ + c1].get() + elements_[r1 * width_ + c2].get()) + srandf() * jitterAmp;
+		elements_[r1 * width_ + midC] += 0.33f * (
+			elements_[r1 * width_ + c1].get() +
+			elements_[r1 * width_ + c2].get() +
+			centerValue
+		) + srandf() * jitterAmp;
 	// bottom midpoint:
 	if (c2 > c1+1)
-		elements_[r2 * width_ + midC] += 0.5f * (elements_[r2 * width_ + c1].get() + elements_[r2 * width_ + c2].get()) + srandf() * jitterAmp;
+		elements_[r2 * width_ + midC] += 0.33f * (
+			elements_[r2 * width_ + c1].get() +
+			elements_[r2 * width_ + c2].get() +
+			centerValue
+		) + srandf() * jitterAmp;
 	// left midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c1] += 0.5f * (elements_[r1 * width_ + c1].get() + elements_[r2 * width_ + c1].get()) + srandf() * jitterAmp;
+		elements_[midR * width_ + c1] += 0.33f * (
+			elements_[r1 * width_ + c1].get() +
+			elements_[r2 * width_ + c1].get() +
+			centerValue
+		) + srandf() * jitterAmp;
 	// right midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c2] += 0.5f * (elements_[r1 * width_ + c2].get() + elements_[r2 * width_ + c2].get()) + srandf() * jitterAmp;
-	// center:
-	if (c2 > c1+1 && r2 > r1+1)
-		elements_[midR * width_ + midC] += 0.25f * (
-				elements_[r1 * width_ + midC].get() +
-				elements_[r2 * width_ + midC].get() +
-				elements_[midR * width_ + c1].get() +
-				elements_[midR * width_ + c2].get()
-			) + srandf() * jitterAmp;
+		elements_[midR * width_ + c2] += 0.33f * (
+			elements_[r1 * width_ + c2].get() +
+			elements_[r2 * width_ + c2].get() +
+			centerValue
+		) + srandf() * jitterAmp;
 	if (c2 > c1+2 || r2 > r1+2) {
 		// recurse into the 4 sub-sections:
 		// top-left
-		computeMidpointStep(r1, midR, c1, midC, jitterAmp * jitterReductionFactor);
+		computeDiamondSquareStep(r1, midR, c1, midC, jitterAmp * jitterReductionFactor);
 		// top-right
-		computeMidpointStep(r1, midR, midC, c2, jitterAmp * jitterReductionFactor);
+		computeDiamondSquareStep(r1, midR, midC, c2, jitterAmp * jitterReductionFactor);
 		// bottom-left
-		computeMidpointStep(midR, r2, c1, midC, jitterAmp * jitterReductionFactor);
+		computeDiamondSquareStep(midR, r2, c1, midC, jitterAmp * jitterReductionFactor);
 		// bottom-right
-		computeMidpointStep(midR, r2, midC, c2, jitterAmp * jitterReductionFactor);
+		computeDiamondSquareStep(midR, r2, midC, c2, jitterAmp * jitterReductionFactor);
 	}
 }
 
 void HeightMap::generate(float amplitude) {
 	// set the corners:
-	elements_[0] += randf() * amplitude;
-	elements_[width_-1] += randf() * amplitude;
-	elements_[(length_-1)*width_] += randf() * amplitude;
-	elements_[width_ * length_ - 1] += randf() * amplitude;
+	elements_[0] += amplitude* (0.5f + 0.5f*randf());
+	elements_[width_-1] += amplitude* (0.5f + 0.5f*randf());
+	elements_[(length_-1)*width_] += amplitude* (0.5f + 0.5f*randf());
+	elements_[width_ * length_ - 1] += amplitude* (0.5f + 0.5f*randf());
 	float jitterAmp = amplitude * jitterReductionFactor;
 	// compute midpoint displacement recursively:
-	computeMidpointStep(0, length_-1, 0, width_-1, jitterAmp);
+	computeDiamondSquareStep(0, length_-1, 0, width_-1, jitterAmp);
 	// average out the values and compute min/max:
 	float vmin = 1e20f, vmax = -1e20f;
 	for (unsigned i=0; i<width_*length_; i++) {
