@@ -512,6 +512,7 @@ int main(int argc, char* argv[]) {
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
+		drawList.push_back(pImgDebugDraw);
 
 		vp1->setDrawList(drawList);
 

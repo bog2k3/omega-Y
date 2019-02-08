@@ -464,7 +464,7 @@ void Terrain::updatePhysics() {
 	// create array of height values:
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
-	heightFieldValues_ = (btScalar*)malloc(sizeof(btScalar) * rows_ * cols_);
+	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	float dx = config_.width / (cols_ - 1);
 	float dz = config_.length / (rows_ - 1);
