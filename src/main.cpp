@@ -7,6 +7,7 @@
 #include "terrain/Terrain.h"
 #include "sky/SkyBox.h"
 #include "buildings/BuildingGenerator.h"
+#include "ImgDebugDraw.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Renderer.h>
@@ -82,6 +83,8 @@ PhysBodyMeta boxBodyMeta(nullptr, 0);
 btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
+
+ImgDebugDraw *pImgDebugDraw = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
@@ -424,7 +427,11 @@ void initTerrain() {
 	pTerrain = new Terrain();
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
-	BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
+
+	pImgDebugDraw->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
+		terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE);
+	pImgDebugDraw->enable();
+	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
 
 void initSky() {
@@ -456,6 +463,8 @@ int main(int argc, char* argv[]) {
 		vp1->camera()->setFOV(PI/2.5f);
 		vp1->camera()->setZPlanes(0.15f, 500.f);
 		renderer.addViewport("main", std::move(vp));
+
+		pImgDebugDraw = new ImgDebugDraw();
 
 		initWorld();
 		World &world = World::getInstance();
@@ -572,6 +581,8 @@ int main(int argc, char* argv[]) {
 		physTestDestroy();
 		destroyPhysics();
 		renderer.unload();
+		if (pImgDebugDraw)
+			delete pImgDebugDraw, pImgDebugDraw = nullptr;
 		deletePostProcessData();
 		Infrastructure::shutDown();
 	} while (0);

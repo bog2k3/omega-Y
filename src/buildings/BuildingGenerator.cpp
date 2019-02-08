@@ -31,6 +31,44 @@ void blurHeightField(const float* in, int rows, int cols, float radius, float* o
 	}
 }
 
+void downsampleHeightField(const float* in, glm::ivec2 const& inSize, glm::ivec2 const& outSize, float* out) {
+	glm::vec2 rcSize = { inSize.x / (float)outSize.x, inSize.y / (float)outSize.y }; // rectangle size for sampling from input
+	glm::ivec2 rcCoverage { ceil(rcSize.x), ceil(rcSize.y) };
+	glm::vec2 sampleOrigin {0.f, 0.f};
+	for (int i=0; i<outSize.y; i++) {
+		sampleOrigin.x = 0.f;
+		for (int j=0; j<outSize.x; j++) {
+			float value = 0.f;
+			float denom = 0.f;
+			for (float sx=sampleOrigin.x; sx <= sampleOrigin.x+rcSize.x; sx++)
+				for (float sy=sampleOrigin.y; sy <= sampleOrigin.y+rcSize.y; sy++) {
+					int isx = floor(sx);
+					int isy = floor(sy);
+					float weight = 1.f;
+					if (isx < sampleOrigin.x) {
+						// partial coverage left column
+						weight *= isx + 1 - sx;
+					} else if (isx == j + rcCoverage.x) {
+						// partial coverage right column
+						weight *= sx - isx;
+					}
+					if (isy < sampleOrigin.y) {
+						// partial coverage top row
+						weight *= isy + 1 - sy;
+					} else if (isy == i + rcCoverage.y) {
+						// partial coverage bottom row
+						weight *= sy - isy;
+					}
+					value += in[isy * inSize.x + isx] * weight;
+					denom += weight;
+				}
+			out[i*outSize.y + j] = value / denom;
+			sampleOrigin.x += rcSize.x;
+		}
+		sampleOrigin.y += rcSize.y;
+	}
+}
+
 // computes a matrix of gradient vectors for each entry in the heightfield
 void computeFieldGradient(const float* in, int rows, int cols, glm::vec2* out) {
 
@@ -38,11 +76,22 @@ void computeFieldGradient(const float* in, int rows, int cols, glm::vec2* out) {
 
 void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &terrain) {
 	glm::ivec2 gridSize = terrain.getGridSize();
+	glm::vec2 gridPointDensity { gridSize.x / terrain.getConfig().width, gridSize.y / terrain.getConfig().length };	// grid points per meter
+	float desiredGridPointDensity = 1.f / 4;
+	glm::ivec2 sourceGridSize = gridSize;
+	if (desiredGridPointDensity < gridPointDensity.x || desiredGridPointDensity < gridPointDensity.y) {
+		// downsample the heightfield
+		float xfactor = min(1.f, desiredGridPointDensity / gridPointDensity.x);
+		float yfactor = min(1.f, desiredGridPointDensity / gridPointDensity.y);
+		gridSize = glm::ivec2{gridSize.x * xfactor, gridSize.y * yfactor};
+	}
+	float* fHeights = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
+	downsampleHeightField(terrain.getHeightField(), sourceGridSize, gridSize, fHeights);
+
 	float samplePointDensity = 0.0045f; // per meter squared -> this will yield a distance of about 15 meters between sample points
 	// prepare heightfield for finding locations:
-	float* fHeights = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
-	float blurRadius = 1.f / sqrt(samplePointDensity) * 0.25f;	// one quarter of the distance between sample points
-	blurHeightField(terrain.getHeightField(), gridSize.y, gridSize.x, blurRadius, fHeights);
+	//float blurRadius = 1.f / sqrt(samplePointDensity) * 0.25f;	// one quarter of the distance between sample points
+	//blurHeightField(terrain.getHeightField(), gridSize.y, gridSize.x, blurRadius, fHeights);
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
 	for (unsigned i=0; i<nSamplePoints; i++) {
