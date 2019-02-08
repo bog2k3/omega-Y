@@ -84,8 +84,6 @@ btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
 
-ImgDebugDraw *pImgDebugDraw = nullptr;
-
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
 }
@@ -99,71 +97,68 @@ template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
 bool toggleMouseCapture();
 
 void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
-	if (ev.key == GLFW_KEY_ESCAPE) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			signalQuit = true;
+	bool consumed = true;
+	switch (ev.key) {
+	case GLFW_KEY_ESCAPE:
+		signalQuit = true;
+	break;
+	case GLFW_KEY_F1:
+		mouseCaptureDisabled = !toggleMouseCapture();
+	break;
+	case GLFW_KEY_F2:
+		slowMo ^= true;
+	break;
+	case GLFW_KEY_F3:
+		updatePaused ^= true;
+	break;
+	case GLFW_KEY_F10:
+		captureFrame = true;
+	break;
+	case GLFW_KEY_TAB: {
+		auto sCamCtrl = cameraCtrl.lock();
+		if (sCamCtrl->getAttachedEntity().lock() == player.lock()) {
+			sCamCtrl->attachToEntity(freeCam, glm::vec3{0.f});
+			playerInputHandler.setTargetObject(freeCam);
+		} else {
+			sCamCtrl->attachToEntity(player, glm::vec3{0.f});
+			playerInputHandler.setTargetObject(player);
 		}
-	} else if (ev.key == GLFW_KEY_F1) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			mouseCaptureDisabled = !toggleMouseCapture();
-		}
-	} else if (ev.key == GLFW_KEY_F2) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			slowMo ^= true;
-		}
-	} else if (ev.key == GLFW_KEY_F3) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			updatePaused ^= true;
-		}
-	} else if (ev.key == GLFW_KEY_F10) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			captureFrame = true;
-		}
-	} else if (ev.key == GLFW_KEY_TAB) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			auto sCamCtrl = cameraCtrl.lock();
-			if (sCamCtrl->getAttachedEntity().lock() == player.lock()) {
-				sCamCtrl->attachToEntity(freeCam, glm::vec3{0.f});
-				playerInputHandler.setTargetObject(freeCam);
-			} else {
-				sCamCtrl->attachToEntity(player, glm::vec3{0.f});
-				playerInputHandler.setTargetObject(player);
-			}
-		}
-	} else if (ev.key == GLFW_KEY_R) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			pTerrain->generate(terrainConfig);
-			pTerrain->finishGenerate();
-			// reset the box:
-			btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-			btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
-			boxBodyMeta.bodyPtr->setWorldTransform(btTransform{qOrient, vPos});
-			// wake up the box:
-			boxBodyMeta.bodyPtr->activate(true);
+	} break;
+	case GLFW_KEY_R: {
+		pTerrain->generate(terrainConfig);
+		pTerrain->finishGenerate();
+		// reset the box:
+		btQuaternion qOrient{0.5f, 0.13f, 1.2f};
+		btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
+		boxBodyMeta.bodyPtr->setWorldTransform(btTransform{qOrient, vPos});
+		// wake up the box:
+		boxBodyMeta.bodyPtr->activate(true);
 
-			// reset player
-			auto sPlayer = player.lock();
-			if (sPlayer)
-				sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
-		}
-	} else if (ev.key == GLFW_KEY_Q) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			renderWireFrame = !renderWireFrame;
-			pTerrain->setWireframeMode(renderWireFrame);
-		}
-	} else if (ev.key == GLFW_KEY_E) {
-		if (ev.type == InputEvent::EV_KEY_DOWN) {
-			ev.consume();
-			renderPhysicsDebug = !renderPhysicsDebug;
-		}
+		// reset player
+		auto sPlayer = player.lock();
+		if (sPlayer)
+			sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
+	} break;
+	case GLFW_KEY_Q:
+		renderWireFrame = !renderWireFrame;
+		pTerrain->setWireframeMode(renderWireFrame);
+	break;
+	case GLFW_KEY_E:
+		renderPhysicsDebug = !renderPhysicsDebug;
+	break;
+	case GLFW_KEY_X:
+		World::getGlobal<ImgDebugDraw>()->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
+			terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE);
+		World::getGlobal<ImgDebugDraw>()->enable();
+	break;
+	case GLFW_KEY_Z:
+		World::getGlobal<ImgDebugDraw>()->disable();
+	break;
+	default:
+		consumed = false;
 	}
+	if (consumed)
+		ev.consume();
 }
 
 void handleGUIInputs(InputEvent& ev) {
@@ -185,7 +180,8 @@ void onInputEventHandler(InputEvent& ev) {
 	// propagate input events in order of priority:
 	if (!ev.isConsumed()) {
 		bool mouseUncaptured = false;
-		handleSystemKeys(ev, mouseUncaptured);
+		if (ev.type == InputEvent::EV_KEY_DOWN)
+			handleSystemKeys(ev, mouseUncaptured);
 		if (mouseUncaptured)
 			firstMoveSuppressed = false; // enable suppressing first move event again after uncapturing mouse to avoid jumps
 	}
@@ -289,27 +285,22 @@ void physTestDestroy() {
 }
 
 void drawDebugTexts() {
-	GLText::get()->print("TAB : toggle playerCam / freeCam",
-			{20, 20, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+	std::string texts[] {
+		"TAB : toggle playerCam / freeCam",
+		"R : regenerate terrain",
+		"Q : toggle wireframe",
+		"E : toggle debug drawing of physics",
+		"F1 : capture / release mouse",
+		"F2 : toggle slow motion",
+		"F3 : pause",
+		"X : debug terrain heightmap",
+		"Z : disable debug image"
+	};
+	for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
+		GLText::get()->print(texts[i],
+			{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
 			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("R : regenerate terrain",
-			{20, 40, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("Q : toggle wireframe",
-			{20, 60, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("E : toggle debug drawing of physics",
-			{20, 80, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("F1 : capture / release mouse",
-			{20, 100, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("F2 : toggle slow motion",
-			{20, 120, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
-	GLText::get()->print("F3 : pause",
-			{20, 140, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
+	}
 
 	if (updatePaused) {
 		GLText::get()->print("PAUSED",
@@ -422,16 +413,12 @@ void initTerrain() {
 	terrainConfig.maxElevation = 30.f;
 	terrainConfig.seaLevel = 0.f;
 	terrainConfig.relativeRandomJitter = 0.8f;
-	terrainConfig.bigRoughness = 1.f;
-	terrainConfig.smallRoughness = 1.f;
+	terrainConfig.roughness = 1.f;
 	pTerrain = new Terrain();
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
-	pImgDebugDraw->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
-		terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE);
-	pImgDebugDraw->enable();
-	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
+	BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
 
 void initSky() {
@@ -464,14 +451,15 @@ int main(int argc, char* argv[]) {
 		vp1->camera()->setZPlanes(0.15f, 500.f);
 		renderer.addViewport("main", std::move(vp));
 
-		pImgDebugDraw = new ImgDebugDraw();
-
 		initWorld();
 		World &world = World::getInstance();
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
 		LOGLN("RAND seed: " << rand_seed);
+
+		auto pImgDebugDraw = new ImgDebugDraw();
+		World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
 		initTerrain();
 		initSky();
@@ -582,8 +570,10 @@ int main(int argc, char* argv[]) {
 		physTestDestroy();
 		destroyPhysics();
 		renderer.unload();
-		if (pImgDebugDraw)
-			delete pImgDebugDraw, pImgDebugDraw = nullptr;
+		if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
+			delete ptr;
+			World::setGlobal<ImgDebugDraw>(nullptr);
+		}
 		deletePostProcessData();
 		Infrastructure::shutDown();
 	} while (0);

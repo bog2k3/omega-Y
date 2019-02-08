@@ -31,8 +31,9 @@ struct TerrainConfig {
 										// to the initial distance between vertices;
 										// this has the effect of producing an irregular (less matrix-like) mesh
 
-	float bigRoughness = 1.f;	// roughness of big features (hills, mountains etc)
-	float smallRoughness = 1.f;	// roughness of small features (small local variations in terrain)
+	float roughness = 1.f;		// roughness of small features (small local variations in terrain)
+	// TODO idea: reintroduce big-roughness to bias between a perlin-based low-freq height (which is very smooth hills)
+	// versus regular heightMap which is rough
 };
 
 class Viewport;

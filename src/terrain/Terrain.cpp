@@ -375,13 +375,14 @@ void Terrain::computeDisplacements() {
 			float v = (pVertices_[k].pos.z - bottomLeft.z) / config_.length;
 
 			float perlinAmp = (config_.maxElevation - config_.minElevation) * 0.1f;
-			float perlin = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
+			float hiFreq = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
 							+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
 							+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
 							+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
+			float lowFreq = height.value(u, v);
+			//lowFreq = pnoise.getNorm(u/50, v/50, 1.f) * (config_.maxElevation - config_.minElevation) + config_.minElevation;
 
-			pVertices_[k].pos.y = height.value(u, v) * config_.bigRoughness
-									+ perlin * config_.smallRoughness;
+			pVertices_[k].pos.y = lowFreq + hiFreq * config_.roughness;
 
 			// TODO : use vertex colors with perlin noise for more variety
 

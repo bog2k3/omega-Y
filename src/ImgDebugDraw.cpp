@@ -145,6 +145,8 @@ void ImgDebugDraw::setValues(const float* values, int width, int height, float r
 void ImgDebugDraw::draw(Viewport* vp) {
 	if (!enabled_)
 		return;
+	int oldDepthFunc; glGetIntegerv(GL_DEPTH_FUNC, &oldDepthFunc);
+	glDepthFunc(GL_ALWAYS);
 	glUseProgram(pRenderData_->shaderProgram);
 	glBindVertexArray(pRenderData_->VAO);
 	glActiveTexture(GL_TEXTURE0);
@@ -156,5 +158,6 @@ void ImgDebugDraw::draw(Viewport* vp) {
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
+	glDepthFunc(oldDepthFunc);
 	checkGLError("ImgDebugDraw render");
 }

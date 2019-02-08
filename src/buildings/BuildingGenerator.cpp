@@ -1,5 +1,6 @@
 #include "BuildingGenerator.h"
 #include "../terrain/Terrain.h"
+#include "../ImgDebugDraw.h"
 
 #include <boglfw/utils/rand.h>
 #include <boglfw/entities/Box.h>
@@ -87,18 +88,19 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 	}
 	float* fHeights = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
 	downsampleHeightField(terrain.getHeightField(), sourceGridSize, gridSize, fHeights);
-
 	float samplePointDensity = 0.0045f; // per meter squared -> this will yield a distance of about 15 meters between sample points
 	// prepare heightfield for finding locations:
-	//float blurRadius = 1.f / sqrt(samplePointDensity) * 0.25f;	// one quarter of the distance between sample points
-	//blurHeightField(terrain.getHeightField(), gridSize.y, gridSize.x, blurRadius, fHeights);
+	float blurRadius = 1.f / sqrt(samplePointDensity) * 0.25f;	// [m] one quarter of the distance between sample points
+	blurRadius *= gridSize.x / terrain.getConfig().width;
+	float* fHeightsBlured = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
+	blurHeightField(fHeights, gridSize.y, gridSize.x, blurRadius, fHeightsBlured);
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
 	for (unsigned i=0; i<nSamplePoints; i++) {
 		glm::ivec2 sp { randi(gridSize.x - 1), randi(gridSize.y - 1) };
 		glm::vec3 wp { (sp.x / (float)gridSize.x - 0.5f) * terrain.getConfig().width, 0.f,
 						(sp.y / (float)gridSize.y - 0.5f) * terrain.getConfig().length };
-		wp.y = fHeights[sp.y * gridSize.y + sp.x];
+		wp.y = fHeightsBlured[sp.y * gridSize.y + sp.x];
 
 		std::shared_ptr<Box> spB = std::make_shared<Box>(0.2f, 1.f, 0.2f);
 		spB->getTransform().setPosition(wp);
