@@ -160,33 +160,3 @@ void HeightMap::generate(float amplitude) {
 		elements_[i].value = (elements_[i].value - vmin) * scale;
 }
 
-void HeightMap::meltEdges(unsigned radius) {
-	if (radius > width_/2 || radius > length_/2) {
-		ERROR("HeightMap::meltEdges() received invalid parameter");
-		return;
-	}
-	// top edge:
-	for (unsigned i=0; i<radius; i++) {
-		float f = pow((float)i / radius, 2.f);
-		for (unsigned j=0; j<width_; j++)
-			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
-	}
-	// bottom edge:
-	for (unsigned i=length_-radius-1; i<length_; i++) {
-		float f = pow((float)(length_-1-i) / radius, 2.f);
-		for (unsigned j=0; j<width_; j++)
-			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
-	}
-	// left edge:
-	for (unsigned j=0; j<radius; j++) {
-		float f = pow((float)j / radius, 2.f);
-		for (unsigned i=0; i<length_; i++)
-			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
-	}
-	// right edge:
-	for (unsigned j=width_-radius-1; j<width_; j++) {
-		float f = pow((float)(width_-1-j) / radius, 2.f);
-		for (unsigned i=0; i<length_; i++)
-			elements_[i*width_+j].value = lerp(0.f, elements_[i*width_+j].value, f);
-	}
-}

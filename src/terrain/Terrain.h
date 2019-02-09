@@ -31,10 +31,8 @@ struct TerrainConfig {
 										// to the initial distance between vertices;
 										// this has the effect of producing an irregular (less matrix-like) mesh
 
-	float roughness = 1.f;		// roughness of small features (small local variations in terrain)
-	// TODO idea: reintroduce big-roughness to bias between a perlin-based low-freq height (which is very smooth hills)
-	// versus regular heightMap which is rough
-	// also this bigRoughness can control the jitterReductionFactor param in heightmap
+	float bigRoughness = 0.5f;		// between [0.0 and 1.0] -> controls roughness of big features (hills/cliffs etc)
+	float smallRoughness = 1.f;		// roughness of small features (small local variations in terrain)
 };
 
 class Viewport;
@@ -98,6 +96,7 @@ private:
 	void loadTextures();
 	void fixTriangleWinding();
 	void computeDisplacements();
+	void meltEdges(unsigned xRadius, unsigned zRadius);
 	void computeNormals();
 	void computeTextureWeights();
 	void updateRenderBuffers();

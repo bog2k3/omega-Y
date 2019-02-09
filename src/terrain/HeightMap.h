@@ -13,9 +13,6 @@ public:
 	HeightMap(HeightmapParams const& params);
 	virtual ~HeightMap();
 
-	// melt the edges over a [radius] distance from the edge, bringing their height value down gradually to zero
-	void meltEdges(unsigned radius);
-
 	// return the interpolated height value at position with normalized coordinates (u, v) <- [0.0, 1.0]
 	float value(float u, float v) const;
 

@@ -1,6 +1,8 @@
 #include "PerlinNoise.h"
 
 #include <boglfw/utils/rand.h>
+#include <boglfw/utils/log.h>
+#include <boglfw/math/math3D.h>
 
 #include <glm/geometric.hpp>
 
@@ -95,8 +97,11 @@ glm::vec2 PerlinNoise::getGradientVector(float u, float v) {
 	
 	glm::vec2 s01 = glm::normalize((1.f - uF) * g0 + uF * g1);
 	glm::vec2 s23 = glm::normalize((1.f - uF) * g2 + uF * g3);
+	//glm::vec2 s01 = (1.f - uF) * g0 + uF * g1;
+	//glm::vec2 s23 = (1.f - uF) * g2 + uF * g3;
 	
 	return glm::normalize((1.f - vF) * s01 + vF * s23);
+	//return (1.f - vF) * s01 + vF * s23;
 }
 #endif
 

@@ -359,13 +359,13 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = config_.width / 4;
-	hparam.length = config_.length / 4;
+	hparam.width = max(4.f, config_.width / 4);
+	hparam.length = max(4.f, config_.length / 4);
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
-	height.meltEdges(10);
-	PerlinNoise pnoise(config_.width, config_.length);
+	PerlinNoise smallNoise(config_.width, config_.length);
+	PerlinNoise bigNoise(max(4.f, config_.width / 50), max(4.f, config_.length / 50));
 
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
@@ -375,14 +375,15 @@ void Terrain::computeDisplacements() {
 			float v = (pVertices_[k].pos.z - bottomLeft.z) / config_.length;
 
 			float perlinAmp = (config_.maxElevation - config_.minElevation) * 0.1f;
-			float hiFreq = pnoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
-							+ pnoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
-							+ pnoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
-							+ pnoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
+			float hiFreq = smallNoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
+							+ smallNoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
+							+ smallNoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
+							+ smallNoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 			float lowFreq = height.value(u, v);
-			//lowFreq = pnoise.getNorm(u/50, v/50, 1.f) * (config_.maxElevation - config_.minElevation) + config_.minElevation;
+			float lowFreqSmooth = bigNoise.getNorm(u, v, 1.f) * (config_.maxElevation - config_.minElevation) + config_.minElevation;
+			lowFreq = lerp(lowFreqSmooth, lowFreq, config_.bigRoughness);
 
-			pVertices_[k].pos.y = lowFreq + hiFreq * config_.roughness;
+			pVertices_[k].pos.y = lowFreq + hiFreq * config_.smallRoughness;
 
 			// TODO : use vertex colors with perlin noise for more variety
 
@@ -390,6 +391,45 @@ void Terrain::computeDisplacements() {
 			//float hr = (pVertices_[k].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
 			//pVertices_[k].color = {1.f - hr, hr, 0};
 		}
+	meltEdges(cols_ * 0.1, rows_ * 0.1);
+}
+
+void Terrain::meltEdges(unsigned xRadius, unsigned zRadius) {
+	if (xRadius > cols_/2 || zRadius > rows_/2) {
+		ERROR("Terrain::meltEdges() received invalid parameter");
+		return;
+	}
+	auto slopeFn = [](float x) {
+		return 0.5f + 0.5f * sinf(x * PI - PI/2);
+	};
+	// top edge:
+	for (unsigned i=0; i<zRadius; i++) {
+		float f = (float)i / zRadius;
+		f = slopeFn(f);
+		for (unsigned j=0; j<cols_; j++)
+			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, f);
+	}
+	// bottom edge:
+	for (unsigned i=rows_-zRadius; i<rows_; i++) {
+		float f = (float)(rows_-i) / zRadius;
+		f = slopeFn(f);
+		for (unsigned j=0; j<cols_; j++)
+			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, f);
+	}
+	// left edge:
+	for (unsigned j=0; j<xRadius; j++) {
+		float f = (float)j / xRadius;
+		f = slopeFn(f);
+		for (unsigned i=0; i<rows_; i++)
+			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, f);
+	}
+	// right edge:
+	for (unsigned j=cols_-xRadius; j<cols_; j++) {
+		float f = (float)(cols_-j) / xRadius;
+		f = slopeFn(f);
+		for (unsigned i=0; i<rows_; i++)
+			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, f);
+	}
 }
 
 void Terrain::computeNormals() {
