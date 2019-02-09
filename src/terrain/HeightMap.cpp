@@ -5,6 +5,7 @@
 #include <boglfw/utils/log.h>
 
 #include <cassert>
+#include <vector>
 
 static const float jitterReductionFactor = 0.5f;	// jitter is multiplied by this factor at each iteration
 
@@ -101,17 +102,6 @@ void HeightMap::computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, 
 			elements_[r2 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
-	if (c2 > c1+2 || r2 > r1+2) {
-		// recurse into the 4 sub-sections:
-		// top-left
-		computeDiamondSquareStep(r1, midR, c1, midC, jitterAmp * jitterReductionFactor);
-		// top-right
-		computeDiamondSquareStep(r1, midR, midC, c2, jitterAmp * jitterReductionFactor);
-		// bottom-left
-		computeDiamondSquareStep(midR, r2, c1, midC, jitterAmp * jitterReductionFactor);
-		// bottom-right
-		computeDiamondSquareStep(midR, r2, midC, c2, jitterAmp * jitterReductionFactor);
-	}
 }
 
 void HeightMap::generate(float amplitude) {
@@ -120,9 +110,41 @@ void HeightMap::generate(float amplitude) {
 	elements_[width_-1] += amplitude* (0.5f + 0.5f*randf());
 	elements_[(length_-1)*width_] += amplitude* (0.5f + 0.5f*randf());
 	elements_[width_ * length_ - 1] += amplitude* (0.5f + 0.5f*randf());
-	float jitterAmp = amplitude * jitterReductionFactor;
-	// compute midpoint displacement recursively:
-	computeDiamondSquareStep(0, length_-1, 0, width_-1, jitterAmp);
+
+	struct rcData {
+		unsigned r1, r2, c1, c2;
+		float jitterAmp;
+	};
+	std::vector<rcData> vSteps;
+	vSteps.reserve(width_*width_ / 3.5f);
+
+	vSteps.push_back(rcData{
+		0, length_ - 1,
+		0, width_ - 1,
+		amplitude * jitterReductionFactor
+	});
+	unsigned index = 0;
+	// compute diamon displacement iteratively:
+	while (index < vSteps.size()) {
+		unsigned r1 = vSteps[index].r1;
+		unsigned r2 = vSteps[index].r2;
+		unsigned c1 = vSteps[index].c1;
+		unsigned c2 = vSteps[index].c2;
+		computeDiamondSquareStep(r1, r2, c1, c2, vSteps[index].jitterAmp);
+		if (c2 > c1+2 || r2 > r1+2) {
+			unsigned midR = (r1 + r2) / 2;
+			unsigned midC = (c1 + c2) / 2;
+			// top-left
+			vSteps.push_back(rcData{r1, midR, c1, midC, vSteps[index].jitterAmp * jitterReductionFactor});
+			// top-right
+			vSteps.push_back(rcData{r1, midR, midC, c2, vSteps[index].jitterAmp * jitterReductionFactor});
+			// bottom-left
+			vSteps.push_back(rcData{midR, r2, c1, midC, vSteps[index].jitterAmp * jitterReductionFactor});
+			// bottom-right
+			vSteps.push_back(rcData{midR, r2, midC, c2, vSteps[index].jitterAmp * jitterReductionFactor});
+		}
+		index++;
+	}
 	// average out the values and compute min/max:
 	float vmin = 1e20f, vmax = -1e20f;
 	for (unsigned i=0; i<width_*length_; i++) {
