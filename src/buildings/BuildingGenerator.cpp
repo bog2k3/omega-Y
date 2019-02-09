@@ -70,14 +70,6 @@ void downsampleHeightField(const float* in, glm::ivec2 const& inSize, glm::ivec2
 	}
 }
 
-// computes a matrix of gradient vectors for each entry in the heightfield
-void computeFieldGradient(const float* in, int rows, int cols, glm::vec2* out) {
-	for (int i=0; i<rows; i++)
-		for (int j=0; j<cols; j++) {
-
-		}
-}
-
 void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &terrain) {
 	glm::ivec2 gridSize = terrain.getGridSize();
 	glm::vec2 gridPointDensity { gridSize.x / terrain.getConfig().width, gridSize.y / terrain.getConfig().length };	// grid points per meter
@@ -98,13 +90,36 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 	float* fHeightsBlured = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
 	blurHeightField(fHeights, gridSize.y, gridSize.x, blurRadius, fHeightsBlured);
 	free(fHeights), fHeights = nullptr;
-	// compute heightfield gradients
-	glm::vec2 *heightGradient = (glm::vec2*)malloc(sizeof(glm::vec2) * gridSize.x * gridSize.y);
-	computeFieldGradient(fHeightsBlured, gridSize.y, gridSize.x, heightGradient);
+
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
 	for (unsigned i=0; i<nSamplePoints; i++) {
 		glm::ivec2 sp { randi(gridSize.x - 1), randi(gridSize.y - 1) };
+		bool seek = true; // seek the local maximum
+		while (seek) {
+			// look at the four neighbours and move towards the higher one
+			glm::ivec2 neighbours[] {
+				{max(0, sp.x - 1), sp.y},
+				{min(gridSize.x-1, sp.x + 1), sp.y},
+				{sp.x, max(0, sp.y - 1)},
+				{sp.x, min(gridSize.y-1, sp.y + 1)},
+			};
+			float nh[] {
+				fHeightsBlured[neighbours[0].y*gridSize.x + neighbours[0].x],
+				fHeightsBlured[neighbours[1].y*gridSize.x + neighbours[1].x],
+				fHeightsBlured[neighbours[2].y*gridSize.x + neighbours[2].x],
+				fHeightsBlured[neighbours[3].y*gridSize.x + neighbours[3].x],
+			};
+			int nmax = 0;
+			for (int i=1; i<4; i++)
+				if (nh[i] > nh[nmax])
+					nmax = i;
+			if (nh[nmax] > fHeightsBlured[sp.y * gridSize.x + sp.x]) {
+				sp = neighbours[nmax];
+			} else
+				seek = false;
+		}
+
 		glm::vec3 wp { (sp.x / (float)gridSize.x - 0.5f) * terrain.getConfig().width, 0.f,
 						(sp.y / (float)gridSize.y - 0.5f) * terrain.getConfig().length };
 		wp.y = fHeightsBlured[sp.y * gridSize.x + sp.x];
@@ -116,5 +131,4 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 	// we now have our sample points, we need to move them around according to local gradients to find local maximums
 
 	free(fHeightsBlured), fHeightsBlured = nullptr;
-	free(heightGradient), heightGradient = nullptr;
 }

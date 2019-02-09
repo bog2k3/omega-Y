@@ -359,8 +359,8 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = max(4.f, config_.width / 4);
-	hparam.length = max(4.f, config_.length / 4);
+	hparam.width = max(4.f, config_.width / 8);
+	hparam.length = max(4.f, config_.length / 8);
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
@@ -375,9 +375,9 @@ void Terrain::computeDisplacements() {
 			float v = (pVertices_[k].pos.z - bottomLeft.z) / config_.length;
 
 			float perlinAmp = (config_.maxElevation - config_.minElevation) * 0.1f;
-			float hiFreq = smallNoise.get(u/8, v/8, 1.f) * perlinAmp * 0.3
-							+ smallNoise.get(u/4, v/4, 1.f) * perlinAmp * 0.2
-							+ smallNoise.get(u/2, v/2, 1.f) * perlinAmp * 0.1
+			float hiFreq = //smallNoise.get(u/8, v/8, 1.f) * perlinAmp * 0.5
+							+ smallNoise.get(u/4, v/4, 1.f) * perlinAmp * 0.3
+							+ smallNoise.get(u/2, v/2, 1.f) * perlinAmp * 0.15
 							+ smallNoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
 			float lowFreq = height.value(u, v);
 			float lowFreqSmooth = bigNoise.getNorm(u, v, 1.f) * (config_.maxElevation - config_.minElevation) + config_.minElevation;
