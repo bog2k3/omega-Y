@@ -93,6 +93,7 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
+	glm::ivec2* samplePoints = malloc(sizeof(glm::ivec2) * nSamplePoints);
 	for (unsigned i=0; i<nSamplePoints; i++) {
 		glm::ivec2 sp { randi(gridSize.x - 1), randi(gridSize.y - 1) };
 		bool seek = true; // seek the local maximum
@@ -119,7 +120,9 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 			} else
 				seek = false;
 		}
+		samplePoints[i] = sp;
 
+		// debug sample points with boxes:
 		glm::vec3 wp { (sp.x / (float)gridSize.x - 0.5f) * terrain.getConfig().width, 0.f,
 						(sp.y / (float)gridSize.y - 0.5f) * terrain.getConfig().length };
 		wp.y = fHeightsBlured[sp.y * gridSize.x + sp.x];
@@ -128,7 +131,9 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 		spB->getTransform().setPosition(wp);
 		World::getInstance().takeOwnershipOf(spB);
 	}
-	// we now have our sample points, we need to move them around according to local gradients to find local maximums
+	// now discard duplicate sample points and use remaining ones to decide where to place castles
+	// ...
 
+	free(samplePoints), samplePoints = nullptr;
 	free(fHeightsBlured), fHeightsBlured = nullptr;
 }
