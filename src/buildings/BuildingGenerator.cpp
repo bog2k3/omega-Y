@@ -23,11 +23,11 @@ void blurHeightField(const float* in, int rows, int cols, float radius, float* o
 					int ci = j + jj;	// column index
 					if (ri < 0 || ri >= rows || ci < 0 || ci >= cols)
 						continue; // we're outside the field
-					val += in[ri*rows + ci] * cubicFactor;
+					val += in[ri*cols + ci] * cubicFactor;
 					denom += cubicFactor;
 				}
 			}
-			out[i*rows + j] = val / denom;
+			out[i*cols + j] = val / denom;
 		}
 	}
 }
@@ -63,7 +63,7 @@ void downsampleHeightField(const float* in, glm::ivec2 const& inSize, glm::ivec2
 					value += in[isy * inSize.x + isx] * weight;
 					denom += weight;
 				}
-			out[i*outSize.y + j] = value / denom;
+			out[i*outSize.x + j] = value / denom;
 			sampleOrigin.x += rcSize.x;
 		}
 		sampleOrigin.y += rcSize.y;
@@ -72,7 +72,10 @@ void downsampleHeightField(const float* in, glm::ivec2 const& inSize, glm::ivec2
 
 // computes a matrix of gradient vectors for each entry in the heightfield
 void computeFieldGradient(const float* in, int rows, int cols, glm::vec2* out) {
+	for (int i=0; i<rows; i++)
+		for (int j=0; j<cols; j++) {
 
+		}
 }
 
 void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &terrain) {
@@ -94,17 +97,24 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 	blurRadius *= gridSize.x / terrain.getConfig().width;
 	float* fHeightsBlured = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
 	blurHeightField(fHeights, gridSize.y, gridSize.x, blurRadius, fHeightsBlured);
+	free(fHeights), fHeights = nullptr;
+	// compute heightfield gradients
+	glm::vec2 *heightGradient = (glm::vec2*)malloc(sizeof(glm::vec2) * gridSize.x * gridSize.y);
+	computeFieldGradient(fHeightsBlured, gridSize.y, gridSize.x, heightGradient);
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
 	for (unsigned i=0; i<nSamplePoints; i++) {
 		glm::ivec2 sp { randi(gridSize.x - 1), randi(gridSize.y - 1) };
 		glm::vec3 wp { (sp.x / (float)gridSize.x - 0.5f) * terrain.getConfig().width, 0.f,
 						(sp.y / (float)gridSize.y - 0.5f) * terrain.getConfig().length };
-		wp.y = fHeightsBlured[sp.y * gridSize.y + sp.x];
+		wp.y = fHeightsBlured[sp.y * gridSize.x + sp.x];
 
 		std::shared_ptr<Box> spB = std::make_shared<Box>(0.2f, 1.f, 0.2f);
 		spB->getTransform().setPosition(wp);
 		World::getInstance().takeOwnershipOf(spB);
 	}
 	// we now have our sample points, we need to move them around according to local gradients to find local maximums
+
+	free(fHeightsBlured), fHeightsBlured = nullptr;
+	free(heightGradient), heightGradient = nullptr;
 }

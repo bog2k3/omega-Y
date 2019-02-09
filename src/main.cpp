@@ -413,8 +413,8 @@ void initTerrain() {
 	terrainConfig.maxElevation = 30.f;
 	terrainConfig.seaLevel = 0.f;
 	terrainConfig.relativeRandomJitter = 0.8f;
-	terrainConfig.bigRoughness = 0.5f;
-	terrainConfig.smallRoughness = 1.f;
+	terrainConfig.bigRoughness = 0.7f;
+	terrainConfig.smallRoughness = 0.8f;
 	pTerrain = new Terrain();
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
