@@ -93,7 +93,7 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 
 	// find suitable locations for castles
 	unsigned nSamplePoints = terrain.getConfig().width * terrain.getConfig().length * samplePointDensity;
-	glm::ivec2* samplePoints = malloc(sizeof(glm::ivec2) * nSamplePoints);
+	glm::ivec2* samplePoints = (glm::ivec2*)malloc(sizeof(glm::ivec2) * nSamplePoints);
 	for (unsigned i=0; i<nSamplePoints; i++) {
 		glm::ivec2 sp { randi(gridSize.x - 1), randi(gridSize.y - 1) };
 		bool seek = true; // seek the local maximum
