@@ -108,7 +108,7 @@ ImgDebugDraw::~ImgDebugDraw() {
 
 #include <boglfw/utils/rand.h>
 
-void ImgDebugDraw::setValues(const float* values, int width, int height, float rangeMin, float rangeMax, ImgDebugDraw::PixelFormat fmt) {
+void ImgDebugDraw::setValues(const float* values, int width, int height, float rangeMin, float rangeMax, ImgDebugDraw::PixelFormat fmt, FilterMode filter) {
 	pRenderData_->channelMask[0] = 0.f;
 	pRenderData_->channelMask[1] = 0.f;
 	pRenderData_->channelMask[2] = 0.f;
@@ -136,6 +136,16 @@ void ImgDebugDraw::setValues(const float* values, int width, int height, float r
 	}
 	glBindTexture(GL_TEXTURE_2D, pRenderData_->texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, glIntFmt, width, height, 0, glFmt, GL_FLOAT, values);
+	switch(filter) {
+		case FILTER_LINEAR:
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		break;
+		case FILTER_NEAREST:
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	pRenderData_->rangeMin = rangeMin;
 	pRenderData_->rangeMax = rangeMax;

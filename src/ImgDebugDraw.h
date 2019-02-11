@@ -14,7 +14,12 @@ public:
 		FMT_GRAYSCALE,	// 1 component grayscale floating point
 	};
 
-	void setValues(const float* values, int width, int height, float rangeMin, float rangeMax, PixelFormat fmt);
+	enum FilterMode {
+		FILTER_NEAREST,
+		FILTER_LINEAR,
+	};
+
+	void setValues(const float* values, int width, int height, float rangeMin, float rangeMax, PixelFormat fmt, FilterMode filter=FILTER_LINEAR);
 	void enable() { enabled_ = true; }
 	void disable() { enabled_ = false; }
 

@@ -148,7 +148,7 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	break;
 	case GLFW_KEY_X:
 		World::getGlobal<ImgDebugDraw>()->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
-			terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE);
+			terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE, ImgDebugDraw::FILTER_LINEAR);
 		World::getGlobal<ImgDebugDraw>()->enable();
 	break;
 	case GLFW_KEY_Z:
