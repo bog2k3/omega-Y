@@ -1,9 +1,19 @@
 #!/bin/bash
+
+# optional parameters:
+#
+# --release		perform a RELEASE build instead of DEBUG
+
+BUILD_TYPE="Debug"
+if [ $1 == "--release" ]; then
+	BUILD_TYPE="Release"
+fi
+
 if [ ! -d build ]; then
     mkdir build
 fi
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
+cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -G "Unix Makefiles" ..
 RESULT=$?
 if [[ $RESULT != 0 ]]; then
 	printf "\nCMake error. exiting.\n"

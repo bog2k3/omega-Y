@@ -104,20 +104,25 @@ void PlayerEntity::update(float dt) {
 void PlayerEntity::move(direction dir) {
 	switch (dir) {
 		case IUserControllable::FORWARD:
-			frameMoveValues_.y += 1.f; break;
+			frameMoveValues_.y += 1.f;
+		break;
 		case IUserControllable::BACKWARD:
-			frameMoveValues_.y -= 1.f; break;
+			frameMoveValues_.y -= 1.f;
+		break;
 		case IUserControllable::LEFT:
-			frameMoveValues_.x -= 1.f; break;
+			frameMoveValues_.x -= 1.f;
+		break;
 		case IUserControllable::RIGHT:
-			frameMoveValues_.x += 1.f; break;
+			frameMoveValues_.x += 1.f;
+		break;
 		case IUserControllable::UP:
 			if (canJump_)
-				jump_ = true, canJump_ = false; break;
+				jump_ = true, canJump_ = false;
+		break;
 		case IUserControllable::DOWN:
-			break;
+		break;
 		default:
-			break;
+		break;
 	}
 }
 
@@ -141,7 +146,16 @@ void PlayerEntity::rotate(direction dir, float angle) {
 }
 
 void PlayerEntity::setActionState(int actionId, bool on) {
-
+	switch (actionId) {
+	case ACTION_SHOOT:
+		setWeaponTriggerState(on);
+	break;
+	case ACTION_RELOAD:
+		setWeaponReloadState(on);
+	break;
+	default:
+		break;
+	}
 }
 
 void PlayerEntity::onCollision(CollisionEvent const& ev) {
@@ -149,5 +163,28 @@ void PlayerEntity::onCollision(CollisionEvent const& ev) {
 		case EntityTypes::TERRAIN:
 			canJump_ = true;
 			break;
+	}
+}
+
+#ifdef DEBUG
+void PlayerEntity::testShootBullet() {
+
+}
+#endif // DEBUG
+
+void PlayerEntity::setWeaponTriggerState(bool on) {
+	// TODO use on/off to implement continuous shooting
+	if (on) {
+#ifdef DEBUG
+		// one shot action
+		testShootBullet();
+#endif // DEBUG
+	}
+}
+
+void PlayerEntity::setWeaponReloadState(bool on) {
+	// TODO use on/off to implement long reloads for some weapons
+	if (on) {
+		// ... reload weapon
 	}
 }

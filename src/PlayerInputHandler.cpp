@@ -19,23 +19,26 @@ void PlayerInputHandler::setDefaultBindings() {
 	bindings[MOVE_RIGHT] 		= { GLFW_KEY_D, false, bindingDescriptor::DeviceType::Keyboard };
 	bindings[RUN]				= { GLFW_KEY_LEFT_SHIFT, false, bindingDescriptor::DeviceType::Keyboard };
 	bindings[MOVE_UP] 			= { InputEvent::MB_RIGHT, false, bindingDescriptor::DeviceType::Mouse };
-	bindings[MOVE_DOWN] 		= { InputEvent::MB_LEFT, false, bindingDescriptor::DeviceType::Mouse };
+	bindings[MOVE_DOWN] 		= { GLFW_KEY_LEFT_CONTROL, false, bindingDescriptor::DeviceType::Keyboard };
 	bindings[ROTATE_YAW] 		= { 0, true, bindingDescriptor::DeviceType::Mouse };	// mouse x axis
 	bindings[ROTATE_PITCH] 		= { 1, true, bindingDescriptor::DeviceType::Mouse };	// mouse y axis
+
+	bindings[CUSTOM_ACTION_1] 	= { InputEvent::MB_LEFT, false, bindingDescriptor::DeviceType::Mouse };
 }
 
 void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
-	// for now we don't have a player, just a free camera
 	for (int a=0; a < ALL_ACTIONS; a++) {
 		switch (bindings[a].device) {
 			case bindingDescriptor::DeviceType::Keyboard: {
 				// treat keyboard buttons
 				if (ev.key == bindings[a].code) {
 					if (ev.type == InputEvent::EV_KEY_DOWN) {
-						inputStates_[a] = 1.f;					// TODO change to += 1.f if allowing multiple bindings for same action
+						inputStates_[a].second = inputStates_[a].first != 1.f;
+						inputStates_[a].first = 1.f;					// TODO change to += 1.f if allowing multiple bindings for same action
 						ev.consume();
 					} else if (ev.type == InputEvent::EV_KEY_UP) {
-						inputStates_[a] = 0.f;
+						inputStates_[a].second = inputStates_[a].first != 0.f;
+						inputStates_[a].first = 0.f;
 						ev.consume();
 					}
 				}
@@ -50,26 +53,31 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 					// treat mouse movement
 					if (ev.type == InputEvent::EV_MOUSE_MOVED || ev.type == InputEvent::EV_MOUSE_SCROLL) {
 						if (bindings[a].code == 0) { 		// X-axis
-							inputStates_[a] += ev.dx * mouseSensitivity * 0.01f;
+							inputStates_[a].first += ev.dx * mouseSensitivity * 0.01f;
+							inputStates_[a].second = true;
 							ev.consume();
 						}
 						else if (bindings[a].code == 1) { // Y-axis
-							inputStates_[a] += ev.dy * mouseSensitivity * 0.01f * (invertMouseY ? -1.f : 1.f);
+							inputStates_[a].first += ev.dy * mouseSensitivity * 0.01f * (invertMouseY ? -1.f : 1.f);
+							inputStates_[a].second = true;
 							ev.consume();
 						}
 						else if (bindings[a].code == 2) { // Z-axis
-							inputStates_[a] += ev.dz;	// we don't apply sensitivity to scroll wheel
+							inputStates_[a].first += ev.dz;	// we don't apply sensitivity to scroll wheel
+							inputStates_[a].second = true;
 							ev.consume();
 						}
 					}
 				} else if (ev.mouseButton == bindings[a].code) {
 					// treat mouse buttons
 					if (ev.type == InputEvent::EV_MOUSE_DOWN) {
-						inputStates_[a] = 1.f;
+						inputStates_[a].second = inputStates_[a].first != 1.f;
+						inputStates_[a].first = 1.f;
 						ev.consume();
 					}
 					else if (ev.type == InputEvent::EV_MOUSE_UP) {
-						inputStates_[a] = 0.f;
+						inputStates_[a].second = inputStates_[a].first != 0.f;
+						inputStates_[a].first = 0.f;
 						ev.consume();
 					}
 				}
@@ -84,30 +92,33 @@ void PlayerInputHandler::update(float dt) {
 		targetObj_.reset();
 		return;		// our target object was destroyed
 	}
-	if (inputStates_[MOVE_FORWARD])
+	if (inputStates_[MOVE_FORWARD].first)
 		targetSP->move(IUserControllable::FORWARD);
-	if (inputStates_[MOVE_BACKWARD])
+	if (inputStates_[MOVE_BACKWARD].first)
 		targetSP->move(IUserControllable::BACKWARD);
-	if (inputStates_[MOVE_LEFT])
+	if (inputStates_[MOVE_LEFT].first)
 		targetSP->move(IUserControllable::LEFT);
-	if (inputStates_[MOVE_RIGHT])
+	if (inputStates_[MOVE_RIGHT].first)
 		targetSP->move(IUserControllable::RIGHT);
-	if (inputStates_[MOVE_UP])
+	if (inputStates_[MOVE_UP].first)
 		targetSP->move(IUserControllable::UP);
-	if (inputStates_[MOVE_DOWN])
+	if (inputStates_[MOVE_DOWN].first)
 		targetSP->move(IUserControllable::DOWN);
-		
-	targetSP->toggleRun(inputStates_[RUN]);
-	
-	if (inputStates_[ROTATE_YAW]) {
-		targetSP->rotate(IUserControllable::RIGHT, inputStates_[ROTATE_YAW]);	// rotating RIGHT with negative angle rotates LEFT
-		inputStates_[ROTATE_YAW] = 0;
+
+	if (inputStates_[RUN].second)
+		targetSP->toggleRun(inputStates_[RUN].first);
+
+	if (inputStates_[ROTATE_YAW].first) {
+		targetSP->rotate(IUserControllable::RIGHT, inputStates_[ROTATE_YAW].first);	// rotating RIGHT with negative angle rotates LEFT
+		inputStates_[ROTATE_YAW].first = 0;
 	}
-	if (inputStates_[ROTATE_PITCH]) {
-		targetSP->rotate(IUserControllable::DOWN, inputStates_[ROTATE_PITCH]);	// rotating DOWN with negative angle rotates UP
-		inputStates_[ROTATE_PITCH] = 0;
+	if (inputStates_[ROTATE_PITCH].first) {
+		targetSP->rotate(IUserControllable::DOWN, inputStates_[ROTATE_PITCH].first);	// rotating DOWN with negative angle rotates UP
+		inputStates_[ROTATE_PITCH].first = 0;
 	}
-	
-	for (int a=CUSTOM_ACTION_1; a < CUSTOM_ACTION_LAST; a++)
-		targetSP->setActionState(a - CUSTOM_ACTION_1, inputStates_[a]);
+
+	for (int a=CUSTOM_ACTION_1; a < CUSTOM_ACTION_LAST; a++) {
+		if (inputStates_[a].second)
+			targetSP->setActionState(a - CUSTOM_ACTION_1, inputStates_[a].first);
+	}
 }

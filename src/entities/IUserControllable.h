@@ -6,7 +6,7 @@
 class IUserControllable {
 public:
 	virtual ~IUserControllable() = default;
-		
+
 	enum direction {
 		FORWARD,
 		BACKWARD,
@@ -15,13 +15,14 @@ public:
 		UP,
 		DOWN
 	};
-	
+
 	virtual void move(direction dir) = 0;
 	virtual void toggleRun(bool on) = 0;
 	virtual void rotate(direction dir, float angle) = 0;
-	
+
 	// sets an action state to ON or OFF as the user presses or releases the associated key/button.
-	// the meaning of the action is defined by the implementation
+	// the meaning of the action is defined by the implementation.
+	// the values of [actionId] start from 0.
 	virtual void setActionState(int actionId, bool on) = 0;
 };
 

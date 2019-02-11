@@ -56,7 +56,7 @@ public:
 	void setTargetObject(std::weak_ptr<IUserControllable> target) { targetObj_ = target; }
 
 private:
-	float inputStates_[ALL_ACTIONS];				// input button/axis states (values) for each bound input
+	std::pair<float, bool> inputStates_[ALL_ACTIONS]; // first: input button/axis states (values) for each bound input; second: isChanged
 	std::weak_ptr<IUserControllable> targetObj_;	// this is the target to which actions are routed
 };
 

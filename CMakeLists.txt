@@ -78,6 +78,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIA
 # target_compile_options(${PROJECT_NAME} PUBLIC -DENABLE_PERF_MARKERS)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g") # enable debug symbols in release build
 
 # update the framework version we built against
 ADD_CUSTOM_COMMAND (

@@ -27,6 +27,12 @@ public:
 
 	void moveTo(glm::vec3 where);
 
+	enum CustomActions {
+		ACTION_SHOOT,
+		ACTION_RELOAD,
+		// ...
+	};
+
 	// sets an action state to ON or OFF as the user presses or releases the associated key/button.
 	// the meaning of the action is defined by the implementation
 	virtual void setActionState(int actionId, bool on) override;
@@ -45,6 +51,13 @@ private:
 	glm::vec2 frameRotateValues_ {0.f};
 
 	void onCollision(CollisionEvent const& ev);
+
+	void setWeaponTriggerState(bool on);
+	void setWeaponReloadState(bool on);
+
+#ifdef DEBUG
+	void testShootBullet();
+#endif
 };
 
 #endif // PLAYERENTITY_H

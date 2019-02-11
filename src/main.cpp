@@ -95,6 +95,7 @@ template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
 }
 
 bool toggleMouseCapture();
+void handleDebugKeys(InputEvent& ev);
 
 void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	bool consumed = true;
@@ -104,12 +105,6 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	break;
 	case GLFW_KEY_F1:
 		mouseCaptureDisabled = !toggleMouseCapture();
-	break;
-	case GLFW_KEY_F2:
-		slowMo ^= true;
-	break;
-	case GLFW_KEY_F3:
-		updatePaused ^= true;
 	break;
 	case GLFW_KEY_F10:
 		captureFrame = true;
@@ -124,6 +119,26 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 			playerInputHandler.setTargetObject(player);
 		}
 	} break;
+	default:
+		consumed = false;
+	}
+	if (consumed)
+		ev.consume();
+#ifdef DEBUG
+	else
+		handleDebugKeys(ev);
+#endif
+}
+
+void handleDebugKeys(InputEvent& ev) {
+	bool consumed = true;
+	switch (ev.key) {
+	case GLFW_KEY_F2:
+		slowMo ^= true;
+	break;
+	case GLFW_KEY_F3:
+		updatePaused ^= true;
+	break;
 	case GLFW_KEY_R: {
 		pTerrain->generate(terrainConfig);
 		pTerrain->finishGenerate();
@@ -287,14 +302,16 @@ void physTestDestroy() {
 void drawDebugTexts() {
 	std::string texts[] {
 		"TAB : toggle playerCam / freeCam",
+		"F1 : capture / release mouse",
+#ifdef DEBUG
 		"R : regenerate terrain",
 		"Q : toggle wireframe",
 		"E : toggle debug drawing of physics",
-		"F1 : capture / release mouse",
 		"F2 : toggle slow motion",
 		"F3 : pause",
 		"X : debug terrain heightmap",
 		"Z : disable debug image"
+#endif
 	};
 	for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
 		GLText::get()->print(texts[i],
@@ -420,7 +437,7 @@ void initTerrain() {
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
-	BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
+	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
 
 void initSky() {
@@ -454,7 +471,6 @@ int main(int argc, char* argv[]) {
 		renderer.addViewport("main", std::move(vp));
 
 		initWorld();
-		World &world = World::getInstance();
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
@@ -568,7 +584,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		world.reset();
+		World::getInstance().reset();
 		physTestDestroy();
 		destroyPhysics();
 		renderer.unload();
