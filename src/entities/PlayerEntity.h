@@ -36,7 +36,7 @@ public:
 private:
 	//Mesh mesh_;
 
-	PhysBodyProxy physicsBodyMeta_;
+	PhysBodyProxy physicsBodyProxy_;
 
 	bool running_ = false;
 	bool jump_ = false;

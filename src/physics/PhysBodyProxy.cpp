@@ -8,6 +8,8 @@
 #include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <bullet3/BulletCollision/CollisionShapes/btCollisionShape.h>
 
+#include <glm/gtc/quaternion.hpp>
+
 PhysBodyProxy::~PhysBodyProxy() {
 	reset();
 }
@@ -41,7 +43,17 @@ void PhysBodyProxy::createBody(PhysBodyConfig const& cfg) {
 
 	bodyPtr = new btRigidBody(cinfo);
 	bodyPtr->setUserPointer(this);
+	bodyPtr->setLinearVelocity(g2b(cfg.initialVelocity));
+	bodyPtr->setAngularVelocity(g2b(glm::eulerAngles(cfg.initialAngularVelocity)));
 	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(bodyPtr);
 
 	collisionShape_ = cfg.shape;
+}
+
+void PhysBodyProxy::updateTransform(Transform &tr) {
+	// update transform from physics:
+	btTransform wTrans;
+	motionState->getWorldTransform(wTrans);	// we get the interpolated transform here
+	tr.setPosition(b2g(wTrans.getOrigin()));
+	tr.setOrientation(b2g(wTrans.getRotation()));
 }

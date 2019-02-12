@@ -36,6 +36,10 @@ struct PhysBodyConfig {
 	float friction = 0.5f;
 	glm::vec3 position {0.f};
 	glm::quat orientation {1.f, 0.f, 0.f, 0.f};
+	// initial velocity in m/s expressed in world space
+	glm::vec3 initialVelocity {0.f};
+	// initial angular velocity in rad/s expressed in world space
+	glm::quat initialAngularVelocity {1.f, 0.f, 0.f, 0.f};
 };
 
 // every btCollisionObject in the world has a userPointer to this class:
@@ -56,6 +60,9 @@ public:
 	// helper function to create the physics body.
 	// This will automatically add the body to the physics world.
 	void createBody(PhysBodyConfig const& cfg);
+
+	// updates the given transform from the physics body's interpolated transform.
+	void updateTransform(Transform &tr);
 
 	const unsigned entityType;		// type of associated entity
 	const Entity* entityPtr;		// pointer to associated entity

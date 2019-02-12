@@ -23,12 +23,12 @@ public:
 	void enableCollisionEvent(unsigned otherEntityType, bool enable);
 
 protected:
-	BasicProjectile(ProjectileType::Types type, glm::vec3 pos, glm::quat orientation, glm::vec3 velocity, glm::quat angularVelocity);
+	BasicProjectile(ProjectileType::Types type);
+	void createPhysicsBody(PhysBodyConfig const& cfg);
 
 private:
 	PhysBodyProxy physBodyProxy_;
 	ProjectileType::Types projectileType_;
-	Transform transform_;
 };
 
 #endif // __BASIC_PROJECTILE_H__

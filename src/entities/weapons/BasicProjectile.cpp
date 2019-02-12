@@ -1,10 +1,13 @@
 #include "BasicProjectile.h"
 
-BasicProjectile::BasicProjectile(ProjectileType::Types type, glm::vec3 pos, glm::quat orientation, glm::vec3 velocity, glm::quat angularVelocity)
+BasicProjectile::BasicProjectile(ProjectileType::Types type)
 	: projectileType_(type)
-	, physBodyProxy_(this)
-	, transform_(pos, orientation) {
+	, physBodyProxy_(this) {
 	physBodyProxy_.onCollision.forward(onCollision);
+}
+
+void BasicProjectile::createPhysicsBody(PhysBodyConfig const& cfg) {
+	physBodyProxy_.createBody(cfg);
 }
 
 void BasicProjectile::enableCollisionEvent(unsigned otherEntityType, bool enable) {
@@ -12,5 +15,5 @@ void BasicProjectile::enableCollisionEvent(unsigned otherEntityType, bool enable
 }
 
 void BasicProjectile::update(float dt) {
-	// do the physics update here
+	physBodyProxy_.updateTransform(transform_);
 }
