@@ -5,7 +5,7 @@
 # --release		perform a RELEASE build instead of DEBUG
 
 BUILD_TYPE="Debug"
-if [ $1 = "--release" ]; then
+if [[ $1 = "--release" ]]; then
 	BUILD_TYPE="Release"
 fi
 
