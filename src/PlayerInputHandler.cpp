@@ -83,6 +83,9 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 					}
 				}
 			} break;
+			case bindingDescriptor::DeviceType::None:
+				// no device bound to this action
+			break;
 			default:
 				ERROR("PlayerInputHandler: invalid device type " << (int)bindings[a].device);
 				break;
