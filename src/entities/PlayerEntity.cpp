@@ -1,5 +1,7 @@
 #include "PlayerEntity.h"
 #include "../physics/math.h"
+#include "weapons/Pistol.h"
+#include "weapons/TestBullet.h"
 
 #include <boglfw/math/math3D.h>
 #include <boglfw/math/aabb.h>
@@ -35,13 +37,17 @@ PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
 
 	physicsBodyProxy_.collisionCfg[EntityTypes::TERRAIN] = true;
 	physicsBodyProxy_.onCollision.add(std::bind(&PlayerEntity::onCollision, this, std::placeholders::_1));
+
+	pWeapon_ = new Pistol();
+	pWeapon_->feedAmmo(100);
+	pWeapon_->forceReload(pWeapon_->getMagazineSize());
 }
 
 PlayerEntity::~PlayerEntity() {
 }
 
 void PlayerEntity::draw(Viewport* vp) {
-
+	pWeapon_->draw(transform_);
 }
 
 void PlayerEntity::moveTo(glm::vec3 where) {
@@ -150,11 +156,18 @@ void PlayerEntity::onCollision(CollisionEvent const& ev) {
 #ifdef DEBUG
 void PlayerEntity::testShootBullet() {
 	// shoot a test projectile
+	glm::vec3 offset {0.f, 0.f, 0.5f};
+	glm::vec3 pos = transform_.position() + transform_.orientation() * offset;
+	glm::quat orient = transform_.orientation();
+	float bulletSpeed = 10.f;
+	glm::vec3 velocity = transform_.orientation() * glm::vec3{0.f, 0.f, bulletSpeed};
+	std::shared_ptr<TestBullet> pb = std::make_shared<TestBullet>(pos, orient, velocity, glm::quat{1.f, 0.f, 0.f, 0.f});
+	World::getInstance().takeOwnershipOf(pb);
 }
 #endif // DEBUG
 
 void PlayerEntity::setWeaponTriggerState(bool on) {
-	// TODO use on/off to implement continuous shooting
+	pWeapon_->toggleTrigger(true, on);
 	if (on) {
 #ifdef DEBUG
 		// one shot action
@@ -164,8 +177,5 @@ void PlayerEntity::setWeaponTriggerState(bool on) {
 }
 
 void PlayerEntity::setWeaponReloadState(bool on) {
-	// TODO use on/off to implement long reloads for some weapons
-	if (on) {
-		// ... reload weapon
-	}
+	pWeapon_->toggleReload(on);
 }

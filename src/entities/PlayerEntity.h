@@ -6,6 +6,8 @@
 #include "../physics/PhysBodyProxy.h"
 #include <boglfw/entities/Entity.h>
 
+class BasicWeapon;
+
 class PlayerEntity : public Entity, public IUserControllable {
 public:
 	// heading is measured CCW from +Z axis (0.0 means looking down +Z)
@@ -35,6 +37,8 @@ public:
 
 private:
 	//Mesh mesh_;
+
+	BasicWeapon* pWeapon_ = nullptr;
 
 	PhysBodyProxy physicsBodyProxy_;
 

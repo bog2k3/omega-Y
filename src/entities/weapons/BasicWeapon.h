@@ -6,6 +6,12 @@
 class Mesh;
 class Viewport;
 
+struct WeaponConfig {
+	unsigned magazineSize = 0;
+	unsigned reserveSize = 0;
+	float reloadTime = 0.f;
+};
+
 class BasicWeapon {
 public:
 	void update(float dt);
@@ -17,19 +23,28 @@ public:
 	// (weapon is reloading while reload is on; reload must be kept on until it's finished)
 	void toggleReload(bool on);
 
-	// feed some ammo into the weapon's reserve
-	void feedAmmo(unsigned count);
+	// force an instant reload of up to [count] or magazineSize (whichever is smaller).
+	void forceReload(unsigned count);
 
+	// feed some ammo into the weapon's reserve;
+	// returns the actual ammount transfered (which can be smaller if there's no more room left).
+	unsigned feedAmmo(unsigned count);
+
+	// returns the size of the weapon's magazine (how much ammo can be loaded into it at once).
+	virtual unsigned getMagazineSize() const { return config_.magazineSize; }
 	// returns loaded ammo into the weapon's magazine
-	virtual unsigned getAmmoInMagazine() const;
+	virtual unsigned getAmmoInMagazine() const { return ammoInMagazine_; }
 	// returns ammo that is stored into the reserve, ready to be reloaded into the magazine
-	virtual unsigned getAmmoInReserve() const;
+	virtual unsigned getAmmoInReserve() const { return ammoInReserve_; }
 
 protected:
-	BasicWeapon() = default;
+	BasicWeapon(WeaponConfig config);
 
 	Mesh* pMesh_ = nullptr;
 	Transform localTransform_;
+	WeaponConfig config_;
+	unsigned ammoInMagazine_ = 0;
+	unsigned ammoInReserve_ = 0;
 };
 
 #endif // __BASIC_WEAPON_H__
