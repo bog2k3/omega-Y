@@ -99,7 +99,7 @@ private:
 };
 
 Terrain::Terrain()
-	: physicsBodyMeta_(this, EntityTypes::TERRAIN)
+	: physicsBodyMeta_(this)
 {
 	LOGPREFIX("Terrain");
 
@@ -169,12 +169,7 @@ void Terrain::clear() {
 	if (pVertices_)
 		free(pVertices_), pVertices_ = nullptr, nVertices_ = 0;
 	triangles_.clear();
-	if (physicsBodyMeta_.bodyPtr) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
-		delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
-	}
-	if (physicsShape_)
-		delete physicsShape_, physicsShape_ = nullptr;
+	physicsBodyMeta_.reset();
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
 	if (pBSP_)
@@ -513,30 +508,17 @@ void Terrain::updatePhysics() {
 	for (unsigned i=0; i<rows_; i++)
 		for (unsigned j=0; j<cols_; j++)
 			heightFieldValues_[i*cols_+j] = getHeightValue(bottomLeft + glm::vec3{j*dx, 0, i*dz}) + heightOffset;
-	// create ground shape
-	if (physicsShape_)
-		delete physicsShape_, physicsShape_ = nullptr;
-	physicsShape_ = new btHeightfieldTerrainShape{cols_, rows_, heightFieldValues_, 1.f,
-							config_.minElevation, config_.maxElevation, 1, PHY_FLOAT, false};
 
 	// create ground body
-	if (physicsBodyMeta_.bodyPtr) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
-		delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
-	}
-	btVector3 vPos(0.f, (config_.maxElevation + config_.minElevation)*0.5f, 0.f);
-	btQuaternion qOrient = btQuaternion::getIdentity();
-	btRigidBody::btRigidBodyConstructionInfo cinfo {
-		0.f,		// mass
-		nullptr,
-		physicsShape_
-	};
-	cinfo.m_startWorldTransform = btTransform{qOrient, vPos};
-	cinfo.m_friction = 0.5f;
+	physicsBodyMeta_.reset();
+	PhysBodyConfig bodyCfg;
+	bodyCfg.position = glm::vec3{0.f, (config_.maxElevation + config_.minElevation)*0.5f, 0.f};
+	bodyCfg.mass = 0.f;
+	bodyCfg.friction = 0.5f;
+	bodyCfg.shape = std::make_shared<btHeightfieldTerrainShape>(cols_, rows_, heightFieldValues_, 1.f,
+							config_.minElevation, config_.maxElevation, 1, PHY_FLOAT, false);
 
-	physicsBodyMeta_.bodyPtr = new btRigidBody(cinfo);
-	physicsBodyMeta_.bodyPtr->setUserPointer(&physicsBodyMeta_);
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBodyMeta_.bodyPtr);
+	physicsBodyMeta_.createBody(bodyCfg);
 }
 
 void Terrain::draw(Viewport* vp) {

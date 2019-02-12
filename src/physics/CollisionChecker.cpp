@@ -1,5 +1,5 @@
 #include "CollisionChecker.h"
-#include "PhysBodyMeta.h"
+#include "PhysBodyProxy.h"
 
 #include <boglfw/World.h>
 #include <boglfw/math/math3D.h>
@@ -10,7 +10,7 @@
 #include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 
-void checkCollision(PhysBodyMeta* pA, PhysBodyMeta* pB, btPersistentManifold* contactManifold, bool reverse) {
+void checkCollision(PhysBodyProxy* pA, PhysBodyProxy* pB, btPersistentManifold* contactManifold, bool reverse) {
 	CollisionEvent ev;
 	ev.pThisObj = contactManifold->getBody0();
 	ev.pOtherObj = contactManifold->getBody1();
@@ -40,11 +40,11 @@ void CollisionChecker::update(float dt) {
 	int numManifolds = physWld->getDispatcher()->getNumManifolds();
 	for (int i=0; i<numManifolds; i++) {
 		btPersistentManifold* contactManifold = physWld->getDispatcher()->getManifoldByIndexInternal(i);
-		PhysBodyMeta* pMetaA = (PhysBodyMeta*)contactManifold->getBody0()->getUserPointer();
-		PhysBodyMeta* pMetaB = (PhysBodyMeta*)contactManifold->getBody1()->getUserPointer();
+		PhysBodyProxy* pMetaA = (PhysBodyProxy*)contactManifold->getBody0()->getUserPointer();
+		PhysBodyProxy* pMetaB = (PhysBodyProxy*)contactManifold->getBody1()->getUserPointer();
 
 		if (pMetaA == nullptr || pMetaB == nullptr) {
-			assertDbg(false && "some btCollisionObject in the world doesn't contain a PhysBodyMeta user pointer");
+			assertDbg(false && "some btCollisionObject in the world doesn't contain a PhysBodyProxy user pointer");
 			continue;
 		}
 

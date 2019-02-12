@@ -3,12 +3,8 @@
 
 #include "enttypes.h"
 #include "IUserControllable.h"
-#include "../physics/PhysBodyMeta.h"
+#include "../physics/PhysBodyProxy.h"
 #include <boglfw/entities/Entity.h>
-
-class btCapsuleShape;
-class btRigidBody;
-class btMotionState;
 
 class PlayerEntity : public Entity, public IUserControllable {
 public:
@@ -40,9 +36,7 @@ public:
 private:
 	//Mesh mesh_;
 
-	PhysBodyMeta physicsBodyMeta_;
-	btCapsuleShape* physicsShape_ = nullptr;
-	btMotionState* physMotionState_ = nullptr;
+	PhysBodyProxy physicsBodyMeta_;
 
 	bool running_ = false;
 	bool jump_ = false;

@@ -8,51 +8,36 @@
 #include <bullet3/BulletCollision/CollisionShapes/btCapsuleShape.h>
 #include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
 #include <bullet3/LinearMath/btDefaultMotionState.h>
-#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
 #include <glm/gtc/quaternion.hpp>
 
 PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
-	: physicsBodyMeta_(this, EntityTypes::PLAYER)
+	: physicsBodyMeta_(this)
 {
 #ifdef DEBUG
 	World::assertOnMainThread();
 #endif
 	transform_.setPosition(position);
-	// create player shape
-	physicsShape_ = new btCapsuleShape{0.3f, 1.5f};
-	btVector3 inertia;
-	float mass = 70.f;
-	physicsShape_->calculateLocalInertia(mass, inertia);
+	transform_.setOrientation(glm::quat(glm::vec3{heading, 0.f, 0.f}));
 
 	// create player body
-	btVector3 vPos = g2b(position);
-	btQuaternion qOrient(heading, 0.f, 0.f);
-	physMotionState_ = new btDefaultMotionState(btTransform{qOrient, vPos});
-	btRigidBody::btRigidBodyConstructionInfo cinfo {
-		mass,
-		physMotionState_,
-		physicsShape_,
-		inertia
-	};
-	cinfo.m_friction = 0.5f;
+	PhysBodyConfig bodyCfg;
+	bodyCfg.mass = 70.f;
+	bodyCfg.position = position;
+	bodyCfg.orientation = transform_.orientation();
+	bodyCfg.friction = 0.5f;
+	bodyCfg.shape = std::make_shared<btCapsuleShape>(0.3f, 1.5f);
 
-	physicsBodyMeta_.bodyPtr = new btRigidBody(cinfo);
-	physicsBodyMeta_.bodyPtr->setUserPointer(&physicsBodyMeta_);
+	physicsBodyMeta_.createBody(bodyCfg);
+
 	physicsBodyMeta_.bodyPtr->setAngularFactor(0.f);
 	physicsBodyMeta_.bodyPtr->setSleepingThresholds(0.f, 0.f);	// prevent player body from falling asleep
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(physicsBodyMeta_.bodyPtr);
 
 	physicsBodyMeta_.collisionCfg[EntityTypes::TERRAIN] = true;
 	physicsBodyMeta_.onCollision.add(std::bind(&PlayerEntity::onCollision, this, std::placeholders::_1));
 }
 
-PlayerEntity::~PlayerEntity()
-{
-	World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(physicsBodyMeta_.bodyPtr);
-	delete physicsBodyMeta_.bodyPtr, physicsBodyMeta_.bodyPtr = nullptr;
-	delete physicsShape_, physicsShape_ = nullptr;
-	delete physMotionState_, physMotionState_ = nullptr;
+PlayerEntity::~PlayerEntity() {
 }
 
 void PlayerEntity::draw(Viewport* vp) {
@@ -69,7 +54,7 @@ void PlayerEntity::update(float dt) {
 
 	// update transform from physics:
 	btTransform wTrans;
-	physMotionState_->getWorldTransform(wTrans);	// we get the interpolated transform here
+	physicsBodyMeta_.motionState->getWorldTransform(wTrans);	// we get the interpolated transform here
 	transform_.setPosition(b2g(wTrans.getOrigin()));
 	transform_.setOrientation(b2g(wTrans.getRotation()));
 
@@ -168,7 +153,7 @@ void PlayerEntity::onCollision(CollisionEvent const& ev) {
 
 #ifdef DEBUG
 void PlayerEntity::testShootBullet() {
-
+	// shoot a test projectile
 }
 #endif // DEBUG
 

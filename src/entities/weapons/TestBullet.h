@@ -11,7 +11,7 @@ public:
 	virtual unsigned getProjectileType() const override { return ProjectileType::TEST_BULLET; }
 
 	// [angularVelocity] is expressed in local coordinates, the rest are in world coordinates
-	TestBullet(Transform tr, glm::vec3 velocity, glm::quat angularVelocity);
+	TestBullet(glm::vec3 pos, glm::quat orientation, glm::vec3 velocity, glm::quat angularVelocity);
 	~TestBullet();
 
 	virtual void draw(Viewport*) override;

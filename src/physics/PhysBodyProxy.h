@@ -1,22 +1,25 @@
 #ifndef __PHYS_BODY_META_H__
 #define __PHYS_BODY_META_H__
 
+#include <boglfw/entities/Entity.h>
 #include <boglfw/utils/Event.h>
 
 #include <glm/vec3.hpp>
 
 #include <unordered_map>
+#include <memory>
 
-class Entity;
 class btRigidBody;
+class btCollisionShape;
 class btCollisionObject;
-class PhysBodyMeta;
+class btDefaultMotionState;
+class PhysBodyProxy;
 
 struct CollisionEvent {
 	const btCollisionObject* pThisObj;
 	const btCollisionObject* pOtherObj;
-	PhysBodyMeta* pThisMeta;
-	PhysBodyMeta* pOtherMeta;
+	PhysBodyProxy* pThisMeta;
+	PhysBodyProxy* pOtherMeta;
 	enum : int { maxNumberContacts = 4 };
 	struct ContactPoint {
 		glm::vec3 worldPointOnThis;
@@ -26,15 +29,38 @@ struct CollisionEvent {
 	int numContacts;
 };
 
-// every btCollisionObject in the world has a userPointer to this struct:
-struct PhysBodyMeta {
-	PhysBodyMeta(Entity* entityPtr, unsigned entityType)
-		: entityType(entityType), entityPtr(entityPtr) {
+// construction config for physics body
+struct PhysBodyConfig {
+	std::shared_ptr<btCollisionShape> shape;
+	float mass = 1.f;
+	float friction = 0.5f;
+	glm::vec3 position {0.f};
+	glm::quat orientation {1.f, 0.f, 0.f, 0.f};
+};
+
+// every btCollisionObject in the world has a userPointer to this class:
+class PhysBodyProxy {
+public:
+	PhysBodyProxy(Entity* entityPtr)
+		: entityType(entityPtr ? entityPtr->getEntityType() : 0)
+		, entityPtr(entityPtr) {
 	}
+
+	// destructor calls reset() automatically
+	~PhysBodyProxy();
+
+	// This will remove the body from the physics world,
+	// delete the body, delete the motion_state and release the shape.
+	void reset();
+
+	// helper function to create the physics body.
+	// This will automatically add the body to the physics world.
+	void createBody(PhysBodyConfig const& cfg);
 
 	const unsigned entityType;		// type of associated entity
 	const Entity* entityPtr;		// pointer to associated entity
 	btRigidBody* bodyPtr = nullptr;	// pointer to the rigid body (or nullptr if the btCollisionObject is not a btRigidBody)
+	btDefaultMotionState* motionState = nullptr; // body's motion state
 
 	// enables generating collision events of the associated body against other entities bodies
 	// key is entity type, value is true/false to enable/disable generating event against that entity type.
@@ -47,6 +73,9 @@ struct PhysBodyMeta {
 	// The event is deferred until all physics have finished updating, then all events are being emitted in a separate step.
 	// The event is *ALWAYS* emitted on the main thread.
 	Event<void(CollisionEvent const& ev)> onCollision;
+
+private:
+	std::shared_ptr<btCollisionShape> collisionShape_;
 };
 
 #endif // __PHYS_BODY_META_H__

@@ -1,7 +1,7 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
-#include "../physics/PhysBodyMeta.h"
+#include "../physics/PhysBodyProxy.h"
 #include "../entities/enttypes.h"
 
 #define ENABLE_BSP_DEBUG_DRAW
@@ -89,8 +89,7 @@ private:
 	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;
 	BSPTree<unsigned> *pBSP_ = nullptr;
 
-	PhysBodyMeta physicsBodyMeta_;
-	btHeightfieldTerrainShape* physicsShape_ = nullptr;
+	PhysBodyProxy physicsBodyMeta_;
 	float *heightFieldValues_ = nullptr;
 
 	void loadTextures();

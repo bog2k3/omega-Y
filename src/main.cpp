@@ -1,6 +1,6 @@
 #include "physics/DebugDrawer.h"
 #include "physics/CollisionChecker.h"
-#include "physics/PhysBodyMeta.h"
+#include "physics/PhysBodyProxy.h"
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
 #include "PlayerInputHandler.h"
@@ -79,7 +79,7 @@ Terrain* pTerrain = nullptr;
 TerrainConfig terrainConfig;
 SkyBox* pSkyBox = nullptr;
 
-PhysBodyMeta boxBodyMeta(nullptr, 0);
+PhysBodyProxy boxBodyMeta(nullptr);
 btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
