@@ -2,6 +2,7 @@
 #include "entities/IUserControllable.h"
 
 #include <boglfw/input/InputEvent.h>
+#include <boglfw/utils/log.h>
 
 #include <GLFW/glfw3.h>
 
@@ -81,7 +82,10 @@ void PlayerInputHandler::handleInputEvent(InputEvent& ev) {
 						ev.consume();
 					}
 				}
-			}
+			} break;
+			default:
+				ERROR("PlayerInputHandler: invalid device type " << (int)bindings[a].device);
+				break;
 		}
 	}
 }
@@ -105,8 +109,10 @@ void PlayerInputHandler::update(float dt) {
 	if (inputStates_[MOVE_DOWN].first)
 		targetSP->move(IUserControllable::DOWN);
 
-	if (inputStates_[RUN].second)
+	if (inputStates_[RUN].second) {
 		targetSP->toggleRun(inputStates_[RUN].first);
+		inputStates_[RUN].second = false;
+	}
 
 	if (inputStates_[ROTATE_YAW].first) {
 		targetSP->rotate(IUserControllable::RIGHT, inputStates_[ROTATE_YAW].first);	// rotating RIGHT with negative angle rotates LEFT
@@ -118,7 +124,9 @@ void PlayerInputHandler::update(float dt) {
 	}
 
 	for (int a=CUSTOM_ACTION_1; a < CUSTOM_ACTION_LAST; a++) {
-		if (inputStates_[a].second)
+		if (inputStates_[a].second) {
 			targetSP->setActionState(a - CUSTOM_ACTION_1, inputStates_[a].first);
+			inputStates_[a].second = false;
+		}
 	}
 }
