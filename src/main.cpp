@@ -25,6 +25,8 @@
 #include <boglfw/OSD/SignalViewer.h>
 #include <boglfw/GUI/GuiSystem.h>
 #include <boglfw/Infrastructure.h>
+#include <boglfw/net/connection.h>
+#include <boglfw/net/listener.h>
 
 #include <boglfw/entities/Gizmo.h>
 #include <boglfw/entities/Box.h>
@@ -78,11 +80,6 @@ PlayerInputHandler playerInputHandler;
 Terrain* pTerrain = nullptr;
 TerrainConfig terrainConfig;
 SkyBox* pSkyBox = nullptr;
-
-PhysBodyProxy boxBodyMeta(nullptr);
-btBoxShape* boxShape = nullptr;
-btMotionState* boxMotionState = nullptr;
-Mesh* boxMesh = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
@@ -142,12 +139,6 @@ void handleDebugKeys(InputEvent& ev) {
 	case GLFW_KEY_R: {
 		pTerrain->generate(terrainConfig);
 		pTerrain->finishGenerate();
-		// reset the box:
-		btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-		btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
-		boxBodyMeta.bodyPtr->setWorldTransform(btTransform{qOrient, vPos});
-		// wake up the box:
-		boxBodyMeta.bodyPtr->activate(true);
 
 		// reset player
 		auto sPlayer = player.lock();
@@ -216,40 +207,13 @@ bool toggleMouseCapture() {
 	return isCaptured;
 }
 
-void physTestInit() {
-	// create test body
-	boxShape = new btBoxShape({0.5f, 0.5f, 0.5f});
-	float mass = 100.f;
-	btVector3 boxInertia;
-	boxShape->calculateLocalInertia(mass, boxInertia);
-	btQuaternion qOrient{0.5f, 0.13f, 1.2f};
-	btVector3 vPos{2.f, terrainConfig.maxElevation + 10, 2.f};
-	boxMotionState = new btDefaultMotionState(btTransform{qOrient, vPos});
-	btRigidBody::btRigidBodyConstructionInfo cinfo {
-		mass,
-		boxMotionState,
-		boxShape,
-		boxInertia
-	};
-	cinfo.m_linearDamping = 0.01f;
-	cinfo.m_angularDamping = 0.01f;
-	cinfo.m_friction = 0.4f;
-
-	boxBodyMeta.bodyPtr = new btRigidBody(cinfo);
-	boxBodyMeta.bodyPtr->setUserPointer(&boxBodyMeta);
-	World::getGlobal<btDiscreteDynamicsWorld>()->addRigidBody(boxBodyMeta.bodyPtr);
-
-	boxMesh = new Mesh();
-	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
-}
-
-void initSession(Camera* camera) {
+void initEmptySession(Camera* camera) {
 	// origin gizmo
 	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 
 	// free camera
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{4.3f, 20, 4}, glm::vec3{-4.3f, -1.5f, -4.f});
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.f, 1.f, 2.f}, glm::vec3{-1.f, -0.5f, -1.f});
 	freeCam = sFreeCam;
 	World::getInstance().takeOwnershipOf(sFreeCam);
 
@@ -259,44 +223,15 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(sCamCtrl);
 
 	// player
-	auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
-	player = sPlayer;
-	World::getInstance().takeOwnershipOf(sPlayer);
+	//auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
+	//player = sPlayer;
+	//World::getInstance().takeOwnershipOf(sPlayer);
 
 	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
 	playerInputHandler.setTargetObject(freeCam);
 
-	physTestInit();
-}
-
-void physTestDebugDraw(Viewport* vp) {
-	if (renderPhysicsDebug)
-		World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
-	// draw the test body's representation:
-	btTransform tr;
-	boxMotionState->getWorldTransform(tr);
-	glm::mat4 matTr;
-	tr.getOpenGLMatrix(&matTr[0][0]);
-	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
-
-	// draw info about simulated body
-	/*rp3d::Transform bodyTr = boxBody->getTransform();
-	auto pos = bodyTr.getPosition();
-	std::stringstream ss;
-	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
-	GLText::get()->print(ss.str(),
-		{20, 100, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-		0, 20, glm::vec3(1.f, 1.f, 1.f));*/
-}
-
-void physTestDestroy() {
-	if (boxBodyMeta.bodyPtr) {
-		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBodyMeta.bodyPtr);
-		delete boxBodyMeta.bodyPtr, boxBodyMeta.bodyPtr = nullptr;
-		delete boxShape, boxShape = nullptr;
-		delete boxMotionState, boxMotionState = nullptr;
-	}
-	delete boxMesh;
+	//initTerrain();
+	//initSky();
 }
 
 void drawDebugTexts() {
@@ -445,6 +380,54 @@ void initSky() {
 	pSkyBox->load("data/textures/sky/1");
 }
 
+bool iamhost = false;
+net::connection netcon;
+
+void newConnection(net::result result, net::connection connection) {
+	if (result.code != net::result::ok) {
+		ERROR("Connection failed. Error code: " << result.code << "\nMessage: " << result.message);
+		return;
+	}
+	LOGLN("Connection established.");
+	netcon = connection;
+}
+
+bool initNetwork(int argc, char** argv) {
+	auto printUsage = []() {
+		LOGLN("Usage:\nOmegaY host portNumber\nOR\nOmegaY join host port");
+	};
+	if (argc < 2) {
+		ERROR("No arguments specified for networking.");
+		return true;
+	}
+	if (!strcmp(argv[1], "host")) {
+		if (argc < 3) {
+			ERROR("Missing [port] argument for hosting.");
+			printUsage();
+			return false;
+		}
+		// start hosting
+		LOGLN("Hosting on port " << argv[2] << " . . .");
+		iamhost = true;
+		net::startListen(atoi(argv[2]), newConnection);
+		return true;
+	} else if (!strcmp(argv[1], "join")) {
+		if (argc < 4) {
+			ERROR("Missing remote address for connecting.");
+			printUsage();
+			return false;
+		}
+		// start joining
+		LOGLN("Connecting to " << argv[2] << ":" << argv[3] << " . . .");
+		iamhost = false;
+		net::connect_async(argv[2], atoi(argv[3]), newConnection);
+		return true;
+	} else {
+		LOGLN("Unknown argument " << argv[1]);
+		return true;
+	}
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -479,9 +462,6 @@ int main(int argc, char* argv[]) {
 		auto pImgDebugDraw = new ImgDebugDraw();
 		World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
-		initTerrain();
-		initSky();
-
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
 				-0.1f, 																		// z
@@ -495,7 +475,6 @@ int main(int argc, char* argv[]) {
 		updateList.add(&CollisionChecker::update);
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
-		updateList.add(pSkyBox);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -512,9 +491,6 @@ int main(int argc, char* argv[]) {
 		};
 
 		std::vector<drawable> drawList;
-		drawList.push_back(pSkyBox);
-		drawList.push_back(&physTestDebugDraw);
-		drawList.push_back(pTerrain);
 		drawList.push_back(&World::getInstance());
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
@@ -522,7 +498,10 @@ int main(int argc, char* argv[]) {
 
 		vp1->setDrawList(drawList);
 
-		initSession(vp1->camera());
+		initEmptySession(vp1->camera());
+		//drawList.push_back(pSkyBox);
+		//drawList.push_back(pTerrain);
+		//updateList.add(pSkyBox);
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
@@ -530,6 +509,10 @@ int main(int argc, char* argv[]) {
 		renderer.render();
 		gltEnd();
 		LOGLN("Done, we're now live.");
+
+		if (!initNetwork(argc, argv)) {
+			break;
+		}
 
 		// initial update:
 		updateList.update(0);
@@ -584,14 +567,19 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		LOGLN("Exiting . . .");
+
+		LOGLN("Deleting all entities . . .");
 		World::getInstance().reset();
-		physTestDestroy();
+		LOGLN("Destroying physics . . .");
 		destroyPhysics();
+		LOGLN("Unloading renderer . . .");
 		renderer.unload();
 		if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
 			delete ptr;
 			World::setGlobal<ImgDebugDraw>(nullptr);
 		}
+		LOGLN("Shutting down . . .");
 		deletePostProcessData();
 		Infrastructure::shutDown();
 	} while (0);
