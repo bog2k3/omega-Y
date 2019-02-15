@@ -381,15 +381,18 @@ void initSky() {
 }
 
 bool iamhost = false;
-net::connection netcon;
+net::listener netlistener;
+std::vector<net::connection> netcons;
 
 void newConnection(net::result result, net::connection connection) {
 	if (result.code != net::result::ok) {
-		ERROR("Connection failed. Error code: " << result.code << "\nMessage: " << result.message);
+		//ERROR("Connection failed. Error code: " << result.code << "\nMessage: " << result.message);
+		std::cerr << "Connection failed. Error code: " << result.code << "\nMessage: " << result.message << "\n";
 		return;
 	}
-	LOGLN("Connection established.");
-	netcon = connection;
+	//LOGLN("Connection established.");
+	std::cout << "Connection established.\n";
+	netcons.push_back(connection);
 }
 
 bool initNetwork(int argc, char** argv) {
@@ -409,7 +412,7 @@ bool initNetwork(int argc, char** argv) {
 		// start hosting
 		LOGLN("Hosting on port " << argv[2] << " . . .");
 		iamhost = true;
-		net::startListen(atoi(argv[2]), newConnection);
+		netlistener = net::startListen(atoi(argv[2]), newConnection);
 		return true;
 	} else if (!strcmp(argv[1], "join")) {
 		if (argc < 4) {
@@ -426,6 +429,13 @@ bool initNetwork(int argc, char** argv) {
 		LOGLN("Unknown argument " << argv[1]);
 		return true;
 	}
+}
+
+void stopNetwork() {
+	if (iamhost)
+		net::stopListen(netlistener);
+	for (auto con : netcons)
+		net::closeConnection(con);
 }
 
 int main(int argc, char* argv[]) {
@@ -569,6 +579,8 @@ int main(int argc, char* argv[]) {
 
 		LOGLN("Exiting . . .");
 
+		LOGLN("Closing all network connections . . .");
+		stopNetwork();
 		LOGLN("Deleting all entities . . .");
 		World::getInstance().reset();
 		LOGLN("Destroying physics . . .");
