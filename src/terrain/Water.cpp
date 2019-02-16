@@ -17,6 +17,27 @@
 
 #include <GL/glew.h>
 
+/*
+ float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
+	// Schlick aproximation
+	float r0 = (n1-n2) / (n1+n2);
+	r0 *= r0;
+	float cosX = -dot(normal, incident);
+	if (n1 > n2)
+	{
+		float n = n1/n2;
+		float sinT2 = n*n*(1.0-cosX*cosX);
+		// Total internal reflection
+		if (sinT2 > 1.0f)
+			return 1.0f;
+		cosX = sqrt(1.0f-sinT2);
+	}
+	float x = 1.0f - cosX;
+	float fres = r0 + (1.0f-r0) * pow(x, 5);
+	return fres;
+ }
+ */
+
 struct Water::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
