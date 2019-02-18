@@ -47,9 +47,11 @@ struct Water::RenderData {
 	unsigned iColor_;
 	unsigned iUV_;
 	unsigned imPV_;
-	unsigned iSampler_;
+	unsigned iTexDuDv_;
+	unsigned iTexReflection_;
 	
-	unsigned textureId_;
+	unsigned textureDuDv_;
+	unsigned textureReflection_;
 };
 
 struct Water::WaterVertex {
@@ -79,7 +81,8 @@ Water::Water()
 	renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
 	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 	renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-	renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
+	renderData_->iTexDuDv_ = glGetUniformLocation(renderData_->shaderProgram_, "textureDuDv");
+	renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
@@ -111,9 +114,13 @@ Water::~Water()
 		delete renderData_, renderData_ = nullptr;
 }
 
+void Water::setReflectionTexture(unsigned reflectionTexCubeMapId) {
+	renderData_->textureReflection_ = reflectionTexCubeMapId;
+}
+
 void Water::loadTextures() {
-	renderData_->textureId_ = TextureLoader::loadFromPNG("data/textures/water/water1.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureId_);
+	renderData_->textureDuDv_ = TextureLoader::loadFromPNG("data/textures/water/dudv.png", false);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureDuDv_);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -153,8 +160,8 @@ void Water::generate(WaterParams params) {
 	glm::vec3 topleft {-params_.innerRadius, 0.f, -params_.innerRadius};
 	float dx = params_.innerRadius * 2.f / (cols - 1);
 	float dz = params_.innerRadius * 2.f / (rows - 1);
-	float wTexW = 5.f;	// world width of water texture
-	float wTexH = 5.f;	// world height of water texture
+	float wTexW = 100.f;	// world width of water texture
+	float wTexH = 100.f;	// world height of water texture
 	// compute water vertices
 	for (unsigned i=0; i<rows; i++)
 		for (unsigned j=0; j<cols; j++) {
@@ -215,15 +222,18 @@ void Water::updateRenderBuffers() {
 }
 
 void Water::draw(Viewport* vp) {
-	// set-up textures
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureId_);
 	// configure backface culling
 	glDisable(GL_CULL_FACE);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
+	// set-up textures
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureDuDv_);
+	glUniform1i(renderData_->iTexDuDv_, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_);
+	glUniform1i(renderData_->iTexReflection_, 1);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
-	glUniform1i(renderData_->iSampler_, 0);
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
@@ -232,4 +242,5 @@ void Water::draw(Viewport* vp) {
 	glUseProgram(0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glEnable(GL_CULL_FACE);
 }

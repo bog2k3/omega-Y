@@ -165,3 +165,7 @@ void SkyBox::draw(Viewport* vp) {
 void SkyBox::update(float dt) {
 
 }
+
+unsigned SkyBox::getCubeMapTexture() const {
+	return renderData_->texture;
+}

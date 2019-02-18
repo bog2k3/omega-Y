@@ -70,6 +70,9 @@ public:
 	const float* getHeightField() const { return heightFieldValues_; }
 	glm::ivec2 getGridSize() const { return {cols_, rows_}; }
 
+	// set a cube map texture for water reflection
+	void setWaterReflectionTex(unsigned texId);
+
 	struct TerrainVertex;
 
 private:

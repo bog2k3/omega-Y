@@ -437,6 +437,8 @@ void initTerrain() {
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
+	pTerrain->setWaterReflectionTex(pSkyBox->getCubeMapTexture());
+
 	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
 
@@ -480,8 +482,8 @@ int main(int argc, char* argv[]) {
 		auto pImgDebugDraw = new ImgDebugDraw();
 		World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
-		initTerrain();
 		initSky();
+		initTerrain();
 
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position

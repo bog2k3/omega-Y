@@ -23,6 +23,8 @@ public:
 
 	void generate(WaterParams params);
 
+	void setReflectionTexture(unsigned reflectionTexCubeMapId);
+
 	void update(float dt);
 	void draw(Viewport* v);
 

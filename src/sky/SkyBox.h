@@ -32,6 +32,8 @@ public:
 	void draw(Viewport* vp);
 	void update(float dt);
 
+	unsigned getCubeMapTexture() const;
+
 private:
 	struct SkyBoxRenderData;
 	SkyBoxRenderData* renderData_ = nullptr;

@@ -587,3 +587,7 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 	}
 	return config_.minElevation;	// no triangles exist at the given location
 }
+
+void Terrain::setWaterReflectionTex(unsigned texId) {
+	pWater_->setReflectionTexture(texId);
+}
