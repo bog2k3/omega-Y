@@ -18,15 +18,13 @@ struct SkyBox::SkyBoxRenderData {
 	unsigned IBO;
 	unsigned shaderProgram;
 	unsigned iPos;
-	unsigned iUV;
 	unsigned iMatVP;
 	unsigned iTexSampler;
-	unsigned textures[6];
+	unsigned texture;
 };
 
 struct SkyBoxVertex {
 	glm::vec3 pos;
-	glm::vec2 uv;
 };
 
 SkyBox::SkyBox() {
@@ -38,9 +36,8 @@ SkyBox::SkyBox() {
 		throw;
 	}
 	renderData_->iPos = glGetAttribLocation(renderData_->shaderProgram, "pos");
-	renderData_->iUV = glGetAttribLocation(renderData_->shaderProgram, "uv");
 	renderData_->iMatVP = glGetUniformLocation(renderData_->shaderProgram, "mVP");
-	renderData_->iTexSampler = glGetUniformLocation(renderData_->shaderProgram, "tex0");
+	renderData_->iTexSampler = glGetUniformLocation(renderData_->shaderProgram, "textureSky");
 
 	glGenVertexArrays(1, &renderData_->VAO);
 	glBindVertexArray(renderData_->VAO);
@@ -50,42 +47,40 @@ SkyBox::SkyBox() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
 	glEnableVertexAttribArray(renderData_->iPos);
 	glVertexAttribPointer(renderData_->iPos, 3, GL_FLOAT, GL_FALSE, sizeof(SkyBoxVertex), (void*)offsetof(SkyBoxVertex, pos));
-	glEnableVertexAttribArray(renderData_->iUV);
-	glVertexAttribPointer(renderData_->iUV, 2, GL_FLOAT, GL_FALSE, sizeof(SkyBoxVertex), (void*)offsetof(SkyBoxVertex, uv));
 	glBindVertexArray(0);
 
 	// generate vertex data:
 	SkyBoxVertex verts[] {
 		// front face
-		{{-1.f, -1.f, +1.f}, {0.f, 0.f}},	// bottom left
-		{{-1.f, +1.f, +1.f}, {0.f, 1.f}},	// top left
-		{{+1.f, +1.f, +1.f}, {1.f, 1.f}},	// top right
-		{{+1.f, -1.f, +1.f}, {1.f, 0.f}},	// bottom right
+		{{-1.f, -1.f, +1.f}},	// bottom left
+		{{-1.f, +1.f, +1.f}},	// top left
+		{{+1.f, +1.f, +1.f}},	// top right
+		{{+1.f, -1.f, +1.f}},	// bottom right
 		// left face
-		{{-1.f, -1.f, -1.f}, {0.f, 0.f}},	// bottom left
-		{{-1.f, +1.f, -1.f}, {0.f, 1.f}},	// top left
-		{{-1.f, +1.f, +1.f}, {1.f, 1.f}},	// top right
-		{{-1.f, -1.f, +1.f}, {1.f, 0.f}},	// bottom right
+		{{-1.f, -1.f, -1.f}},	// bottom left
+		{{-1.f, +1.f, -1.f}},	// top left
+		{{-1.f, +1.f, +1.f}},	// top right
+		{{-1.f, -1.f, +1.f}},	// bottom right
 		// right face
-		{{+1.f, -1.f, +1.f}, {0.f, 0.f}},	// bottom left
-		{{+1.f, +1.f, +1.f}, {0.f, 1.f}},	// top left
-		{{+1.f, +1.f, -1.f}, {1.f, 1.f}},	// top right
-		{{+1.f, -1.f, -1.f}, {1.f, 0.f}},	// bottom right
+		{{+1.f, -1.f, +1.f}},	// bottom left
+		{{+1.f, +1.f, +1.f}},	// top left
+		{{+1.f, +1.f, -1.f}},	// top right
+		{{+1.f, -1.f, -1.f}},	// bottom right
 		// back face
-		{{+1.f, -1.f, -1.f}, {0.f, 0.f}},	// bottom left
-		{{+1.f, +1.f, -1.f}, {0.f, 1.f}},	// top left
-		{{-1.f, +1.f, -1.f}, {1.f, 1.f}},	// top right
-		{{-1.f, -1.f, -1.f}, {1.f, 0.f}},	// bottom right
+		{{+1.f, -1.f, -1.f}},	// bottom left
+		{{+1.f, +1.f, -1.f}},	// top left
+		{{-1.f, +1.f, -1.f}},	// top right
+		{{-1.f, -1.f, -1.f}},	// bottom right
 		// top face
-		{{-1.f, +1.f, +1.f}, {0.f, 0.f}},	// bottom left
-		{{-1.f, +1.f, -1.f}, {0.f, 1.f}},	// top left
-		{{+1.f, +1.f, -1.f}, {1.f, 1.f}},	// top right
-		{{+1.f, +1.f, +1.f}, {1.f, 0.f}},	// bottom right
+		{{-1.f, +1.f, +1.f}},	// bottom left
+		{{-1.f, +1.f, -1.f}},	// top left
+		{{+1.f, +1.f, -1.f}},	// top right
+		{{+1.f, +1.f, +1.f}},	// bottom right
 		// bottom face
-		{{-1.f, -1.f, -1.f}, {0.f, 0.f}},	// bottom left
-		{{-1.f, -1.f, +1.f}, {0.f, 1.f}},	// top left
-		{{+1.f, -1.f, +1.f}, {1.f, 1.f}},	// top right
-		{{+1.f, -1.f, -1.f}, {1.f, 0.f}},	// bottom right
+		{{-1.f, -1.f, -1.f}},	// bottom left
+		{{-1.f, -1.f, +1.f}},	// top left
+		{{+1.f, -1.f, +1.f}},	// top right
+		{{+1.f, -1.f, -1.f}},	// bottom right
 	};
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), (void*)verts, GL_STATIC_DRAW);
@@ -109,25 +104,23 @@ void SkyBox::load(std::string const& path) {
 	LOGPREFIX("SkyBox::load");
 	clear();
 	std::string filenames[6] {
-		"front.png",
-		"left.png",
-		"right.png",
-		"back.png",
-		"top.png",
-		"bottom.png"
+		path + "/right.png",	//X+
+		path + "/left.png",		//X-
+		path + "/top.png",		//Y+
+		path + "/bottom.png",	//Y-
+		path + "/front.png",	//Z+
+		path + "/back.png",		//Z-
 	};
-	for (int i=0; i<6; i++) {
-		renderData_->textures[i] = TextureLoader::loadFromPNG(path + "/" + filenames[i], true);
-		if (!renderData_->textures[i]) {
-			ERROR("Failed to load texture " << path << "/" << filenames[i]);
-			throw;
-		}
-		glBindTexture(GL_TEXTURE_2D, renderData_->textures[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	renderData_->texture = TextureLoader::loadCubeFromPNG(filenames, true);
+	if (!renderData_->texture) {
+		ERROR("Failed to load skybox textures from " << path);
+		throw;
 	}
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);
+	//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 // generates a dynamic skybox
@@ -141,9 +134,9 @@ void SkyBox::generateClouds(CloudsGenerationParams params) {
 }
 
 void SkyBox::clear() {
-	if (renderData_->textures[0])
-		glDeleteTextures(6, renderData_->textures);
-	memset(renderData_->textures, 0, sizeof(renderData_->textures));
+	if (renderData_->texture)
+		glDeleteTextures(1, &renderData_->texture);
+	renderData_->texture = 0;
 }
 
 void SkyBox::draw(Viewport* vp) {
@@ -160,10 +153,8 @@ void SkyBox::draw(Viewport* vp) {
 
 	glDepthMask(GL_FALSE);	// disable depth buffer writing
 
-	for (int i=0; i<6; i++) {
-		glBindTexture(GL_TEXTURE_2D, renderData_->textures[i]);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)(12*i));
-	}
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
 	glDepthMask(GL_TRUE);	// enable depth buffer writing
 

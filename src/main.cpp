@@ -454,6 +454,7 @@ int main(int argc, char* argv[]) {
 		int winW = 1280, winH = 900;
 		if (!gltInitGLFW(winW, winH, "Omega-Y", 0, false))
 			return -1;
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		if (initPostProcessData(winW, winH)) {
 			unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
