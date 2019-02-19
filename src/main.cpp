@@ -341,15 +341,31 @@ struct {
 
 bool initPostProcessData(unsigned winW, unsigned winH) {
 	checkGLError();
+	glGenVertexArrays(1, &postProcessData.VAO);
+	glGenBuffers(1, &postProcessData.VBO);
+	glGenBuffers(1, &postProcessData.IBO);
 	// load shader:
-	postProcessData.shaderProgram = Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag");
-	if (!postProcessData.shaderProgram) {
-		ERROR("Unabled to load post-processing shaders!");
+	Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag", [&](unsigned id) {
+		postProcessData.shaderProgram = id;
+		if (!postProcessData.shaderProgram) {
+			ERROR("Unabled to load post-processing shaders!");
+			return;
+		}
+		unsigned posAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "pos");
+		unsigned uvAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "uv");
+		postProcessData.iTexSampler = glGetUniformLocation(postProcessData.shaderProgram, "texSampler");
+
+		glBindVertexArray(postProcessData.VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, postProcessData.VBO);
+		glEnableVertexAttribArray(posAttrIndex);
+		glVertexAttribPointer(posAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0);
+		glEnableVertexAttribArray(uvAttrIndex);
+		glVertexAttribPointer(uvAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*2));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, postProcessData.IBO);
+		glBindVertexArray(0);
+	});
+	if (!postProcessData.shaderProgram)
 		return false;
-	}
-	unsigned posAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "pos");
-	unsigned uvAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "uv");
-	postProcessData.iTexSampler = glGetUniformLocation(postProcessData.shaderProgram, "texSampler");
 
 	// create screen quad:
 	float screenQuadPosUV[] {
@@ -361,19 +377,13 @@ bool initPostProcessData(unsigned winW, unsigned winH) {
 	uint16_t screenQuadIdx[] {
 		0, 1, 2, 0, 2, 3
 	};
-	glGenVertexArrays(1, &postProcessData.VAO);
-	glBindVertexArray(postProcessData.VAO);
-	glGenBuffers(1, &postProcessData.VBO);
+
 	glBindBuffer(GL_ARRAY_BUFFER, postProcessData.VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadPosUV), screenQuadPosUV, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(posAttrIndex);
-	glVertexAttribPointer(posAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0);
-	glEnableVertexAttribArray(uvAttrIndex);
-	glVertexAttribPointer(uvAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*2));
-	glGenBuffers(1, &postProcessData.IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, postProcessData.IBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(screenQuadIdx), screenQuadIdx, GL_STATIC_DRAW);
-	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	return !checkGLError("initPostProcessData");
 }

@@ -30,24 +30,27 @@ struct SkyBoxVertex {
 SkyBox::SkyBox() {
 	LOGPREFIX("SkyBox");
 	renderData_ = new SkyBoxRenderData();
-	renderData_->shaderProgram = Shaders::createProgram("data/shaders/skybox.vert", "data/shaders/skybox.frag");
-	if (!renderData_->shaderProgram) {
-		ERROR("Could not load skybox shaders!");
-		throw;
-	}
-	renderData_->iPos = glGetAttribLocation(renderData_->shaderProgram, "pos");
-	renderData_->iMatVP = glGetUniformLocation(renderData_->shaderProgram, "mVP");
-	renderData_->iTexSampler = glGetUniformLocation(renderData_->shaderProgram, "textureSky");
-
 	glGenVertexArrays(1, &renderData_->VAO);
-	glBindVertexArray(renderData_->VAO);
 	glGenBuffers(1, &renderData_->VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO);
 	glGenBuffers(1, &renderData_->IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
-	glEnableVertexAttribArray(renderData_->iPos);
-	glVertexAttribPointer(renderData_->iPos, 3, GL_FLOAT, GL_FALSE, sizeof(SkyBoxVertex), (void*)offsetof(SkyBoxVertex, pos));
-	glBindVertexArray(0);
+
+	Shaders::createProgram("data/shaders/skybox.vert", "data/shaders/skybox.frag", [this](unsigned id) {
+		renderData_->shaderProgram = id;
+		if (!renderData_->shaderProgram) {
+			ERROR("Could not load skybox shaders!");
+			throw;
+		}
+		renderData_->iPos = glGetAttribLocation(renderData_->shaderProgram, "pos");
+		renderData_->iMatVP = glGetUniformLocation(renderData_->shaderProgram, "mVP");
+		renderData_->iTexSampler = glGetUniformLocation(renderData_->shaderProgram, "textureSky");
+
+		glBindVertexArray(renderData_->VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
+		glEnableVertexAttribArray(renderData_->iPos);
+		glVertexAttribPointer(renderData_->iPos, 3, GL_FLOAT, GL_FALSE, sizeof(SkyBoxVertex), (void*)offsetof(SkyBoxVertex, pos));
+		glBindVertexArray(0);
+	});
 
 	// generate vertex data:
 	SkyBoxVertex verts[] {

@@ -76,40 +76,43 @@ float nth_elem(Water::WaterVertex const& v, unsigned n) {
 Water::Water()
 {
 	renderData_ = new RenderData;
-	renderData_->shaderProgram_ = Shaders::createProgram("data/shaders/water.vert", "data/shaders/water.frag");
-	if (!renderData_->shaderProgram_) {
-		ERROR("Failed to load water shaders!");
-		throw std::runtime_error("Failed to load water shaders");
-	}
-	renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
-	renderData_->iFog_ = glGetAttribLocation(renderData_->shaderProgram_, "fog");
-	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
-	renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
-	renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
-	renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-	renderData_->iTexDuDv_ = glGetUniformLocation(renderData_->shaderProgram_, "textureDuDv");
-	renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	glBindVertexArray(renderData_->VAO_);
-	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glEnableVertexAttribArray(renderData_->iPos_);
-	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
-		(void*)offsetof(WaterVertex, pos));
-	if (renderData_->iFog_ > 0) {
-		glEnableVertexAttribArray(renderData_->iFog_);
-		glVertexAttribPointer(renderData_->iFog_, 1, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
-			(void*)offsetof(WaterVertex, fog));
-	}
-	if (renderData_->iUV_ > 0) {
-		glEnableVertexAttribArray(renderData_->iUV_);
-		glVertexAttribPointer(renderData_->iUV_, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
-			(void*)(offsetof(WaterVertex, uv)));
-	}
-	glBindVertexArray(0);
+	Shaders::createProgram("data/shaders/water.vert", "data/shaders/water.frag", [this](unsigned id) {
+		renderData_->shaderProgram_ = id;
+		if (!renderData_->shaderProgram_) {
+			ERROR("Failed to load water shaders!");
+			throw std::runtime_error("Failed to load water shaders");
+		}
+		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
+		renderData_->iFog_ = glGetAttribLocation(renderData_->shaderProgram_, "fog");
+		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
+		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
+		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
+		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+		renderData_->iTexDuDv_ = glGetUniformLocation(renderData_->shaderProgram_, "textureDuDv");
+		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
+
+		glBindVertexArray(renderData_->VAO_);
+		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+		glEnableVertexAttribArray(renderData_->iPos_);
+		glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
+			(void*)offsetof(WaterVertex, pos));
+		if (renderData_->iFog_ > 0) {
+			glEnableVertexAttribArray(renderData_->iFog_);
+			glVertexAttribPointer(renderData_->iFog_, 1, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
+				(void*)offsetof(WaterVertex, fog));
+		}
+		if (renderData_->iUV_ > 0) {
+			glEnableVertexAttribArray(renderData_->iUV_);
+			glVertexAttribPointer(renderData_->iUV_, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
+				(void*)(offsetof(WaterVertex, uv)));
+		}
+		glBindVertexArray(0);
+	});
 
 	loadTextures();
 }

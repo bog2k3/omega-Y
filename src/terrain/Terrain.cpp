@@ -104,51 +104,54 @@ Terrain::Terrain()
 	LOGPREFIX("Terrain");
 
 	renderData_ = new RenderData();
-	renderData_->shaderProgram_ = Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag");
-	if (!renderData_->shaderProgram_) {
-		ERROR("Failed to load terrain shaders!");
-		throw std::runtime_error("Failed to load terrain shaders");
-	}
-	renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
-	renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
-	renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
-	renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
-	renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
-	renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-	renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	glBindVertexArray(renderData_->VAO_);
-	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glEnableVertexAttribArray(renderData_->iPos_);
-	glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-		(void*)offsetof(TerrainVertex, pos));
-	if (renderData_->iNormal_ > 0) {
-		glEnableVertexAttribArray(renderData_->iNormal_);
-		glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-			(void*)offsetof(TerrainVertex, normal));
-	}
-	if (renderData_->iColor_ > 0) {
-		glEnableVertexAttribArray(renderData_->iColor_);
-		glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-			(void*)offsetof(TerrainVertex, color));
-	}
-	if (renderData_->iUV_ > 0) {
-		for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
-			glEnableVertexAttribArray(renderData_->iUV_ + i);
-			glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-				(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
+	Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag", [this](unsigned id) {
+		renderData_->shaderProgram_ = id;
+		if (!renderData_->shaderProgram_) {
+			ERROR("Failed to load terrain shaders!");
+			throw std::runtime_error("Failed to load terrain shaders");
 		}
-	}
-	if (renderData_->iTexBlendF_ > 0) {
-		glEnableVertexAttribArray(renderData_->iTexBlendF_);
-		glVertexAttribPointer(renderData_->iTexBlendF_, 4, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-			(void*)offsetof(TerrainVertex, texBlendFactor));
-	}
-	glBindVertexArray(0);
+		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
+		renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
+		renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
+		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
+		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
+		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
+
+		glBindVertexArray(renderData_->VAO_);
+		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+		glEnableVertexAttribArray(renderData_->iPos_);
+		glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+			(void*)offsetof(TerrainVertex, pos));
+		if (renderData_->iNormal_ > 0) {
+			glEnableVertexAttribArray(renderData_->iNormal_);
+			glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+				(void*)offsetof(TerrainVertex, normal));
+		}
+		if (renderData_->iColor_ > 0) {
+			glEnableVertexAttribArray(renderData_->iColor_);
+			glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+				(void*)offsetof(TerrainVertex, color));
+		}
+		if (renderData_->iUV_ > 0) {
+			for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
+				glEnableVertexAttribArray(renderData_->iUV_ + i);
+				glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+					(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
+			}
+		}
+		if (renderData_->iTexBlendF_ > 0) {
+			glEnableVertexAttribArray(renderData_->iTexBlendF_);
+			glVertexAttribPointer(renderData_->iTexBlendF_, 4, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+				(void*)offsetof(TerrainVertex, texBlendFactor));
+		}
+		glBindVertexArray(0);
+	});
 
 	loadTextures();
 
