@@ -326,7 +326,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 	pWater_->generate(WaterParams {
 		config_.seaLevel,				// water level
 		terrainRadius,					// inner radius
-		seaBedRadius - terrainRadius,	// outer extent
+		seaBedRadius - terrainRadius + 200,// outer extent
 		max(0.05f, 2.f / terrainRadius),// vertex density
 		false							// constrain to circle
 	});
@@ -590,4 +590,8 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 
 void Terrain::setWaterReflectionTex(unsigned texId) {
 	pWater_->setReflectionTexture(texId);
+}
+
+void Terrain::update(float dt) {
+	pWater_->update(dt);
 }

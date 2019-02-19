@@ -499,6 +499,7 @@ int main(int argc, char* argv[]) {
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
 		updateList.add(pSkyBox);
+		updateList.add(pTerrain);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo

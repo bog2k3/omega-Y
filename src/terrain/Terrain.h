@@ -62,7 +62,8 @@ public:
 	// clear all terrain data
 	void clear();
 
-	void draw(Viewport* vp);
+	void draw(Viewport* vp) override;
+	void update(float dt) override;
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 
 	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point

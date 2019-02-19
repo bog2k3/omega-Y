@@ -1,18 +1,18 @@
 #version 330 core
 
 in vec3 pos;
-in vec3 color;
 in vec2 uv;
- 
-out vec3 fWPos;
-out vec3 fColor;
-out vec2 fUV;
+in float fog;
 
-uniform mat4 mPV;
- 
+out vec3 fWPos;
+out vec2 fUV;
+out float fFog;
+
+uniform mat4 mPV;		// proj*view
+
 void main() {
    	gl_Position = mPV * vec4(pos, 1);
 	fWPos = pos;
-   	fColor = color;
+   	fFog = fog;
    	fUV = uv;
 }
