@@ -62,13 +62,17 @@ public:
 	// clear all terrain data
 	void clear();
 
-	void draw(Viewport* vp);
+	void draw(Viewport* vp) override;
+	void update(float dt) override;
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 
 	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point
 	TerrainConfig const& getConfig() const { return config_; }
 	const float* getHeightField() const { return heightFieldValues_; }
 	glm::ivec2 getGridSize() const { return {cols_, rows_}; }
+
+	// set a cube map texture for water reflection
+	void setWaterReflectionTex(unsigned texId);
 
 	struct TerrainVertex;
 

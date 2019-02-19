@@ -1,9 +1,9 @@
 #version 330 core
 
-in vec2 fUV;
+in vec3 fUV;
 
-uniform sampler2D tex0;
+uniform samplerCube textureSky;
 
 void main() {
-	gl_FragColor = texture(tex0, fUV);
+	gl_FragColor = texture(textureSky, fUV);
 }
