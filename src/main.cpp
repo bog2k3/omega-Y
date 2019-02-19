@@ -502,8 +502,8 @@ int main(int argc, char* argv[]) {
 		updateList.add(&CollisionChecker::update);
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
-		updateList.add(pSkyBox);
-		updateList.add(pTerrain);
+		//updateList.add(pSkyBox);
+		//updateList.add(pTerrain);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -524,13 +524,11 @@ int main(int argc, char* argv[]) {
 		drawList.push_back(&sigViewer);
 		drawList.push_back(&infoTexts);
 		drawList.push_back(pImgDebugDraw);
-
+		//drawList.push_back(pSkyBox);
+		//drawList.push_back(pTerrain);
 		vp1->setDrawList(drawList);
 
 		initEmptySession(vp1->camera());
-		//drawList.push_back(pSkyBox);
-		//drawList.push_back(pTerrain);
-		//updateList.add(pSkyBox);
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
