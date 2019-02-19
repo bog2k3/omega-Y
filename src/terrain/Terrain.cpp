@@ -70,6 +70,7 @@ struct Terrain::RenderData {
 	unsigned iTexBlendF_;
 	unsigned imPV_;
 	unsigned iSampler_;
+	unsigned iEyePos_;
 	TextureInfo textures_[TerrainVertex::nTextures];
 };
 
@@ -120,6 +121,7 @@ Terrain::Terrain()
 		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 
 		glBindVertexArray(renderData_->VAO_);
@@ -547,6 +549,7 @@ void Terrain::draw(Viewport* vp) {
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
+	glUniform3fv(renderData_->iEyePos_, 1, &vp->camera()->position().x);
 	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);

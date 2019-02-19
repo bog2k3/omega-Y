@@ -59,7 +59,7 @@ void main() {
 	vec3 perturb4 = dudv.rbg * perturbStrength4;
 
 	float perturbFreq5 = 60.0;
-	float perturbStrength5 = 0.02;
+	float perturbStrength5 = 0.05;
 	dudv = texture(textureDuDv, (fUV.yx - change/7) * perturbFreq5) * 2.0 - 1.0;
 	vec3 perturb5 = dudv.rbg * perturbStrength5;
 
@@ -83,18 +83,19 @@ void main() {
 	float fogFactor = pow(fFog, 0.50);
 
 	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
-	vec3 ownColor = vec3(0.07, 0.16, 0.2);
-	vec3 color = mix(ownColor, reflectColor.xyz, fresnelFactor);
+	//vec3 ownColor = vec3(0.07, 0.16, 0.2);
+	//vec3 color = mix(ownColor, reflectColor.xyz, fresnelFactor);
 	
-	color = mix(color.xyz, fogColor.xyz, fogFactor);
+	vec3 color = mix(reflectColor.xyz, fogColor.xyz, fogFactor);
 	
-	float alpha = max(0.90, fresnelFactor);
+	float alpha = max(0.10, fresnelFactor);
 
 	vec4 final = vec4(color, alpha);
 
 	// DEBUG:
 	float f = fresnelFactor;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	//final.a = 0.00001;
 
 	gl_FragColor = final;
 }

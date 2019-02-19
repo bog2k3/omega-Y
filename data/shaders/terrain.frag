@@ -6,6 +6,8 @@ in vec4 fColor;
 in vec2 fUV[5];
 in vec4 fTexBlendFactor;
 
+uniform vec3 eyePos;
+
 uniform sampler2D tex[5];
 
 void main() {
@@ -52,9 +54,23 @@ void main() {
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
 
+	// water fog:
+	vec3 waterColor = vec3(0.07, 0.16, 0.2);
+	float waterLevel = 0;
+	float h = eyePos.y - waterLevel;	// eye height
+	vec3 waterNormal = vec3(0.0, 1.0, 0.0);
+	vec3 D = normalize(fWPos - eyePos);
+	vec3 I = eyePos - D * h / dot(waterNormal, D); // water intersection point
+	float waterThickness = length(fWPos - I);
+	float fogFactor = pow(min(1.0, waterThickness / 15), 0.3);
+	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
+	final.xyz = mix(final.xyz, waterColor, fogFactor);
+
 	// DEBUG:
 	//final = vec4(totalLight, 1.0) + 0.01 * final;
-	//final = vec4(tFinal.xyz, 1.0) + 0.001 * final;
+	//float f = h / 20;
+	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	//final.xyz = D.xyz + 0.00001 * final.xyz;
 
 	gl_FragColor = final;
 }
