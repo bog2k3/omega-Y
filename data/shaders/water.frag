@@ -28,7 +28,8 @@ float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
 	float fres = r0 + (1.0f-r0) * pow(x, 5);
 	return fres;*/
 	
-	return 1.0 - pow(dot(normal, -incident), 2.0);
+	float f = 1.0 - pow(dot(normal, -incident), 2.0);
+	return min(1.0, pow(f, 10) * 1.3);
  }
 
 void main() {
@@ -52,8 +53,18 @@ void main() {
 	dudv = texture(textureDuDv, (fUV.yx + change) * perturbFreq3) * 2.0 - 1.0;
 	vec3 perturb3 = dudv.rbg * perturbStrength3;
 
+	float perturbFreq4 = 20.0;
+	float perturbStrength4 = 0.02;
+	dudv = texture(textureDuDv, (fUV.yx + change/5) * perturbFreq4) * 2.0 - 1.0;
+	vec3 perturb4 = dudv.rbg * perturbStrength4;
+
+	float perturbFreq5 = 60.0;
+	float perturbStrength5 = 0.02;
+	dudv = texture(textureDuDv, (fUV.yx - change/7) * perturbFreq5) * 2.0 - 1.0;
+	vec3 perturb5 = dudv.rbg * perturbStrength5;
+
 	float perturbTotalFactor = (1.0 - pow(fFog, 0.8)) * 0.5;
-	vec3 perturbTotal = perturbTotalFactor * (perturb1 + perturb2 + perturb3);
+	vec3 perturbTotal = perturbTotalFactor * (perturb1 + perturb2 + perturb3 + perturb4 + perturb5);
 	perturbTotal.y = 0;
 	normal = normalize(normal + perturbTotal);
 
@@ -62,25 +73,27 @@ void main() {
 	vec3 reflectDir = reflect(-eyeDir, normal);
 	vec4 reflectColor = texture(textureReflection, reflectDir);
 
+	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.2;
+	reflectColor.xyz = pow(reflectColor.xyz, vec3(0.75));
+	reflectColor.xyz *= reflectTint;
+
 	vec3 fogDir = -eyeDir;
 	fogDir.y = 0;
 	vec4 fogColor = texture(textureReflection, fogDir);
 	float fogFactor = pow(fFog, 0.50);
-	
+
 	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
 	vec3 ownColor = vec3(0.07, 0.16, 0.2);
-	vec3 color = mix(ownColor, reflectColor.xyz, pow(fresnelFactor, 15));
+	vec3 color = mix(ownColor, reflectColor.xyz, fresnelFactor);
 	
 	color = mix(color.xyz, fogColor.xyz, fogFactor);
 	
-	float alpha = max(0.5, fresnelFactor);
+	float alpha = max(0.90, fresnelFactor);
 
 	vec4 final = vec4(color, alpha);
 
 	// DEBUG:
-	//final = vec4(fWPos + fNormal, 1.0) + fColor;
-	//final.xy += fUV;
-	//float f = pow(fresnelFactor, 15);
+	float f = fresnelFactor;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 
 	gl_FragColor = final;
