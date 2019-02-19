@@ -442,7 +442,7 @@ void initTerrain() {
 	terrainConfig.length = 200;
 	terrainConfig.minElevation = -10;
 	terrainConfig.maxElevation = 35.f;
-	terrainConfig.seaLevel = 0.f;
+	terrainConfig.seaLevel = 1.f;
 	terrainConfig.relativeRandomJitter = 0.8f;
 
 	terrainConfig.bigRoughness = 0.9f;

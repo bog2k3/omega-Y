@@ -10,6 +10,27 @@ uniform vec3 eyePos;
 uniform sampler2D textureDuDv;
 uniform samplerCube textureReflection;
 
+float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
+	// Schlick aproximation
+	/*float r0 = (n1-n2) / (n1+n2);
+	r0 *= r0;
+	float cosX = -dot(normal, incident);
+	if (n1 > n2)
+	{
+		float n = n1/n2;
+		float sinT2 = n*n*(1.0-cosX*cosX);
+		// Total internal reflection
+		if (sinT2 > 1.0f)
+			return 1.0f;
+		cosX = sqrt(1.0f-sinT2);
+	}
+	float x = 1.0f - cosX;
+	float fres = r0 + (1.0f-r0) * pow(x, 5);
+	return fres;*/
+	
+	return 1.0 - pow(dot(normal, -incident), 2.0);
+ }
+
 void main() {
 	vec3 normal = vec3(0.0, 1.0, 0.0);
 
@@ -44,13 +65,22 @@ void main() {
 	vec3 fogDir = -eyeDir;
 	fogDir.y = 0;
 	vec4 fogColor = texture(textureReflection, fogDir);
-	float fogFactor = pow(fFog, 2.0);
+	float fogFactor = pow(fFog, 0.50);
+	
+	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
+	vec3 ownColor = vec3(0.07, 0.16, 0.2);
+	vec3 color = mix(ownColor, reflectColor.xyz, pow(fresnelFactor, 15));
+	
+	color = mix(color.xyz, fogColor.xyz, fogFactor);
+	
+	float alpha = max(0.5, fresnelFactor);
 
-	vec4 final = vec4(mix(reflectColor.xyz, fogColor.xyz, fogFactor), 1.0);
+	vec4 final = vec4(color, alpha);
 
 	// DEBUG:
 	//final = vec4(fWPos + fNormal, 1.0) + fColor;
 	//final.xy += fUV;
+	//float f = pow(fresnelFactor, 15);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 
 	gl_FragColor = final;
