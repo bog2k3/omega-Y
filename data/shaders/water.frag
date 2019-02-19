@@ -21,13 +21,13 @@ void main() {
 	vec4 dudv = texture(textureDuDv, (fUV + change) * perturbFreq1) * 2.0 - 1.0;
 	vec3 perturb1 = dudv.rbg * perturbStrength1;
 
-	float perturbFreq2 = 4.0;
-	float perturbStrength2 = 0.1 * 0;
+	float perturbFreq2 = 2.0;
+	float perturbStrength2 = 0.05;
 	dudv = texture(textureDuDv, (fUV - change) * perturbFreq2) * 2.0 - 1.0;
 	vec3 perturb2 = dudv.rbg * perturbStrength2;
 
-	float perturbFreq3 = 12.0;
-	float perturbStrength3 = 0.1 * 0;
+	float perturbFreq3 = 8.0;
+	float perturbStrength3 = 0.03;
 	dudv = texture(textureDuDv, (fUV.yx + change) * perturbFreq3) * 2.0 - 1.0;
 	vec3 perturb3 = dudv.rbg * perturbStrength3;
 

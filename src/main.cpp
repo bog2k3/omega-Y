@@ -169,6 +169,9 @@ void handleDebugKeys(InputEvent& ev) {
 	case GLFW_KEY_Z:
 		World::getGlobal<ImgDebugDraw>()->disable();
 	break;
+	case GLFW_KEY_P:
+		Shaders::reloadAllShaders();
+	break;
 	default:
 		consumed = false;
 	}
@@ -310,7 +313,8 @@ void drawDebugTexts() {
 		"F2 : toggle slow motion",
 		"F3 : pause",
 		"X : debug terrain heightmap",
-		"Z : disable debug image"
+		"Z : disable debug image",
+		"P : reload all shaders"
 #endif
 	};
 	for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
