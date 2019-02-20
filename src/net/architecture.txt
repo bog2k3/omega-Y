@@ -1,0 +1,50 @@
+[Host]
+	* holds NetHost object
+	* responsible for flow control:
+		+ create and end sessions
+		+ create shared resources (terrain, sky, etc) -> synchs via seeds and they're recomputed on the clients
+		+ starts and ends game
+	* updates local player; receives updates from clients' player objects;
+		+ broadcasts all player updates to all clients
+	* receives and broadcasts game events to/from all clients (bullet creation, relevant collisions etc)
+		+ bullets are created and simulated separately on each client
+
+[Client]
+	* holds NetClient object
+	* receives flow commands from Host
+		+ receives resource seeds (terrain, sky etc) and computes them locally
+		+ receives start/end game commands
+	* updates local player; notifies the host of the modifications
+	* receives updates for other remote players from host - these are not simulated locally (except maybe some interpolation)
+	* simulates bullets and other objects locally
+
+[NetAdapter]
+	* both [Host] and [Client] objects are accessed via a [NetAdapter] interface, thus the rest of the code does not care about host/client identity.
+	* this interface performs the relevant actions on network peers depending on wether it's a host or client type
+
+[Arbitrage]
+	* because most objects are simulated locally and independently on each peer, there are bound to arise desynchronizations.
+	* we treat two categories of objects:
+		1. projectiles (bullets, rockets etc)
+		2. big and mostly stationary objects (boulders, crates etc)
+
+	1. [projectiles]
+		- creation event is synched across all peers
+		- independent simulation on each peer
+		- collision events *must* be synchronized such that all peers agree on them.
+		- we use a majority vote to settle the arbitrage of events, or in case there is a draw,
+			we randomly select one outcome (real quantum stuff, yeah) so that neither peer is consistently favoured over the other.
+		- the host manages arbitrage (or in case we want to be really politically correct we can randomly choose one peer to do this).
+
+		- we must design a deferred event strategy, where an event that occurred locally is recorded and held back until it is settled by
+			arbitrage and only then the corresponding action is taken (or the event is dropped)
+		- some events may not register at all on some peers (such as a bullet collision) so we need to send them some sort of "spurious" events
+			as the arbitrage is done, and these events must be handled immediately.
+
+	2. [big, mostly stationary objects]
+		- these can exist from the begining (boulders, crates) or can be created dynamically (rubble when breaking a wall)
+		- they can also be destroyed dynamically (breaking a crate)
+		- these don't used deferred events, rather their attributes (position, velocity) are averaged out by the designated arbiter from the
+			values collected from all peers and then an update is issued to all peers via the host
+
+	* for other event types (such as damage taken by a player) a similar approach to #2 is taken - average out from all peers.
