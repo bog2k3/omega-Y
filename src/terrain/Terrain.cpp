@@ -62,6 +62,7 @@ struct Terrain::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
+	unsigned trisBelowWater_;
 	unsigned shaderProgram_;
 	unsigned iPos_;
 	unsigned iNormal_;
@@ -487,11 +488,32 @@ void Terrain::updateRenderBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
+	renderData_->trisBelowWater_ = 0;
+	// first loop: indices for tris below water
 	for (unsigned i=0; i<triangles_.size(); i++) {
-		indices[i*3 + 0] = triangles_[i].iV1;
-		indices[i*3 + 1] = triangles_[i].iV2;
-		indices[i*3 + 2] = triangles_[i].iV3;
+		// decide if triangle is at least partially submerged:
+		if (pVertices_[triangles_[i].iV1].pos.y >= config_.seaLevel
+			&& pVertices_[triangles_[i].iV2].pos.y >= config_.seaLevel
+			&& pVertices_[triangles_[i].iV3].pos.y >= config_.seaLevel)
+			continue;
+		indices[renderData_->trisBelowWater_*3 + 0] = triangles_[i].iV1;
+		indices[renderData_->trisBelowWater_*3 + 1] = triangles_[i].iV2;
+		indices[renderData_->trisBelowWater_*3 + 2] = triangles_[i].iV3;
+		renderData_->trisBelowWater_++;
 	}
+	// second loop: indices for tris above water
+	unsigned trisAbove = 0;
+	for (unsigned i=0; i<triangles_.size(); i++) {
+		if (pVertices_[triangles_[i].iV1].pos.y < config_.seaLevel
+			|| pVertices_[triangles_[i].iV2].pos.y < config_.seaLevel
+			|| pVertices_[triangles_[i].iV3].pos.y < config_.seaLevel)
+			continue;
+		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 0] = triangles_[i].iV1;
+		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 1] = triangles_[i].iV2;
+		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 2] = triangles_[i].iV3;
+		trisAbove++;
+	}
+	assertDbg(renderData_->trisBelowWater_ + trisAbove == triangles_.size());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -554,7 +576,8 @@ void Terrain::draw(Viewport* vp) {
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
-	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, (triangles_.size() - renderData_->trisBelowWater_) * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
 	// unbind stuff
 	glBindVertexArray(0);
 	glUseProgram(0);
