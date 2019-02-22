@@ -4,7 +4,6 @@
 #include <vector>
 
 struct WaterParams {
-	float waterLevel = 0.f;
 	float innerRadius = 50.f;	// radius of 'detailed' water mesh -> should cover the playable area
 	float outerExtent = 100.f;	// extend from the innerRadius to make the water appear infinite - this area will have fewer vertices
 	float vertexDensity = 0.1f;	// vertices per meter

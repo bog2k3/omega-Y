@@ -63,15 +63,17 @@ struct Terrain::RenderData {
 	unsigned VBO_;
 	unsigned IBO_;
 	unsigned trisBelowWater_;
-	unsigned shaderProgram_;
-	unsigned iPos_;
-	unsigned iNormal_;
-	unsigned iColor_;
-	unsigned iUV_;
-	unsigned iTexBlendF_;
-	unsigned imPV_;
-	unsigned iSampler_;
-	unsigned iEyePos_;
+	unsigned trisAboveWater_;
+	int shaderProgram_;
+	int iPos_;
+	int iNormal_;
+	int iColor_;
+	int iUV_;
+	int iTexBlendF_;
+	int imPV_;
+	int iSampler_;
+	int iEyePos_;
+	int iSubspace_;
 	TextureInfo textures_[TerrainVertex::nTextures];
 };
 
@@ -124,6 +126,7 @@ Terrain::Terrain()
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
+		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -330,7 +333,6 @@ void Terrain::generate(TerrainConfig const& settings) {
 
 	LOGLN("Generating water . . .");
 	pWater_->generate(WaterParams {
-		config_.seaLevel,				// water level
 		terrainRadius,					// inner radius
 		seaBedRadius - terrainRadius + 200,// outer extent
 		max(0.05f, 2.f / terrainRadius),// vertex density
@@ -472,8 +474,8 @@ void Terrain::computeTextureWeights() {
 
 		// sand factor -> some distance above water level and everything below is sand
 		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
-		if (pVertices_[i].pos.y < config_.seaLevel + beachHeight) {
-			float sandFactor = min(1.f, config_.seaLevel + beachHeight - pVertices_[i].pos.y);
+		if (pVertices_[i].pos.y < beachHeight) {
+			float sandFactor = min(1.f, beachHeight - pVertices_[i].pos.y);
 			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
 		}
 	}
@@ -487,14 +489,15 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
+	uint32_t *indices = (uint32_t*)malloc(6 * triangles_.size() * sizeof(uint32_t));	// allocate twice as much space to make sure we don't overrun
+																						// the buffer when computing above/below water triangles
 	renderData_->trisBelowWater_ = 0;
 	// first loop: indices for tris below water
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		// decide if triangle is at least partially submerged:
-		if (pVertices_[triangles_[i].iV1].pos.y >= config_.seaLevel
-			&& pVertices_[triangles_[i].iV2].pos.y >= config_.seaLevel
-			&& pVertices_[triangles_[i].iV3].pos.y >= config_.seaLevel)
+		if (pVertices_[triangles_[i].iV1].pos.y >= 0
+			&& pVertices_[triangles_[i].iV2].pos.y >= 0
+			&& pVertices_[triangles_[i].iV3].pos.y >= 0)
 			continue;
 		indices[renderData_->trisBelowWater_*3 + 0] = triangles_[i].iV1;
 		indices[renderData_->trisBelowWater_*3 + 1] = triangles_[i].iV2;
@@ -502,20 +505,21 @@ void Terrain::updateRenderBuffers() {
 		renderData_->trisBelowWater_++;
 	}
 	// second loop: indices for tris above water
-	unsigned trisAbove = 0;
+	renderData_->trisAboveWater_ = 0;
 	for (unsigned i=0; i<triangles_.size(); i++) {
-		if (pVertices_[triangles_[i].iV1].pos.y < config_.seaLevel
-			|| pVertices_[triangles_[i].iV2].pos.y < config_.seaLevel
-			|| pVertices_[triangles_[i].iV3].pos.y < config_.seaLevel)
+		// check if the triangle is at least partially above water
+		if (pVertices_[triangles_[i].iV1].pos.y <= 0
+			&& pVertices_[triangles_[i].iV2].pos.y <= 0
+			&& pVertices_[triangles_[i].iV3].pos.y <= 0)
 			continue;
-		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 0] = triangles_[i].iV1;
-		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 1] = triangles_[i].iV2;
-		indices[renderData_->trisBelowWater_*3 + trisAbove*3 + 2] = triangles_[i].iV3;
-		trisAbove++;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 0] = triangles_[i].iV1;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 1] = triangles_[i].iV2;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 2] = triangles_[i].iV3;
+		renderData_->trisAboveWater_++;
 	}
-	assertDbg(renderData_->trisBelowWater_ + trisAbove == triangles_.size());
+	assertDbg(renderData_->trisBelowWater_ + renderData_->trisAboveWater_ >= triangles_.size());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * (renderData_->trisBelowWater_ + renderData_->trisAboveWater_) * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -568,6 +572,7 @@ void Terrain::draw(Viewport* vp) {
 	glFrontFace(GL_CW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_CLIP_DISTANCE0);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
@@ -575,14 +580,19 @@ void Terrain::draw(Viewport* vp) {
 	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
-	// do the drawing
+	// draw below-water subspace:
+	glUniform1f(renderData_->iSubspace_, -1.f);
 	glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
-	glDrawElements(GL_TRIANGLES, (triangles_.size() - renderData_->trisBelowWater_) * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
+	// draw above-water subspace:
+	glUniform1f(renderData_->iSubspace_, +1.f);
+	glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
 	// unbind stuff
 	glBindVertexArray(0);
 	glUseProgram(0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_CLIP_DISTANCE0);
 
 	// draw vertex normals
 	/*for (unsigned i=0; i<nVertices_; i++) {

@@ -154,9 +154,9 @@ void Water::generate(WaterParams params) {
 	for (unsigned i=0; i<rows; i++)
 		for (unsigned j=0; j<cols; j++) {
 			new(&pVertices_[i*rows + j]) WaterVertex {
-				topleft + glm::vec3(dx * j, params_.waterLevel, dz * i),	// position
-				{dx*j / wTexW, dz*i / wTexH},								// uv
-				0.f															// fog
+				topleft + glm::vec3(dx * j, 0, dz * i),	// position
+				{dx*j / wTexW, dz*i / wTexH},			// uv
+				0.f										// fog
 			};
 		}
 	// compute skirt vertices
@@ -164,7 +164,7 @@ void Water::generate(WaterParams params) {
 		float x = extentRadius * cosf(i*skirtVertSector);
 		float z = extentRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows*cols+i]) WaterVertex {
-			{ x, params_.waterLevel, z },										// position
+			{ x, 0, z },														// position
 			{(x+params_.innerRadius) / wTexW, (z+params_.innerRadius) / wTexH},	// uv
 			1.f																	// fog
 		};

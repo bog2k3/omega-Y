@@ -19,7 +19,6 @@ struct TerrainConfig {
 	float length = 100.f;	// Z axis
 	float minElevation = -5.f;	// minimum Y axis value
 	float maxElevation = 15.f;	// maximum Y axis value
-	float seaLevel = 0.f;
 
 	// structure settings
 	float vertexDensity = 2.f;	// vertices per meter (actual density may be slightly higher due to rounding,

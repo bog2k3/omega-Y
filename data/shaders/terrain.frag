@@ -23,7 +23,7 @@ void main() {
 	vec4 t3low = texture(tex[3], fUV[3] * lowFreqFactor);
 	vec4 t4 = texture(tex[4], fUV[4]);
 	vec4 t4low = texture(tex[4], fUV[4] * lowFreqFactor);
-	
+
 	// mix texture frequencies
 	t0 = t0 * t0low * 2.5;
 	t1 = t1 * t1low * 2.5;
@@ -49,7 +49,7 @@ void main() {
 	vec3 light = lightColor * lightIntensity * max(dot(-lightDir, normalize(fNormal)), 0.0);
 	float falloff = 1.0; //1.0 / (lightDist*lightDist);
 	vec3 ambientLight = vec3(0.01, 0.02, 0.05);
-	
+
 	vec3 totalLight = light * falloff + ambientLight;
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
@@ -68,7 +68,7 @@ void main() {
 
 	// DEBUG:
 	//final = vec4(totalLight, 1.0) + 0.01 * final;
-	//float f = h / 20;
+	//float f = gl_ClipDistance[0];
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final.xyz = D.xyz + 0.00001 * final.xyz;
 
