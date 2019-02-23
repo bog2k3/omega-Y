@@ -3,7 +3,7 @@
 
 #include <string>
 
-class Viewport;
+class RenderContext;
 
 struct SkyBoxGenerationParams {
 };
@@ -29,7 +29,7 @@ public:
 
 	void clear();
 
-	void draw(Viewport* vp);
+	void draw(RenderContext const& ctx);
 	void update(float dt);
 
 	unsigned getCubeMapTexture() const;

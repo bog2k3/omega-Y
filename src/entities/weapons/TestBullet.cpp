@@ -32,6 +32,6 @@ TestBullet::TestBullet(glm::vec3 pos, glm::quat orientation, glm::vec3 velocity,
 TestBullet::~TestBullet() {
 }
 
-void TestBullet::draw(Viewport*) {
+void TestBullet::draw(RenderContext const& ctx) {
 	MeshRenderer::get()->renderMesh(*pMeshShared_, transform_.glMatrix());
 }

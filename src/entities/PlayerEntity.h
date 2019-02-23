@@ -17,7 +17,7 @@ public:
 	virtual unsigned getEntityType() const override { return EntityTypes::PLAYER; }
 
 	virtual void update(float dt) override;
-	virtual void draw(Viewport* vp) override;
+	virtual void draw(RenderContext const& ctx) override;
 
 	virtual void move(direction dir) override;
 	virtual void toggleRun(bool on) override;

@@ -11,7 +11,7 @@ struct WaterParams {
 									// if false, a square of length 2*innerRadius will be used instead (faster)
 };
 
-class Viewport;
+class RenderContext;
 struct RenderData;
 struct Triangle;
 
@@ -25,7 +25,7 @@ public:
 	void setReflectionTexture(unsigned reflectionTexCubeMapId);
 
 	void update(float dt);
-	void draw(Viewport* v);
+	void draw(RenderContext const& ctx);
 
 	struct WaterVertex;
 

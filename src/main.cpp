@@ -1,3 +1,4 @@
+#include "CustomRenderContext.h"
 #include "physics/DebugDrawer.h"
 #include "physics/CollisionChecker.h"
 #include "physics/PhysBodyProxy.h"
@@ -10,7 +11,6 @@
 #include "ImgDebugDraw.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
-#include <boglfw/renderOpenGL/Renderer.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/GLText.h>
 #include <boglfw/renderOpenGL/Camera.h>
@@ -18,6 +18,8 @@
 #include <boglfw/renderOpenGL/Mesh.h>
 #include <boglfw/renderOpenGL/MeshRenderer.h>
 #include <boglfw/renderOpenGL/shader.h>
+#include <boglfw/renderOpenGL/drawable.h>
+#include <boglfw/renderOpenGL/RenderHelpers.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
@@ -30,7 +32,6 @@
 #include <boglfw/entities/Box.h>
 #include <boglfw/entities/CameraController.h>
 
-#include <boglfw/utils/drawable.h>
 #include <boglfw/utils/log.h>
 #include <boglfw/utils/UpdateList.h>
 #include <boglfw/utils/rand.h>
@@ -272,7 +273,7 @@ void initSession(Camera* camera) {
 	physTestInit();
 }
 
-void physTestDebugDraw(Viewport* vp) {
+void physTestDebugDraw(RenderContext const& ctx) {
 	if (renderPhysicsDebug)
 		World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
 	// draw the test body's representation:
@@ -320,18 +321,18 @@ void drawDebugTexts() {
 	for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
 		GLText::get()->print(texts[i],
 			{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			0, 20, glm::vec3(0.4f, 0.6, 1.0f));
+			20, glm::vec3(0.4f, 0.6, 1.0f));
 	}
 
 	if (updatePaused) {
 		GLText::get()->print("PAUSED",
 				{50, 50, ViewportCoord::percent},
-				0, 32, glm::vec3(1.f, 0.8f, 0.2f));
+				32, glm::vec3(1.f, 0.8f, 0.2f));
 	}
 	if (slowMo) {
 		GLText::get()->print("~~ Slow Motion ON ~~",
 				{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
-				0, 18, glm::vec3(1.f, 0.5f, 0.1f));
+				18, glm::vec3(1.f, 0.5f, 0.1f));
 	}
 }
 
@@ -474,17 +475,18 @@ int main(int argc, char* argv[]) {
 			unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 		}
+		RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
+		RenderHelpers::load(rcfg);
 
 		GLFWInput::initialize(gltGetWindow());
 		GLFWInput::onInputEvent.add(onInputEventHandler);
 
-		Renderer renderer(winW, winH);
-		auto vp = std::make_unique<Viewport>(0, 0, winW, winH);
-		auto vp1 = vp.get();
-		vp1->setBkColor({0.f, 0.f, 0.f});
-		vp1->camera()->setFOV(PI/2.5f);
-		vp1->camera()->setZPlanes(0.15f, 500.f);
-		renderer.addViewport("main", std::move(vp));
+		Viewport vp(0, 0, winW, winH);
+		vp.setBkColor({0.f, 0.f, 0.f});
+		vp.camera()->setFOV(PI/2.5f);
+		vp.camera()->setZPlanes(0.15f, 500.f);
+
+		CustomRenderContext rctx(vp);
 
 		initWorld();
 
@@ -500,7 +502,6 @@ int main(int argc, char* argv[]) {
 
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
-				-0.1f, 																		// z
 				{20, 10, ViewportCoord::percent}); 											// size
 
 		UpdateList continuousUpdateList;
@@ -521,10 +522,10 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		auto infoTexts = [&](Viewport*) {
+		auto infoTexts = [&](RenderContext const&) {
 			GLText::get()->print("Omega-Y v0.1",
 					{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
-					0, 20, glm::vec3(0.5f, 0.9, 1.0f));
+					20, glm::vec3(0.5f, 0.9, 1.0f));
 			drawDebugTexts();
 		};
 
@@ -537,14 +538,13 @@ int main(int argc, char* argv[]) {
 		drawList.push_back(&infoTexts);
 		drawList.push_back(pImgDebugDraw);
 
-		vp1->setDrawList(drawList);
-
-		initSession(vp1->camera());
+		initSession(vp.camera());
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
 		gltBegin();
-		renderer.render();
+		rctx.renderPass = RenderPass::AboveWater;
+		vp.render(drawList);
 		gltEnd();
 		LOGLN("Done, we're now live.");
 
@@ -587,8 +587,11 @@ int main(int argc, char* argv[]) {
 					// wait until previous frame finishes rendering and show frame output:
 					gltEnd();
 					gltBegin();
-					// build the render queue for the current frame and start the actual openGL render (which is independent of our world)
-					renderer.render();
+					// start rendering the frame:
+					rctx.renderPass = RenderPass::UnderWater;
+					vp.render(drawList);
+					rctx.renderPass = RenderPass::AboveWater;
+					vp.render(drawList);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */
@@ -604,7 +607,7 @@ int main(int argc, char* argv[]) {
 		World::getInstance().reset();
 		physTestDestroy();
 		destroyPhysics();
-		renderer.unload();
+		RenderHelpers::unload();
 		if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
 			delete ptr;
 			World::setGlobal<ImgDebugDraw>(nullptr);

@@ -12,7 +12,7 @@ public:
 	TestBullet(glm::vec3 pos, glm::quat orientation, glm::vec3 velocity, glm::quat angularVelocity);
 	~TestBullet();
 
-	virtual void draw(Viewport*) override;
+	virtual void draw(RenderContext const& ctx) override;
 
 private:
 	static std::shared_ptr<btCollisionShape> pCollisionShapeShared_;

@@ -4,6 +4,7 @@
 #include "HeightMap.h"
 #include "PerlinNoise.h"
 #include "Water.h"
+#include "../CustomRenderContext.h"
 
 #include "../BSP/BSPDebugDraw.h"
 
@@ -552,7 +553,7 @@ void Terrain::updatePhysics() {
 	physicsBodyMeta_.createBody(bodyCfg);
 }
 
-void Terrain::draw(Viewport* vp) {
+void Terrain::draw(RenderContext const& ctx) {
 	if (renderWireframe_) {
 		glLineWidth(2.f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -575,8 +576,8 @@ void Terrain::draw(Viewport* vp) {
 	glEnable(GL_CLIP_DISTANCE0);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
-	glUniform3fv(renderData_->iEyePos_, 1, &vp->camera()->position().x);
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera()->matProjView()));
+	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera()->position().x);
 	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 		glUniform1i(renderData_->iSampler_ + i, i);
 	glBindVertexArray(renderData_->VAO_);
@@ -600,7 +601,7 @@ void Terrain::draw(Viewport* vp) {
 	}*/
 
 	if (!renderWireframe_)
-		pWater_->draw(vp);
+		pWater_->draw(ctx);
 
 	if (renderWireframe_) {	// reset state
 		glLineWidth(1.f);

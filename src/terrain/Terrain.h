@@ -61,7 +61,7 @@ public:
 	// clear all terrain data
 	void clear();
 
-	void draw(Viewport* vp) override;
+	void draw(RenderContext const& ctx) override;
 	void update(float dt) override;
 	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
 

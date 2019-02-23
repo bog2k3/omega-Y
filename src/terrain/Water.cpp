@@ -2,6 +2,7 @@
 
 #include "triangulation.h"
 #include "PerlinNoise.h"
+#include "../CustomRenderContext.h"
 
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -209,13 +210,13 @@ void Water::updateRenderBuffers() {
 	free(indices);
 }
 
-void Water::draw(Viewport* vp) {
+void Water::draw(RenderContext const& ctx) {
 	// configure backface culling
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
-	glUniform3fv(renderData_->iEyePos_, 1, &vp->camera()->position().x);
+	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera()->position().x);
 	glUniform1f(renderData_->iTime_, renderData_->time_);
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
@@ -224,7 +225,7 @@ void Water::draw(Viewport* vp) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_);
 	glUniform1i(renderData_->iTexReflection_, 1);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera()->matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);

@@ -1,4 +1,5 @@
 #include "SkyBox.h"
+#include "../CustomRenderContext.h"
 
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>
@@ -142,15 +143,15 @@ void SkyBox::clear() {
 	renderData_->texture = 0;
 }
 
-void SkyBox::draw(Viewport* vp) {
+void SkyBox::draw(RenderContext const& ctx) {
 	glUseProgram(renderData_->shaderProgram);
 	glBindVertexArray(renderData_->VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(renderData_->iTexSampler, 0);
 
-	glm::mat4 mV = vp->camera()->matView();
+	glm::mat4 mV = ctx.viewport.camera()->matView();
 	mV[3][0] = mV[3][1] = mV[3][2] = 0.f;	// reset translation to center the skybox on the camera
-	glm::mat4 mPV = vp->camera()->matProj() * mV;
+	glm::mat4 mPV = ctx.viewport.camera()->matProj() * mV;
 
 	glUniformMatrix4fv(renderData_->iMatVP, 1, GL_FALSE, glm::value_ptr(mPV));
 
