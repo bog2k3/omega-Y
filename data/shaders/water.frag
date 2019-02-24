@@ -95,7 +95,7 @@ void main() {
 
 	// DEBUG:
 	float f = 1.0;
-	final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

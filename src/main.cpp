@@ -528,23 +528,41 @@ void setupRenderPass(RenderPass pass, bool isCameraUnderwater) {
 		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
 	break;
 	}
-	glDisable(GL_DEPTH_TEST);
 }
 
 void render(std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
+	viewport->clear();
+
+	std::vector<drawable> underDraw = drawlist3D;
+	std::vector<Entity*> underEntities;
+	// append all drawable entities from world:
+	// TODO - use a BSP or something to only get entities under water level
+	World::getInstance().getEntities(underEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
+	for (auto e : underEntities)
+		underDraw.push_back(e);
+
+	std::vector<drawable> aboveDraw = drawlist3D;
+	std::vector<Entity*> aboveEntities;
+	// append all drawable entities from world:
+	// TODO - use a BSP or something to only get entities above water level
+	World::getInstance().getEntities(aboveEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
+	for (auto e : aboveEntities)
+		aboveDraw.push_back(e);
+	aboveDraw.push_back(pSkyBox);
+
 	bool isCameraUnderwater = viewport->camera().position().y < 0;
 
 	renderCtx->renderPass = isCameraUnderwater ? RenderPass::AboveWater : RenderPass::UnderWater;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render(drawlist3D);
+	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
 
 	renderCtx->renderPass = isCameraUnderwater ? RenderPass::UnderWater : RenderPass::AboveWater;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render(drawlist3D);
+	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
 
 	renderCtx->renderPass = RenderPass::WaterSurface;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render({pTerrain});
+	//viewport->render({pTerrain});
 
 	renderCtx->renderPass = RenderPass::UI;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
@@ -610,10 +628,8 @@ int main(int argc, char* argv[]) {
 		};
 
 		std::vector<drawable> drawList3D;
-		drawList3D.push_back(pSkyBox);
 		drawList3D.push_back(&physTestDebugDraw);
 		drawList3D.push_back(pTerrain);
-		drawList3D.push_back(&World::getInstance());
 
 		std::vector<drawable> drawList2D;
 		drawList2D.push_back(&sigViewer);
