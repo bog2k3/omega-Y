@@ -480,8 +480,8 @@ bool initRender(int winW, int winH, const char* winTitle) {
 		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 	}
-	refractionBufWidth = winW / 2;
-	refractionBufHeight = winH / 2;
+	refractionBufWidth = winW;// / 2;
+	refractionBufHeight = winH;// / 2;
 	if (!gltCreateFrameBuffer(refractionBufWidth, refractionBufHeight, GL_RGBA8, 0,
 								waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
 		return false;
@@ -529,7 +529,7 @@ void setupRenderPass(RenderPass pass, bool isCameraUnderwater) {
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRefractionFB);
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			viewport->setArea(0, 0, refractionBufWidth, refractionBufHeight);
-			viewport->setBkColor(glm::vec3(0.07f, 0.16f, 0.2f));
+			viewport->setBkColor(glm::vec4(0.07f, 0.16f, 0.2f, 1.f));
 			viewport->clear();
 			viewport->setBkColor(glm::vec3(0.f));
 		}

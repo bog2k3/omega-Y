@@ -46,7 +46,17 @@ void main() {
 	//vec3 lightDir = lightVec / lightDist;
 	vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
 	float lightIntensity = 2.0;
-	vec3 light = lightColor * lightIntensity * max(dot(-lightDir, normalize(fNormal)), 0.0);
+	lightColor *= lightIntensity;
+
+	// for underwater terrain, we need to simulate light absorbtion through water
+	float waterLevel = 0;
+	vec3 waterAbsorptionCoef = vec3(0.07, 0.05, 0.03); // per meter
+	float lightWaterDistance = fWPos.y / lightDir.y;
+	vec3 absorption = waterAbsorptionCoef * lightWaterDistance;
+	absorption *= fWPos.y < waterLevel ? 1.0 : 0.0;
+	lightColor = max(vec3(0), lightColor - absorption);
+
+	vec3 light = lightColor * max(dot(-lightDir, normalize(fNormal)), 0.0);
 	float falloff = 1.0; //1.0 / (lightDist*lightDist);
 	vec3 ambientLight = vec3(0.01, 0.02, 0.05);
 
@@ -57,19 +67,18 @@ void main() {
 
 	// water fog:
 	vec3 waterColor = vec3(0.07, 0.16, 0.2);
-	float waterLevel = 0;
 	float h = eyePos.y - waterLevel;	// eye height
 	vec3 waterNormal = vec3(0.0, 1.0, 0.0);
 	vec3 D = normalize(fWPos - eyePos);
 	vec3 I = eyePos - D * h / dot(waterNormal, D); // water intersection point
 	float waterThickness = length(fWPos - I);
-	float fogFactor = pow(min(1.0, waterThickness / 15), 0.3);
+	float fogFactor = pow(min(1.0, waterThickness / 15), 0.7);
 	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
 	final.xyz = mix(final.xyz, waterColor, fogFactor);
 
 	// DEBUG:
-	//final = vec4(totalLight, 1.0) + 0.01 * final;
-	//float f = gl_ClipDistance[0];
+	//final = vec4(absorption, 1.0) + 0.01 * final;
+	float f = pow(lightWaterDistance * 0.05, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final.xyz = D.xyz + 0.00001 * final.xyz;
 

@@ -493,12 +493,13 @@ void Terrain::updateRenderBuffers() {
 	uint32_t *indices = (uint32_t*)malloc(6 * triangles_.size() * sizeof(uint32_t));	// allocate twice as much space to make sure we don't overrun
 																						// the buffer when computing above/below water triangles
 	renderData_->trisBelowWater_ = 0;
+	float waterLevelTolerance = 1.f;
 	// first loop: indices for tris below water
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		// decide if triangle is at least partially submerged:
-		if (pVertices_[triangles_[i].iV1].pos.y >= 0
-			&& pVertices_[triangles_[i].iV2].pos.y >= 0
-			&& pVertices_[triangles_[i].iV3].pos.y >= 0)
+		if (pVertices_[triangles_[i].iV1].pos.y >= waterLevelTolerance
+			&& pVertices_[triangles_[i].iV2].pos.y >= waterLevelTolerance
+			&& pVertices_[triangles_[i].iV3].pos.y >= waterLevelTolerance)
 			continue;
 		indices[renderData_->trisBelowWater_*3 + 0] = triangles_[i].iV1;
 		indices[renderData_->trisBelowWater_*3 + 1] = triangles_[i].iV2;
@@ -509,9 +510,9 @@ void Terrain::updateRenderBuffers() {
 	renderData_->trisAboveWater_ = 0;
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		// check if the triangle is at least partially above water
-		if (pVertices_[triangles_[i].iV1].pos.y <= 0
-			&& pVertices_[triangles_[i].iV2].pos.y <= 0
-			&& pVertices_[triangles_[i].iV3].pos.y <= 0)
+		if (pVertices_[triangles_[i].iV1].pos.y <= -waterLevelTolerance
+			&& pVertices_[triangles_[i].iV2].pos.y <= -waterLevelTolerance
+			&& pVertices_[triangles_[i].iV3].pos.y <= -waterLevelTolerance)
 			continue;
 		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 0] = triangles_[i].iV1;
 		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 1] = triangles_[i].iV2;

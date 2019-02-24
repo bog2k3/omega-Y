@@ -95,17 +95,21 @@ void main() {
 // compute refraction
 	vec2 refractCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
 	float targetElevation = texture(textureRefraction, refractCoord).a;
-	refractCoord += perturbTotal.xz / pow(eyeDist, 0.5) * abs(targetElevation - 0.5) * 2;
+	float elevationRefFactor = abs(targetElevation - 0.5) * 2;
+	refractCoord += perturbTotal.xz / pow(eyeDist, 0.5) * elevationRefFactor;
 	vec4 refractColor = texture(textureRefraction, refractCoord);
 
 // mix reflection and refraction:
-	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);	
+	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
 	vec4 final = vec4(mix(refractColor.xyz, reflectColor.xyz, fresnelFactor), 1.0);
 
+	float alpha = 1.0 - pow(refractColor.a, 20);
+	final.a = alpha;
+
 	// DEBUG:
-	float f = targetElevation;
+	float f = fresnelFactor;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(refractCoord.xy, 0.0, 1.0) + 0.00001 * final;
+	//final = vec4(refractColor.xyz, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;
