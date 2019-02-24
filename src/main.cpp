@@ -247,7 +247,7 @@ void physTestInit() {
 	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
 }
 
-void initSession(Camera* camera) {
+void initSession(Camera& camera) {
 	// origin gizmo
 	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
@@ -258,7 +258,7 @@ void initSession(Camera* camera) {
 	World::getInstance().takeOwnershipOf(sFreeCam);
 
 	// camera controller (this one moves the render camera to the position of the target entity)
-	auto sCamCtrl = std::make_shared<CameraController>(camera);
+	auto sCamCtrl = std::make_shared<CameraController>(&camera);
 	cameraCtrl = sCamCtrl;
 	World::getInstance().takeOwnershipOf(sCamCtrl);
 
@@ -461,6 +461,98 @@ void initSky() {
 	pSkyBox->load("data/textures/sky/1");
 }
 
+Viewport *viewport = nullptr;
+CustomRenderContext *renderCtx = nullptr;
+unsigned waterRefractionFB = 0;
+unsigned waterRefractionTex = 0;
+unsigned waterRefractionDepth = 0;
+
+bool initRender(int winW, int winH, const char* winTitle) {
+	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
+		return false;
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	if (initPostProcessData(winW, winH)) {
+		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
+		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
+	}
+	//if (!gltCreateFrameBuffer(winW / 2, winH / 2, GL_RGB8, 0, waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
+	//	return false;
+	glBindTexture(GL_TEXTURE_2D, waterRefractionTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
+	RenderHelpers::load(rcfg);
+
+	viewport = new Viewport(0, 0, winW, winH);
+	viewport->setBkColor({0.f, 0.f, 0.f});
+	viewport->camera().setFOV(PI/2.5f);
+	viewport->camera().setZPlanes(0.15f, 500.f);
+
+	renderCtx = new CustomRenderContext(*viewport);
+
+	return true;
+}
+
+void unloadRender() {
+	if (renderCtx)
+		delete renderCtx, renderCtx = nullptr;
+	if (viewport)
+		delete viewport, viewport = nullptr;
+	glDeleteTextures(1, &waterRefractionTex);
+	glDeleteRenderbuffers(1, &waterRefractionDepth);
+	glDeleteFramebuffers(1, &waterRefractionFB);
+	RenderHelpers::unload();
+	glfwDestroyWindow(gltGetWindow());
+}
+
+void setupRenderPass(RenderPass pass, bool isCameraUnderwater) {
+	static int defFrameBuffer;
+	switch (pass) {
+	case RenderPass::UnderWater:
+	case RenderPass::AboveWater: {
+		bool sameSide = (pass == RenderPass::UnderWater) == isCameraUnderwater;
+		if (sameSide) {
+			//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		} else {
+			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defFrameBuffer);
+			//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRefractionFB);
+		}
+	} break;
+	case RenderPass::WaterSurface:
+		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		pTerrain->setWaterRefractionTex(waterRefractionTex);
+	break;
+	case RenderPass::UI:
+		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+	break;
+	}
+	glDisable(GL_DEPTH_TEST);
+}
+
+void render(std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
+	bool isCameraUnderwater = viewport->camera().position().y < 0;
+
+	renderCtx->renderPass = isCameraUnderwater ? RenderPass::AboveWater : RenderPass::UnderWater;
+	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
+	viewport->render(drawlist3D);
+
+	renderCtx->renderPass = isCameraUnderwater ? RenderPass::UnderWater : RenderPass::AboveWater;
+	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
+	viewport->render(drawlist3D);
+
+	renderCtx->renderPass = RenderPass::WaterSurface;
+	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
+	viewport->render({pTerrain});
+
+	renderCtx->renderPass = RenderPass::UI;
+	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
+	viewport->render(drawlist2D);
+
+	renderCtx->renderPass = RenderPass::None;
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 	do {
@@ -468,25 +560,13 @@ int main(int argc, char* argv[]) {
 
 		// initialize stuff:
 		int winW = 1280, winH = 900;
-		if (!gltInitGLFW(winW, winH, "Omega-Y", 0, false))
+		if (!initRender(winW, winH, "Omega-Y")) {
+			ERROR("Failed to initialize OpenGL / GLFW rendering system");
 			return -1;
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-		if (initPostProcessData(winW, winH)) {
-			unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
-			gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 		}
-		RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
-		RenderHelpers::load(rcfg);
 
 		GLFWInput::initialize(gltGetWindow());
 		GLFWInput::onInputEvent.add(onInputEventHandler);
-
-		Viewport vp(0, 0, winW, winH);
-		vp.setBkColor({0.f, 0.f, 0.f});
-		vp.camera()->setFOV(PI/2.5f);
-		vp.camera()->setZPlanes(0.15f, 500.f);
-
-		CustomRenderContext rctx(vp);
 
 		initWorld();
 
@@ -529,22 +609,23 @@ int main(int argc, char* argv[]) {
 			drawDebugTexts();
 		};
 
-		std::vector<drawable> drawList;
-		drawList.push_back(pSkyBox);
-		drawList.push_back(&physTestDebugDraw);
-		drawList.push_back(pTerrain);
-		drawList.push_back(&World::getInstance());
-		drawList.push_back(&sigViewer);
-		drawList.push_back(&infoTexts);
-		drawList.push_back(pImgDebugDraw);
+		std::vector<drawable> drawList3D;
+		drawList3D.push_back(pSkyBox);
+		drawList3D.push_back(&physTestDebugDraw);
+		drawList3D.push_back(pTerrain);
+		drawList3D.push_back(&World::getInstance());
 
-		initSession(vp.camera());
+		std::vector<drawable> drawList2D;
+		drawList2D.push_back(&sigViewer);
+		drawList2D.push_back(&infoTexts);
+		drawList2D.push_back(pImgDebugDraw);
+
+		initSession(viewport->camera());
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
 		gltBegin();
-		rctx.renderPass = RenderPass::AboveWater;
-		vp.render(drawList);
+		render(drawList3D, drawList2D);
 		gltEnd();
 		LOGLN("Done, we're now live.");
 
@@ -588,10 +669,7 @@ int main(int argc, char* argv[]) {
 					gltEnd();
 					gltBegin();
 					// start rendering the frame:
-					rctx.renderPass = RenderPass::UnderWater;
-					vp.render(drawList);
-					rctx.renderPass = RenderPass::AboveWater;
-					vp.render(drawList);
+					render(drawList3D, drawList2D);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */
@@ -607,12 +685,12 @@ int main(int argc, char* argv[]) {
 		World::getInstance().reset();
 		physTestDestroy();
 		destroyPhysics();
-		RenderHelpers::unload();
 		if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
 			delete ptr;
 			World::setGlobal<ImgDebugDraw>(nullptr);
 		}
 		deletePostProcessData();
+		unloadRender();
 		Infrastructure::shutDown();
 	} while (0);
 

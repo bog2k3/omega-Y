@@ -7,11 +7,17 @@ enum class RenderPass {
 	None,
 	UnderWater,
 	AboveWater,
+	WaterSurface,
+	UI,			// 2D user interface
 };
 
 class CustomRenderContext : public RenderContext {
 public:
 	CustomRenderContext(Viewport& viewport) : RenderContext(viewport) {
+	}
+
+	static CustomRenderContext const& fromCtx(RenderContext const& r) {
+		return dynamic_cast<CustomRenderContext const&>(r);
 	}
 
 	RenderPass renderPass = RenderPass::None;

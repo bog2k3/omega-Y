@@ -149,9 +149,9 @@ void SkyBox::draw(RenderContext const& ctx) {
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(renderData_->iTexSampler, 0);
 
-	glm::mat4 mV = ctx.viewport.camera()->matView();
+	glm::mat4 mV = ctx.viewport.camera().matView();
 	mV[3][0] = mV[3][1] = mV[3][2] = 0.f;	// reset translation to center the skybox on the camera
-	glm::mat4 mPV = ctx.viewport.camera()->matProj() * mV;
+	glm::mat4 mPV = ctx.viewport.camera().matProj() * mV;
 
 	glUniformMatrix4fv(renderData_->iMatVP, 1, GL_FALSE, glm::value_ptr(mPV));
 

@@ -9,6 +9,7 @@ uniform float time;
 uniform vec3 eyePos;
 uniform sampler2D textureDuDv;
 uniform samplerCube textureReflection;
+uniform sampler2D textureRefraction;
 
 float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
 	// Schlick aproximation
@@ -93,8 +94,8 @@ void main() {
 	vec4 final = vec4(color, alpha);
 
 	// DEBUG:
-	float f = fresnelFactor;
-	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	float f = 1.0;
+	final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

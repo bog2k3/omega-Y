@@ -554,63 +554,67 @@ void Terrain::updatePhysics() {
 }
 
 void Terrain::draw(RenderContext const& ctx) {
-	if (renderWireframe_) {
-		glLineWidth(2.f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-	// set-up textures
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
-	// configure backface culling
-	glFrontFace(GL_CW);
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_CLIP_DISTANCE0);
-	// set-up shader, vertex buffer and uniforms
-	glUseProgram(renderData_->shaderProgram_);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera()->matProjView()));
-	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera()->position().x);
-	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
-		glUniform1i(renderData_->iSampler_ + i, i);
-	glBindVertexArray(renderData_->VAO_);
-	// draw below-water subspace:
-	glUniform1f(renderData_->iSubspace_, -1.f);
-	glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
-	// draw above-water subspace:
-	glUniform1f(renderData_->iSubspace_, +1.f);
-	glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
-	// unbind stuff
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_CLIP_DISTANCE0);
+	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
-	// draw vertex normals
-	/*for (unsigned i=0; i<nVertices_; i++) {
-		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
-	}*/
+	if (rctx.renderPass == RenderPass::AboveWater || rctx.renderPass == RenderPass::UnderWater) {
+		if (renderWireframe_) {
+			glLineWidth(2.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		// set-up textures
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
+		// configure backface culling
+		glFrontFace(GL_CW);
+		glCullFace(GL_BACK);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_CLIP_DISTANCE0);
+		// set-up shader, vertex buffer and uniforms
+		glUseProgram(renderData_->shaderProgram_);
+		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
+		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
+		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
+			glUniform1i(renderData_->iSampler_ + i, i);
+		glBindVertexArray(renderData_->VAO_);
+		if (rctx.renderPass == RenderPass::UnderWater) {
+			// draw below-water subspace:
+			glUniform1f(renderData_->iSubspace_, -1.f);
+			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
+		} else {
+			// draw above-water subspace:
+			glUniform1f(renderData_->iSubspace_, +1.f);
+			glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
+		}
+		// unbind stuff}
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_CLIP_DISTANCE0);
 
-	if (!renderWireframe_)
+		if (renderWireframe_) {	// reset state
+			glLineWidth(1.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+		// draw vertex normals
+		/*for (unsigned i=0; i<nVertices_; i++) {
+			Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
+		}*/
+		//BSPDebugDraw::draw(*pBSP_);
+		//for (unsigned i=0; i<triangles_.size() / 10; i++)
+		//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
+	} else if (!renderWireframe_ && rctx.renderPass == RenderPass::WaterSurface) {
 		pWater_->draw(ctx);
-
-	if (renderWireframe_) {	// reset state
-		glLineWidth(1.f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-
-	//BSPDebugDraw::draw(*pBSP_);
-	//for (unsigned i=0; i<triangles_.size() / 10; i++)
-	//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
 }
 
 float Terrain::getHeightValue(glm::vec3 const& where) const {
@@ -630,6 +634,10 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 
 void Terrain::setWaterReflectionTex(unsigned texId) {
 	pWater_->setReflectionTexture(texId);
+}
+
+void Terrain::setWaterRefractionTex(unsigned texId) {
+	pWater_->setRefractionTexture(texId);
 }
 
 void Terrain::update(float dt) {

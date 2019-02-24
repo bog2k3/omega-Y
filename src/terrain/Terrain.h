@@ -72,6 +72,8 @@ public:
 
 	// set a cube map texture for water reflection
 	void setWaterReflectionTex(unsigned texId);
+	// set a 2D texture to be used as water refraction
+	void setWaterRefractionTex(unsigned texId);
 
 	struct TerrainVertex;
 

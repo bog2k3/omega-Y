@@ -31,9 +31,11 @@ struct Water::RenderData {
 	unsigned iTime_;
 	unsigned iTexDuDv_;
 	unsigned iTexReflection_;
+	unsigned iTexRefraction_;
 
 	unsigned textureDuDv_;
 	unsigned textureReflection_;
+	unsigned textureRefraction_;
 
 	float time_ = 0.f;
 };
@@ -74,6 +76,7 @@ Water::Water()
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iTexDuDv_ = glGetUniformLocation(renderData_->shaderProgram_, "textureDuDv");
 		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
+		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -105,6 +108,10 @@ Water::~Water()
 
 void Water::setReflectionTexture(unsigned reflectionTexCubeMapId) {
 	renderData_->textureReflection_ = reflectionTexCubeMapId;
+}
+
+void Water::setRefractionTexture(unsigned refractionTexId) {
+	renderData_->textureRefraction_ = refractionTexId;
 }
 
 void Water::loadTextures() {
@@ -216,7 +223,7 @@ void Water::draw(RenderContext const& ctx) {
 	glEnable(GL_BLEND);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
-	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera()->position().x);
+	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
 	glUniform1f(renderData_->iTime_, renderData_->time_);
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
@@ -225,7 +232,10 @@ void Water::draw(RenderContext const& ctx) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_);
 	glUniform1i(renderData_->iTexReflection_, 1);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera()->matProjView()));
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);
+	glUniform1i(renderData_->iTexRefraction_, 2);
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
