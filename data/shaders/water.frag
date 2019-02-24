@@ -4,6 +4,7 @@ in vec3 fWPos;
 in vec3 fNormal;
 in vec2 fUV;
 in float fFog;
+in vec3 fScreenUV;
 
 uniform float time;
 uniform vec3 eyePos;
@@ -39,6 +40,7 @@ void main() {
 	float changeSpeed = 0.02;
 	float change = time * changeSpeed;
 
+// compute perturbation of normal
 	float perturbFreq1 = 0.5;
 	float perturbStrength1 = 0.1;
 	vec4 dudv = texture(textureDuDv, (fUV + change) * perturbFreq1) * 2.0 - 1.0;
@@ -67,9 +69,14 @@ void main() {
 	float perturbTotalFactor = (1.0 - pow(fFog, 0.8)) * 0.5;
 	vec3 perturbTotal = perturbTotalFactor * (perturb1 + perturb2 + perturb3 + perturb4 + perturb5);
 	perturbTotal.y = 0;
+
+// alter normal
 	normal = normalize(normal + perturbTotal);
 
-	vec3 eyeDir = normalize(eyePos - fWPos);
+// compute reflection
+	vec3 eyeDir = eyePos - fWPos;
+	float eyeDist = length(eyeDir);
+	eyeDir /= eyeDist; // normalize
 
 	vec3 reflectDir = reflect(-eyeDir, normal);
 	vec4 reflectColor = texture(textureReflection, reflectDir);
@@ -78,24 +85,27 @@ void main() {
 	reflectColor.xyz = pow(reflectColor.xyz, vec3(0.75));
 	reflectColor.xyz *= reflectTint;
 
+// towards the far edges, reflection fades to skybox
 	vec3 fogDir = -eyeDir;
 	fogDir.y = 0;
 	vec4 fogColor = texture(textureReflection, fogDir);
 	float fogFactor = pow(fFog, 0.50);
+	reflectColor.xyz = mix(reflectColor.xyz, fogColor.xyz, fogFactor);
 
-	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
-	//vec3 ownColor = vec3(0.07, 0.16, 0.2);
-	//vec3 color = mix(ownColor, reflectColor.xyz, fresnelFactor);
-	
-	vec3 color = mix(reflectColor.xyz, fogColor.xyz, fogFactor);
-	
-	float alpha = max(0.10, fresnelFactor);
+// compute refraction
+	vec2 refractCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
+	float targetElevation = texture(textureRefraction, refractCoord).a;
+	refractCoord += perturbTotal.xz / pow(eyeDist, 0.5) * abs(targetElevation - 0.5) * 2;
+	vec4 refractColor = texture(textureRefraction, refractCoord);
 
-	vec4 final = vec4(color, alpha);
+// mix reflection and refraction:
+	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);	
+	vec4 final = vec4(mix(refractColor.xyz, reflectColor.xyz, fresnelFactor), 1.0);
 
 	// DEBUG:
-	float f = 1.0;
+	float f = targetElevation;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	//final = vec4(refractCoord.xy, 0.0, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

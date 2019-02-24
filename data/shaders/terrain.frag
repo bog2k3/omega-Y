@@ -53,6 +53,7 @@ void main() {
 	vec3 totalLight = light * falloff + ambientLight;
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
+	final.a = fWPos.y*0.5 + 0.5; // this is used by water for refraction attenuation
 
 	// water fog:
 	vec3 waterColor = vec3(0.07, 0.16, 0.2);

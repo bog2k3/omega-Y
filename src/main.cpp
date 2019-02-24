@@ -461,22 +461,30 @@ void initSky() {
 	pSkyBox->load("data/textures/sky/1");
 }
 
+unsigned windowW, windowH;
 Viewport *viewport = nullptr;
 CustomRenderContext *renderCtx = nullptr;
 unsigned waterRefractionFB = 0;
 unsigned waterRefractionTex = 0;
 unsigned waterRefractionDepth = 0;
+unsigned refractionBufWidth = 0;
+unsigned refractionBufHeight = 0;
 
 bool initRender(int winW, int winH, const char* winTitle) {
 	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
 		return false;
+	windowW = winW;
+	windowH = winH;
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	if (initPostProcessData(winW, winH)) {
 		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 	}
-	//if (!gltCreateFrameBuffer(winW / 2, winH / 2, GL_RGB8, 0, waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
-	//	return false;
+	refractionBufWidth = winW / 2;
+	refractionBufHeight = winH / 2;
+	if (!gltCreateFrameBuffer(refractionBufWidth, refractionBufHeight, GL_RGBA8, 0,
+								waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
+		return false;
 	glBindTexture(GL_TEXTURE_2D, waterRefractionTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -514,18 +522,26 @@ void setupRenderPass(RenderPass pass, bool isCameraUnderwater) {
 	case RenderPass::AboveWater: {
 		bool sameSide = (pass == RenderPass::UnderWater) == isCameraUnderwater;
 		if (sameSide) {
-			//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+			viewport->setArea(0, 0, windowW, windowH);
 		} else {
 			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defFrameBuffer);
-			//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRefractionFB);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRefractionFB);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			viewport->setArea(0, 0, refractionBufWidth, refractionBufHeight);
+			viewport->setBkColor(glm::vec3(0.07f, 0.16f, 0.2f));
+			viewport->clear();
+			viewport->setBkColor(glm::vec3(0.f));
 		}
 	} break;
 	case RenderPass::WaterSurface:
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		viewport->setArea(0, 0, windowW, windowH);
 		pTerrain->setWaterRefractionTex(waterRefractionTex);
 	break;
 	case RenderPass::UI:
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
+		viewport->setArea(0, 0, windowW, windowH);
 	break;
 	}
 }
@@ -541,29 +557,33 @@ void render(std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D
 	for (auto e : underEntities)
 		underDraw.push_back(e);
 
-	std::vector<drawable> aboveDraw = drawlist3D;
+	std::vector<drawable> aboveDraw { pSkyBox };
+	aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
 	std::vector<Entity*> aboveEntities;
 	// append all drawable entities from world:
 	// TODO - use a BSP or something to only get entities above water level
 	World::getInstance().getEntities(aboveEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
 	for (auto e : aboveEntities)
 		aboveDraw.push_back(e);
-	aboveDraw.push_back(pSkyBox);
 
 	bool isCameraUnderwater = viewport->camera().position().y < 0;
 
+	// first pass - opposite side
 	renderCtx->renderPass = isCameraUnderwater ? RenderPass::AboveWater : RenderPass::UnderWater;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
 	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
 
+	// second pass - same side
 	renderCtx->renderPass = isCameraUnderwater ? RenderPass::UnderWater : RenderPass::AboveWater;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
 	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
 
+	// third pass - water surface
 	renderCtx->renderPass = RenderPass::WaterSurface;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	//viewport->render({pTerrain});
+	viewport->render({pTerrain});
 
+	// last - 2D UI
 	renderCtx->renderPass = RenderPass::UI;
 	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
 	viewport->render(drawlist2D);
