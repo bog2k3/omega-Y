@@ -42,8 +42,8 @@ struct Terrain::TerrainVertex {
 	glm::vec2 uv[nTextures];	// uvs for each texture layer
 	glm::vec4 texBlendFactor;	// 4 texture blend factors: x is between grass1 & grass2,
 								// 							y between rock1 & rock2
-								//							z between grass and rock
-								//							w between everything and sand
+								//							z between grass/sand and rock (highest priority)
+								//							w between grass and sand
 
 	TerrainVertex() = default;
 };
@@ -459,26 +459,50 @@ void Terrain::computeTextureWeights() {
 	for (unsigned i=0; i<rows_*cols_; i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
-		float u = (pVertices_[i].pos.x - bottomLeft.x) / config_.width * 0.15;
-		float v = (pVertices_[i].pos.z - bottomLeft.z) / config_.length * 0.15;
+		float u = (pVertices_[i].pos.x - bottomLeft.x) / config_.width;
+		float v = (pVertices_[i].pos.z - bottomLeft.z) / config_.length;
+		// #1 Grass vs Dirt factor
 		pVertices_[i].texBlendFactor.x = grassBias
-											+ pnoise.getNorm(u, v, 7.f)
-											+ 0.3f * pnoise.get(u*2, v*2, 7.f)
-											+ 0.1 * pnoise.get(u*4, v*4, 2.f);	// dirt / grass
-		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 7.f) + 0.5 * pnoise.get(v*4, u*4, 2.f);	// rock1 / rock2
-		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
-		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
-		float hFactor = (pVertices_[i].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
-		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
-		cutoffY += (1.0 - cutoffY) * hFactor;
-		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
+											+ pnoise.getNorm(u*0.15, v*0.15, 7.f)
+											+ 0.3f * pnoise.get(u*0.3, v*0.3, 7.f)
+											+ 0.1 * pnoise.get(u*0.6, v*0.6, 2.f);	// dirt / grass
+		// #2 Rock1 vs Rock2 factor
+		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v*0.15, u*0.15, 7.f) + 0.5 * pnoise.get(v*0.6, u*0.6, 2.f);	// rock1 / rock2
 
-		// sand factor -> some distance above water level and everything below is sand
-		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
+		// #3 Rock vs Grass/Sand factor (highest priority)
+		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
+		if (pVertices_[i].pos.y > 0) {
+			// above water grass-rock coefficient
+			// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
+			float hFactor = clamp(pVertices_[i].pos.y / config_.maxElevation, 0.f, 1.f); // hFactor is 1.0 at the highest elevation, 0.0 at sea level.
+			hFactor = pow(hFactor, 1.5f);
+			cutoffY += (1.0 - cutoffY) * hFactor;
+			pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
+		} else {
+			// this is below water
+			if (u <= 0.01 || v <= 0.01 || u >= 0.99 || v >= 0.99) {
+				// edges are always sand
+				pVertices_[i].texBlendFactor.z = 1.f;
+			} else {
+				if (pVertices_[i].normal.y > cutoffY + 0.1f) {
+					// below water rock coefficient based on perlin noise
+					float noise = pnoise.get(u*0.15, v*0.15, 7.f)
+								+ 0.3 * pnoise.get(u*0.6, v*0.6, 7.f)
+								+ 0.1 * pnoise.get(u*1.0, v*1.0, 7.f);
+					float sandBias = 0.4f * pVertices_[i].normal.y; // flat areas are more likely to be sand rather than rock
+					pVertices_[i].texBlendFactor.z = noise + sandBias > 0 ? 1.f : 0.25f;
+				} else
+					pVertices_[i].texBlendFactor.z = 0.2f; // steep underwater areas are still rock
+			}
+		}
+
+		// #4 Grass vs Sand factor -> some distance above water level and everything below is sand or rock
+		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*1.5, v*1.5, 1.f); // meters
 		if (pVertices_[i].pos.y < beachHeight) {
 			float sandFactor = min(1.f, beachHeight - pVertices_[i].pos.y);
 			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
-		}
+		} else
+			pVertices_[i].texBlendFactor.w = 0;
 	}
 }
 

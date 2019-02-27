@@ -29,7 +29,7 @@ float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
 	float x = 1.0f - cosX;
 	float fres = r0 + (1.0f-r0) * pow(x, 5);
 	return fres;*/
-	
+
 	float f = 1.0 - pow(dot(normal, -incident), 2.0);
 	return min(1.0, pow(f, 10) * 1.3);
  }
@@ -82,28 +82,28 @@ void main() {
 	vec4 reflectColor = texture(textureReflection, reflectDir);
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.2;
-	reflectColor.xyz = pow(reflectColor.xyz, vec3(0.75));
 	reflectColor.xyz *= reflectTint;
 
 // towards the far edges, reflection fades to skybox
 	vec3 fogDir = -eyeDir;
 	fogDir.y = 0;
 	vec4 fogColor = texture(textureReflection, fogDir);
-	float fogFactor = pow(fFog, 0.50);
+	float fogFactor = pow(fFog, 0.40);
 	reflectColor.xyz = mix(reflectColor.xyz, fogColor.xyz, fogFactor);
 
 // compute refraction
 	vec2 refractCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
 	float targetElevation = texture(textureRefraction, refractCoord).a;
 	float elevationRefFactor = abs(targetElevation - 0.5) * 2;
-	refractCoord += perturbTotal.xz / pow(eyeDist, 0.5) * elevationRefFactor;
+	refractCoord += perturbTotal.xz * elevationRefFactor / pow(eyeDist, 0.5);
 	vec4 refractColor = texture(textureRefraction, refractCoord);
 
 // mix reflection and refraction:
 	float fresnelFactor = fresnel(1.0, 1.0, normal, -eyeDir);
 	vec4 final = vec4(mix(refractColor.xyz, reflectColor.xyz, fresnelFactor), 1.0);
 
-	float alpha = 1.0 - pow(refractColor.a, 20);
+	float alpha = pow(elevationRefFactor, 0.5);
+	alpha *= (1-pow(fFog, 3.0));
 	final.a = alpha;
 
 	// DEBUG:
