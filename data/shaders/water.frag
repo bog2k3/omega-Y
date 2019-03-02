@@ -12,6 +12,8 @@ uniform sampler2D textureDuDv;
 uniform samplerCube textureReflection;
 uniform sampler2D textureRefraction;
 
+#define PI 3.1415
+
 float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
 	// Schlick aproximation
 	/*float r0 = (n1-n2) / (n1+n2);
@@ -36,12 +38,17 @@ float fresnel(float n1, float n2, vec3 normal, vec3 incident) {
 
 void main() {
 	vec3 normal = vec3(0.0, 1.0, 0.0);
+	vec3 eyeDir = eyePos - fWPos;
+	float eyeDist = length(eyeDir);
+	float eyeDistProjected = length(vec3(eyeDir.x, 0.0, eyeDir.z));
+	float eyeHeight = eyeDir.y;
+	eyeDir /= eyeDist; // normalize
 
 	float changeSpeed = 0.02;
 	float change = time * changeSpeed;
 
 // compute perturbation of normal
-	float perturbFreq1 = 0.5;
+	/*float perturbFreq1 = 0.5;
 	float perturbStrength1 = 0.1;
 	vec4 dudv = texture(textureDuDv, (fUV + change) * perturbFreq1) * 2.0 - 1.0;
 	vec3 perturb1 = dudv.rbg * perturbStrength1;
@@ -68,16 +75,41 @@ void main() {
 
 	float perturbTotalFactor = (1.0 - pow(fFog, 0.8)) * 0.5;
 	vec3 perturbTotal = perturbTotalFactor * (perturb1 + perturb2 + perturb3 + perturb4 + perturb5);
-	perturbTotal.y = 0;
+	perturbTotal.y = 0;*/
+
+	float wavefrontSpeed = 2.f; // m/s
+	vec2 dh_p0 = texture(textureDuDv, fUV*3).rg;
+	float dh = pow(dh_p0.x, 1.0) * PI/200; // delta heading [rad]
+	float p0 = dh_p0.y * PI * 0.5; // initial phase [rad]
+	float wavefrontDist = length(fWPos) / (1 + dh); // m
+
+	//float baseLambda = length(dFdy(fWPos)) * 40; // minimum wavelength we can render at nyquist frequency
+	float baseLambda = length(dFdy(fWPos)) * 40; // minimum wavelength we can render at nyquist frequency
+	float freq1 = 0.2; // Hz
+	float amp1 = 0.5; // m
+	amp1 *= min(1.0, pow(freq1 * wavefrontSpeed / baseLambda, 0.8));
+	float wave1 = amp1 * sin(p0 + 2*PI*freq1 * (time*0 + wavefrontDist / wavefrontSpeed));
+
+	float freq2 = 0.45; // Hz
+	float amp2 = 0.3; // m
+	amp2 *= min(1.0, pow(freq2 * wavefrontSpeed / baseLambda, 1));
+	float wave2 = amp2 * sin(p0 + 2*PI*freq2 * (time + wavefrontDist / wavefrontSpeed));
+
+	float freq3 = 2.0; // Hz
+	float amp3 = 0.25; // m
+	amp3 *= min(1.0, pow(freq3 * wavefrontSpeed / baseLambda, 2));
+	float wave3 = amp3 * sin(p0 + 2*PI*freq3 * (time + wavefrontDist / wavefrontSpeed));
+
+	float waveTotal = wave1 + wave2 + wave3;
+
+	float perturbFogFactor = 1.0 - pow(fFog, 0.8);
+	float perturbTotalFactor = perturbFogFactor;
+	vec3 perturbTotal = perturbTotalFactor * vec3(dFdx(waveTotal), 0, dFdy(waveTotal));
 
 // alter normal
 	normal = normalize(normal + perturbTotal);
 
 // compute reflection
-	vec3 eyeDir = eyePos - fWPos;
-	float eyeDist = length(eyeDir);
-	eyeDir /= eyeDist; // normalize
-
 	vec3 reflectDir = reflect(-eyeDir, normal);
 	vec4 reflectColor = texture(textureReflection, reflectDir);
 
@@ -107,9 +139,9 @@ void main() {
 	final.a = alpha;
 
 	// DEBUG:
-	float f = fresnelFactor;
+	float f = (waveTotal + 1) * 0.5;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(refractColor.xyz, 1.0) + 0.00001 * final;
+	//final = vec4(dFdx(perturbTotal) * 30 + 0.1, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

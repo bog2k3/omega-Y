@@ -480,8 +480,8 @@ bool initRender(int winW, int winH, const char* winTitle) {
 		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 	}
-	refractionBufWidth = winW / 2;
-	refractionBufHeight = winH / 2;
+	refractionBufWidth = winW;// / 2;
+	refractionBufHeight = winH;// / 2;
 	if (!gltCreateFrameBuffer(refractionBufWidth, refractionBufHeight, GL_RGBA8, 0,
 								waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
 		return false;
