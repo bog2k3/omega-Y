@@ -117,7 +117,7 @@ Terrain::Terrain()
 		renderData_->shaderProgram_ = id;
 		if (!renderData_->shaderProgram_) {
 			ERROR("Failed to load terrain shaders!");
-			throw std::runtime_error("Failed to load terrain shaders");
+			return;
 		}
 		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
 		renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
@@ -579,6 +579,10 @@ void Terrain::updatePhysics() {
 }
 
 void Terrain::draw(RenderContext const& ctx) {
+	if (!renderData_->shaderProgram_) {
+		return;
+	}
+
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
 	if (rctx.renderPass == RenderPass::AboveWater || rctx.renderPass == RenderPass::UnderWater) {
