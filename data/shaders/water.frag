@@ -54,14 +54,15 @@ void main() {
 	vec3 perturbation = perturb1 + perturb2 + perturb3 + perturb4 + perturb5;
 	float perturbationDistanceFactor = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
 	vec3 normal = normalize(smoothNormal + perturbation * perturbationDistanceFactor);
-	
+
 	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
 	float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
 
 // compute reflection
 	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
 	float elevationReflectionFactor = min(abs(targetElevation), 1.0);
-	vec2 reflectionPerturbFactor = vec2(0.6 * distanceReflectionFactor * elevationReflectionFactor);
+	vec2 positionReflectionFactor = vec2(max(0.2, pow((screenCoord.x - 0.5) * 2, 0.5)), max(0.2, pow(screenCoord.y, 0.5)));
+	vec2 reflectionPerturbFactor = vec2(0.6 * distanceReflectionFactor * elevationReflectionFactor) * positionReflectionFactor;
 	reflectionPerturbFactor.x *= 0.3;
 	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
@@ -88,7 +89,7 @@ void main() {
 // DEBUG:
 	float f = elevationReflectionFactor;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(refractCoord.xy, 0.0, 1.0) + 0.00001 * final;
+	//final = vec4(positionReflectionFactor.xy, 0.0, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;
