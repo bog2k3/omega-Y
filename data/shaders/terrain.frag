@@ -62,13 +62,13 @@ void main() {
 	float falloff = 1.0; //1.0 / (lightDist*lightDist);
 
 	vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05);
-	vec3 ambientLightBelow = vec3(0.03, 0.07, 0.1) / (1 -fWPos.y);
+	vec3 ambientLightBelow = vec3(0.03, 0.08, 0.1) / (1 -fWPos.y);
 	vec3 ambientLight = mix(ambientLightBelow, ambientLightAbove, fWPos.y > waterLevel ? 1.0 : 0.0);
 
 	vec3 totalLight = light * falloff + ambientLight;
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
-	final.a = fWPos.y*0.5 + 0.5; // this is used by water for refraction attenuation
+	final.a = fWPos.y*0.2 + 0.5; // this is used by water for refraction attenuation
 
 	// water fog:
 	vec3 waterColor = ambientLightBelow*3; //vec3(0.07, 0.16, 0.2);
@@ -77,7 +77,7 @@ void main() {
 	vec3 D = normalize(fWPos - eyePos);
 	vec3 I = eyePos - D * h / dot(waterNormal, D); // water intersection point
 	float waterThickness = length(fWPos - I);
-	float fogFactor = 1.0 - 1.0 / (waterThickness * 0.25 + 1); //pow(min(1.0, waterThickness / 15), 0.7);
+	float fogFactor = 1.0 - 1.0 / (waterThickness * 0.15 + 1); //pow(min(1.0, waterThickness / 15), 0.7);
 	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
 	final.xyz = mix(final.xyz, waterColor, fogFactor);
 
