@@ -63,7 +63,9 @@ void main() {
 
 	vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05);
 	vec3 ambientLightBelow = vec3(0.03, 0.08, 0.1) / (1 -fWPos.y);
-	vec3 ambientLight = mix(ambientLightBelow, ambientLightAbove, fWPos.y > waterLevel ? 1.0 : 0.0);
+	float ambientMixDistance = 1.0;
+	float ambientMixFactor = clamp(fWPos.y + ambientMixDistance, 0.0, 1.0);
+	vec3 ambientLight = mix(ambientLightBelow, ambientLightAbove, ambientMixFactor);
 
 	vec3 totalLight = light * falloff + ambientLight;
 

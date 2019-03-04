@@ -3,8 +3,11 @@
 
 #include <boglfw/renderOpenGL/RenderContext.h>
 
+#include <glm/vec4.hpp>
+
 enum class RenderPass {
 	None,
+	WaterReflection,
 	UnderWater,
 	AboveWater,
 	WaterSurface,
@@ -21,6 +24,8 @@ public:
 	}
 
 	RenderPass renderPass = RenderPass::None;
+	glm::vec4 clipPlane;
+	bool enableClipPlane = false;
 };
 
 #endif // __CUST_RENDER_CONTEXT_H__

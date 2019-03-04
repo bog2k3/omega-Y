@@ -344,6 +344,26 @@ struct {
 	unsigned iTexSampler;
 } postProcessData;
 
+struct {
+	unsigned refractionFB = 0;
+	unsigned refractionTex = 0;
+	unsigned refractionDepth = 0;
+	unsigned refractionFB_width = 0;
+	unsigned refractionFB_height = 0;
+	unsigned reflectionFB = 0;
+	unsigned reflectionTex = 0;
+	unsigned reflectionDepth = 0;
+	unsigned reflectionFB_width = 0;
+	unsigned reflectionFB_height = 0;
+} waterRenderData;
+
+struct {
+	Viewport *viewport = nullptr;
+	CustomRenderContext *renderCtx = nullptr;
+	unsigned windowW = 0;
+	unsigned windowH = 0;
+} renderData;
+
 bool initPostProcessData(unsigned winW, unsigned winH) {
 	checkGLError();
 	glGenVertexArrays(1, &postProcessData.VAO);
@@ -394,12 +414,25 @@ bool initPostProcessData(unsigned winW, unsigned winH) {
 }
 
 void renderPostProcess() {
+	/*int defFB;
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defFB);
+	// blit the current framebuffer into the water reflection texture first:
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRenderData.reflectionFB);
+	checkGLError("renderPostProcess 1");
+	glBlitFramebuffer(0, 0, renderData.windowW, renderData.windowH,
+					0, 0, waterRenderData.refractionFB_width, waterRenderData.refractionFB_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFB);
+	checkGLError("renderPostProcess 2");*/
+
+	// now do the post-processing render
 	glUseProgram(postProcessData.shaderProgram);
 	glBindVertexArray(postProcessData.VAO);
 	glUniform1i(postProcessData.iTexSampler, 0);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	glUseProgram(0);
 	glBindVertexArray(0);
+
+	checkGLError("renderPostProcess 3");
 }
 
 void deletePostProcessData() {
@@ -451,7 +484,9 @@ void initTerrain() {
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
-	pTerrain->setWaterReflectionTex(pSkyBox->getCubeMapTexture());
+	//pTerrain->setWaterReflectionTex(pSkyBox->getCubeMapTexture());
+	pTerrain->setWaterReflectionTex(waterRenderData.reflectionTex);
+	pTerrain->setWaterRefractionTex(waterRenderData.refractionTex);
 
 	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
 }
@@ -461,56 +496,71 @@ void initSky() {
 	pSkyBox->load("data/textures/sky/1");
 }
 
-unsigned windowW, windowH;
-Viewport *viewport = nullptr;
-CustomRenderContext *renderCtx = nullptr;
-unsigned waterRefractionFB = 0;
-unsigned waterRefractionTex = 0;
-unsigned waterRefractionDepth = 0;
-unsigned refractionBufWidth = 0;
-unsigned refractionBufHeight = 0;
-
 bool initRender(int winW, int winH, const char* winTitle) {
+	// set up window
 	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
 		return false;
-	windowW = winW;
-	windowH = winH;
+	renderData.windowW = winW;
+	renderData.windowH = winH;
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	// set up post processing hook
 	if (initPostProcessData(winW, winH)) {
 		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
 		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, renderPostProcess, multisamples);
 	}
-	refractionBufWidth = winW / 2;
-	refractionBufHeight = winH / 2;
-	if (!gltCreateFrameBuffer(refractionBufWidth, refractionBufHeight, GL_RGBA8, 0,
-								waterRefractionFB, waterRefractionTex, &waterRefractionDepth))
+
+	// set up water refraction framebuffer
+	waterRenderData.refractionFB_width = winW / 2;
+	waterRenderData.refractionFB_height = winH / 2;
+	if (!gltCreateFrameBuffer(waterRenderData.refractionFB_width, waterRenderData.refractionFB_height, GL_RGBA8, 0,
+								waterRenderData.refractionFB, waterRenderData.refractionTex, &waterRenderData.refractionDepth))
 		return false;
-	glBindTexture(GL_TEXTURE_2D, waterRefractionTex);
+	glBindTexture(GL_TEXTURE_2D, waterRenderData.refractionTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	// set up water reflection framebuffer
+	waterRenderData.reflectionFB_width = winW / 2;
+	waterRenderData.reflectionFB_height = winH / 2;
+	if (!gltCreateFrameBuffer(waterRenderData.reflectionFB_width, waterRenderData.reflectionFB_height, GL_RGB8, 0,
+								waterRenderData.reflectionFB, waterRenderData.reflectionTex, &waterRenderData.reflectionDepth))
+		return false;
+	glBindTexture(GL_TEXTURE_2D, waterRenderData.reflectionTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// load render helpers
 	RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
 	RenderHelpers::load(rcfg);
 
-	viewport = new Viewport(0, 0, winW, winH);
-	viewport->setBkColor({0.f, 0.f, 0.f});
-	viewport->camera().setFOV(PI/2.5f);
-	viewport->camera().setZPlanes(0.15f, 500.f);
+	// set up viewport and camera
+	renderData.viewport = new Viewport(0, 0, winW, winH);
+	renderData.viewport->setBkColor({0.f, 0.f, 0.f});
+	renderData.viewport->camera().setFOV(PI/2.5f);
+	renderData.viewport->camera().setZPlanes(0.15f, 500.f);
 
-	renderCtx = new CustomRenderContext(*viewport);
+	// set up render context
+	renderData.renderCtx = new CustomRenderContext(*renderData.viewport);
 
+	// done
 	return true;
 }
 
 void unloadRender() {
-	if (renderCtx)
-		delete renderCtx, renderCtx = nullptr;
-	if (viewport)
-		delete viewport, viewport = nullptr;
-	glDeleteTextures(1, &waterRefractionTex);
-	glDeleteRenderbuffers(1, &waterRefractionDepth);
-	glDeleteFramebuffers(1, &waterRefractionFB);
+	if (renderData.renderCtx)
+		delete renderData.renderCtx, renderData.renderCtx = nullptr;
+	if (renderData.viewport)
+		delete renderData.viewport, renderData.viewport = nullptr;
+	glDeleteTextures(1, &waterRenderData.refractionTex);
+	glDeleteRenderbuffers(1, &waterRenderData.refractionDepth);
+	glDeleteFramebuffers(1, &waterRenderData.refractionFB);
 	RenderHelpers::unload();
 	glfwDestroyWindow(gltGetWindow());
 }
@@ -518,36 +568,47 @@ void unloadRender() {
 void setupRenderPass(RenderPass pass, bool isCameraUnderwater) {
 	static int defFrameBuffer;
 	switch (pass) {
+	case RenderPass::WaterReflection:
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRenderData.reflectionFB);
+		renderData.viewport->setArea(0, 0, waterRenderData.reflectionFB_width, waterRenderData.reflectionFB_height);
+		renderData.viewport->clear();
+		renderData.renderCtx->clipPlane = {0.f, isCameraUnderwater ? -1.f : +1.f, 0.f, 0.f};
+		renderData.renderCtx->enableClipPlane = true;
+		renderData.viewport->camera().mirror(renderData.renderCtx->clipPlane);
+	break;
 	case RenderPass::UnderWater:
 	case RenderPass::AboveWater: {
 		bool sameSide = (pass == RenderPass::UnderWater) == isCameraUnderwater;
+		renderData.renderCtx->clipPlane = {0.f, isCameraUnderwater == sameSide ? -1.f : +1.f, 0.f, 0.f};
+		renderData.renderCtx->enableClipPlane = true;
 		if (sameSide) {
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
-			viewport->setArea(0, 0, windowW, windowH);
+			renderData.viewport->setArea(0, 0, renderData.windowW, renderData.windowH);
 		} else {
 			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defFrameBuffer);
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRefractionFB);
-			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			viewport->setArea(0, 0, refractionBufWidth, refractionBufHeight);
-			viewport->setBkColor(glm::vec4(0.07f, 0.16f, 0.2f, 1.f));
-			viewport->clear();
-			viewport->setBkColor(glm::vec3(0.f));
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, waterRenderData.refractionFB);
+			//glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			renderData.viewport->setArea(0, 0, waterRenderData.refractionFB_width, waterRenderData.refractionFB_height);
+			renderData.viewport->setBkColor(glm::vec4(0.07f, 0.16f, 0.2f, 1.f));
+			renderData.viewport->clear();
+			renderData.viewport->setBkColor(glm::vec3(0.f));
 		}
 	} break;
 	case RenderPass::WaterSurface:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
-		viewport->setArea(0, 0, windowW, windowH);
-		pTerrain->setWaterRefractionTex(waterRefractionTex);
+		renderData.viewport->setArea(0, 0, renderData.windowW, renderData.windowH);
+		renderData.renderCtx->enableClipPlane = false;
+		renderData.viewport->camera().mirror(renderData.renderCtx->clipPlane);
 	break;
 	case RenderPass::UI:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defFrameBuffer);
-		viewport->setArea(0, 0, windowW, windowH);
+		renderData.viewport->setArea(0, 0, renderData.windowW, renderData.windowH);
 	break;
 	}
 }
 
 void render(std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
-	viewport->clear();
+	renderData.viewport->clear();
 
 	std::vector<drawable> underDraw = drawlist3D;
 	std::vector<Entity*> underEntities;
@@ -566,29 +627,34 @@ void render(std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D
 	for (auto e : aboveEntities)
 		aboveDraw.push_back(e);
 
-	bool isCameraUnderwater = viewport->camera().position().y < 0;
+	bool isCameraUnderwater = renderData.viewport->camera().position().y < 0;
 
 	// first pass - opposite side
-	renderCtx->renderPass = isCameraUnderwater ? RenderPass::AboveWater : RenderPass::UnderWater;
-	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
+	renderData.renderCtx->renderPass = isCameraUnderwater ? RenderPass::AboveWater : RenderPass::UnderWater;
+	setupRenderPass(renderData.renderCtx->renderPass, isCameraUnderwater);
+	renderData.viewport->render(renderData.renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
 
 	// second pass - same side
-	renderCtx->renderPass = isCameraUnderwater ? RenderPass::UnderWater : RenderPass::AboveWater;
-	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render(renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
+	renderData.renderCtx->renderPass = isCameraUnderwater ? RenderPass::UnderWater : RenderPass::AboveWater;
+	setupRenderPass(renderData.renderCtx->renderPass, isCameraUnderwater);
+	renderData.viewport->render(renderData.renderCtx->renderPass == RenderPass::AboveWater ? aboveDraw : underDraw);
+
+	// third pass - water reflection
+	renderData.renderCtx->renderPass = RenderPass::WaterReflection;
+	setupRenderPass(renderData.renderCtx->renderPass, isCameraUnderwater);
+	renderData.viewport->render(isCameraUnderwater ? underDraw : aboveDraw);
 
 	// third pass - water surface
-	renderCtx->renderPass = RenderPass::WaterSurface;
-	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render({pTerrain});
+	renderData.renderCtx->renderPass = RenderPass::WaterSurface;
+	setupRenderPass(renderData.renderCtx->renderPass, isCameraUnderwater);
+	renderData.viewport->render({pTerrain});
 
 	// last - 2D UI
-	renderCtx->renderPass = RenderPass::UI;
-	setupRenderPass(renderCtx->renderPass, isCameraUnderwater);
-	viewport->render(drawlist2D);
+	renderData.renderCtx->renderPass = RenderPass::UI;
+	setupRenderPass(renderData.renderCtx->renderPass, isCameraUnderwater);
+	renderData.viewport->render(drawlist2D);
 
-	renderCtx->renderPass = RenderPass::None;
+	renderData.renderCtx->renderPass = RenderPass::None;
 }
 
 int main(int argc, char* argv[]) {
@@ -656,7 +722,7 @@ int main(int argc, char* argv[]) {
 		drawList2D.push_back(&infoTexts);
 		drawList2D.push_back(pImgDebugDraw);
 
-		initSession(viewport->camera());
+		initSession(renderData.viewport->camera());
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");

@@ -233,7 +233,7 @@ void Water::draw(RenderContext const& ctx) {
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	glUniform1i(renderData_->iTexture1_, 0);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_);
 	glUniform1i(renderData_->iTexReflection_, 1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);

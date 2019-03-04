@@ -9,7 +9,7 @@ in vec3 fScreenUV;
 uniform float time;
 uniform vec3 eyePos;
 uniform sampler2D textureNormal;
-uniform samplerCube textureReflection;
+uniform sampler2D textureReflection;
 uniform sampler2D textureRefraction;
 
 float fresnel(vec3 normal, vec3 incident) {
@@ -29,7 +29,7 @@ void main() {
 	vec2 moveSpeed1 = vec2(0.02);
 	vec2 modUV1 = fUV + time_ * moveSpeed1;
 	vec3 texNormal1 = texture(textureNormal, modUV1 * 0.5).rbg * 2 - 1;
-	float perturbStrength1 = 0.05;
+	float perturbStrength1 = 0.005;
 	vec3 perturb1 = (texNormal1 - smoothNormal) * perturbStrength1;
 
 	vec2 modUV2 = fUV.yx - time_ * moveSpeed1;
@@ -39,7 +39,7 @@ void main() {
 	float moveSpeed3 = -0.012;
 	vec2 modUV3 = fUV + time_ * moveSpeed3;
 	vec3 texNormal3 = texture(textureNormal, modUV3 * 2).rbg * 2 - 1;
-	float perturbStrength3 = 0.05;
+	float perturbStrength3 = 0.03;
 	vec3 perturb3 = (texNormal3 - smoothNormal) * perturbStrength3;
 
 	vec2 modUV4 = fUV.yx - time_ * moveSpeed3;
@@ -54,20 +54,25 @@ void main() {
 	vec3 perturbation = perturb1 + perturb2 + perturb3 + perturb4 + perturb5;
 	float perturbationDistanceFactor = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
 	vec3 normal = normalize(smoothNormal + perturbation * perturbationDistanceFactor);
+	
+	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
+	float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
 
 // compute reflection
-	vec3 reflectDir = reflect(-eyeDir, normal);
-	vec4 reflectColor = texture(textureReflection, reflectDir);
+	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
+	float elevationReflectionFactor = min(abs(targetElevation), 1.0);
+	vec2 reflectionPerturbFactor = vec2(0.6 * distanceReflectionFactor * elevationReflectionFactor);
+	reflectionPerturbFactor.x *= 0.3;
+	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;
+	vec4 reflectColor = texture(textureReflection, reflectCoord);
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
 	reflectColor.xyz *= reflectTint;
 
 // compute refraction
-	vec2 refractCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
-	float targetElevation = (texture(textureRefraction, refractCoord).a - 0.5) * 5;
 	float elevationRefFactor = pow(abs(targetElevation) / 2.5, 0.6);
-	float distanceRefFactor = 1.0 / (1 + pow(eyeDist, 0.8));
-	refractCoord += perturbation.xz * elevationRefFactor * distanceRefFactor;
+	float elevationRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.8));
+	vec2 refractCoord = screenCoord + perturbation.xz * elevationRefFactor * elevationRefractionFactor;
 	vec4 refractColor = texture(textureRefraction, refractCoord);
 
 // mix reflection and refraction:
@@ -78,12 +83,12 @@ void main() {
 	float targetElevationNormalized = targetElevation / 2.5;
 	float elevationAlphaFactor = min(1.0, pow(abs(targetElevationNormalized) * 10, 3));
 	float alpha = elevationAlphaFactor * (1-pow(fFog, 3.0));
-	final.a = alpha;
+	//final.a = alpha;
 
 // DEBUG:
-	float f = distanceRefFactor;
+	float f = elevationReflectionFactor;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(normal.xyz, 1.0) + 0.00001 * final;
+	//final = vec4(refractCoord.xy, 0.0, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

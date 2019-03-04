@@ -585,7 +585,7 @@ void Terrain::draw(RenderContext const& ctx) {
 
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
-	if (rctx.renderPass == RenderPass::AboveWater || rctx.renderPass == RenderPass::UnderWater) {
+	if (rctx.renderPass == RenderPass::AboveWater || rctx.renderPass == RenderPass::UnderWater || rctx.renderPass == RenderPass::WaterReflection) {
 		if (renderWireframe_) {
 			glLineWidth(2.f);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -613,13 +613,12 @@ void Terrain::draw(RenderContext const& ctx) {
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 			glUniform1i(renderData_->iSampler_ + i, i);
 		glBindVertexArray(renderData_->VAO_);
-		if (rctx.renderPass == RenderPass::UnderWater) {
+		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
+		if (rctx.clipPlane.y < 0) {
 			// draw below-water subspace:
-			glUniform1f(renderData_->iSubspace_, -1.f);
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
 		} else {
 			// draw above-water subspace:
-			glUniform1f(renderData_->iSubspace_, +1.f);
 			glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
 		}
 		// unbind stuff}
