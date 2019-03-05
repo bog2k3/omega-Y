@@ -137,7 +137,7 @@ void Water::clear() {
 	triangles_.clear();
 }
 
-\void Water::generate(WaterParams params) {
+void Water::generate(WaterParams params) {
 	validateParams(params);
 	clear();
 	params_ = params;

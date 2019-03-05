@@ -55,7 +55,7 @@ void main() {
 
 	vec3 perturbation = perturb1 + perturb2 + perturb3 + perturb4 + perturb5;
 	float perturbationDistanceFactor = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec3 normal = smoothNormal; //normalize(smoothNormal + perturbation * perturbationDistanceFactor);
+	vec3 normal = normalize(smoothNormal + perturbation * perturbationDistanceFactor);
 
 	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
 	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
@@ -65,15 +65,17 @@ void main() {
 	float Zf = 500.0;
 	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
 	float dxy = length((screenCoord * 2 - 1) * vec2(screenAspectRatio, 1.0)); // screen-space distance from center
-	float targetDist = sqrt(targetZ*targetZ * (1 + dxy*dxy / (Zn*Zn)));
+	float fov = 3.1415/2.5; // vertical field of view
+	float dxyW = dxy * Zn * tan(fov*0.5);// world-space distance from screen center at near-z plane
+	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
 // compute reflection
-	/*float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
-	float elevationReflectionFactor = min(abs(targetElevation), 1.0);
+	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
+	float elevationReflectionFactor = 1.0;//min(abs(targetElevation), 1.0);
 	float reflectionPerturbFactor = distanceReflectionFactor * elevationReflectionFactor;
-	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;*/
+	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;
 
-	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
+	//vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
@@ -110,7 +112,7 @@ void main() {
 
 // DEBUG:
 	float f = pow(targetDist / 50, 2.2);
-	final = vec4(f, f, f, 1.0) + 0.00001 * final;
+	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(refractColor.xyz, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
