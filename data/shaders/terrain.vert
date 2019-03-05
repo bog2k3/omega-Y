@@ -18,7 +18,8 @@ uniform float subspace;	// represents the subspace we're rendering: +1 above wat
 void main() {
 	gl_Position = mPV * vec4(pos, 1);
 	gl_ClipDistance[0] = pos.y * sign(subspace);
-	fWPos = pos;
+	fWPos.xyz = pos;
+	//fWPos.w = gl_Position.z;
 	fNormal = normal;
 	fColor = vec4(color, 1);
 	fUV[0] = uv[0];

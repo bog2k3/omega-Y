@@ -70,15 +70,18 @@ void main() {
 	vec3 totalLight = light * falloff + ambientLight;
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
-	final.a = fWPos.y*0.2 + 0.5; // this is used by water for refraction attenuation
+	//final.a = fWPos.y*0.2 + 0.5; // this is used by water for refraction attenuation
+	float Zn = 0.15;
+	float Zf = 50.0;
+	final.a = clamp((gl_FragCoord.z / gl_FragCoord.w - Zn) / (Zf - Zn), 0.0, 1.0);
 
 	// water fog:
 	vec3 waterColor = ambientLightBelow*3; //vec3(0.07, 0.16, 0.2);
 	float h = eyePos.y - waterLevel;	// eye height
 	vec3 waterNormal = vec3(0.0, 1.0, 0.0);
-	vec3 D = normalize(fWPos - eyePos);
+	vec3 D = normalize(fWPos.xyz - eyePos);
 	vec3 I = eyePos - D * h / dot(waterNormal, D); // water intersection point
-	float waterThickness = length(fWPos - I);
+	float waterThickness = length(fWPos.xyz - I);
 	float fogFactor = 1.0 - 1.0 / (waterThickness * 0.15 + 1); //pow(min(1.0, waterThickness / 15), 0.7);
 	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
 	final.xyz = mix(final.xyz, waterColor, fogFactor);
