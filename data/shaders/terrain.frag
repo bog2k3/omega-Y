@@ -72,7 +72,7 @@ void main() {
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
 	//final.a = fWPos.y*0.2 + 0.5; // this is used by water for refraction attenuation
 	float Zn = 0.15;
-	float Zf = 50.0;
+	float Zf = 500.0;
 	final.a = clamp((gl_FragCoord.z / gl_FragCoord.w - Zn) / (Zf - Zn), 0.0, 1.0);
 
 	// water fog:

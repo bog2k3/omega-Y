@@ -7,6 +7,7 @@ in float fFog;
 in vec3 fScreenUV;
 
 uniform float time;
+uniform float screenAspectRatio;
 uniform vec3 eyePos;
 uniform mat4 mPV;
 uniform sampler2D textureNormal;
@@ -58,19 +59,20 @@ void main() {
 
 	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
 	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
-	
+
 	vec4 refractTarget = texture(textureRefraction, screenCoord);
 	float Zn = 0.15;
-	float Zf = 50.0;
-	//float targetDist = Zn + (Zf - Zn) * refractTarget.a;
-	float targetDist = Zn + refractTarget.a * (Zf - Zn);
+	float Zf = 500.0;
+	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
+	float dxy = length((screenCoord * 2 - 1) * vec2(screenAspectRatio, 1.0)); // screen-space distance from center
+	float targetDist = sqrt(targetZ*targetZ * (1 + dxy*dxy / (Zn*Zn)));
 
 // compute reflection
 	/*float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
 	float elevationReflectionFactor = min(abs(targetElevation), 1.0);
 	float reflectionPerturbFactor = distanceReflectionFactor * elevationReflectionFactor;
 	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;*/
-	
+
 	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
 
@@ -81,7 +83,7 @@ void main() {
 	/*float elevationRefFactor = pow(abs(targetElevation) / 2.5, 0.6);
 	float elevationRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.8));
 	vec2 refractCoord = screenCoord + perturbation.xz * elevationRefFactor * elevationRefractionFactor;*/
-	
+
 	float waterRefrIndex = 1.33; //1.333;
 	vec3 T = refract(-eyeDir, normal, 1.0 / waterRefrIndex);
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
@@ -90,7 +92,7 @@ void main() {
 	vec3 wPosT = fWPos + T * R_targetDist;
 	vec4 projT = mPV * vec4(wPosT, 1.0);
 	projT.xyz /= projT.w;
-	
+
 	vec2 refractCoord = projT.xy * 0.5 + 0.5;//screenCoord;
 	vec4 refractColor = texture(textureRefraction, refractCoord);
 	float refractAttenuation = 0.0;
@@ -107,7 +109,7 @@ void main() {
 	//final.a = alpha;
 
 // DEBUG:
-	float f = pow(targetDistUW / 10, 2.2);
+	float f = pow(targetDist / 50, 2.2);
 	final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(refractColor.xyz, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;

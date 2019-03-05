@@ -513,7 +513,7 @@ bool initRender(int winW, int winH, const char* winTitle) {
 	// set up water refraction framebuffer
 	waterRenderData.refractionFB_width = winW / 2;
 	waterRenderData.refractionFB_height = winH / 2;
-	if (!gltCreateFrameBuffer(waterRenderData.refractionFB_width, waterRenderData.refractionFB_height, GL_RGBA8, 0,
+	if (!gltCreateFrameBuffer(waterRenderData.refractionFB_width, waterRenderData.refractionFB_height, GL_RGBA16, 0,
 								waterRenderData.refractionFB, waterRenderData.refractionTex, &waterRenderData.refractionDepth))
 		return false;
 	glBindTexture(GL_TEXTURE_2D, waterRenderData.refractionTex);

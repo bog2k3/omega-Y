@@ -29,6 +29,7 @@ struct Water::RenderData {
 	unsigned imPV_;
 	unsigned iEyePos_;
 	unsigned iTime_;
+	unsigned iAspectRatio_;
 	unsigned iTexture1_;
 	unsigned iTexReflection_;
 	unsigned iTexRefraction_;
@@ -73,6 +74,7 @@ Water::Water()
 		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
+		renderData_->iAspectRatio_ = glGetUniformLocation(renderData_->shaderProgram_, "screenAspectRatio");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureNormal");
 		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
@@ -135,7 +137,7 @@ void Water::clear() {
 	triangles_.clear();
 }
 
-void Water::generate(WaterParams params) {
+\void Water::generate(WaterParams params) {
 	validateParams(params);
 	clear();
 	params_ = params;
@@ -228,6 +230,7 @@ void Water::draw(RenderContext const& ctx) {
 	glUseProgram(renderData_->shaderProgram_);
 	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
 	glUniform1f(renderData_->iTime_, renderData_->time_);
+	glUniform1f(renderData_->iAspectRatio_, ctx.viewport.aspect());
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
