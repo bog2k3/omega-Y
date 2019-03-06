@@ -604,8 +604,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		// configure backface culling
 		glFrontFace(GL_CW);
 		glCullFace(GL_BACK);
-		//glEnable(GL_CULL_FACE);
-		glDisable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glEnable(GL_CLIP_DISTANCE0);
 		// set-up shader, vertex buffer and uniforms
 		glUseProgram(renderData_->shaderProgram_);

@@ -58,15 +58,15 @@ void main() {
 	vec3 normal = normalize(smoothNormal + perturbation * perturbationDistanceFactor);
 
 	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
-	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
-
-	vec4 refractTarget = texture(textureRefraction, screenCoord);
+	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;	
 	float Zn = 0.15;
 	float Zf = 500.0;
-	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
 	float dxy = length((screenCoord * 2 - 1) * vec2(screenAspectRatio, 1.0)); // screen-space distance from center
 	float fov = 3.1415/2.5; // vertical field of view
 	float dxyW = dxy * Zn * tan(fov*0.5);// world-space distance from screen center at near-z plane
+	
+	vec4 refractTarget = texture(textureRefraction, screenCoord);
+	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
 // compute reflection
@@ -84,25 +84,34 @@ void main() {
 // compute refraction
 	/*float elevationRefFactor = pow(abs(targetElevation) / 2.5, 0.6);
 	float elevationRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.8));
-	vec2 refractCoord = screenCoord + perturbation.xz * elevationRefFactor * elevationRefractionFactor;*/
+	vec2 transmitCoord = screenCoord + perturbation.xz * elevationRefFactor * elevationRefractionFactor;*/
 
 	float waterRefrIndex = 1.33; //1.333;
-	vec3 T = refract(-eyeDir, normal, 1.0 / waterRefrIndex);
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
-	float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
-	float R_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
-	vec3 wPosT = fWPos + T * R_targetDist;
+	//float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
+	
+	vec3 T = refract(-eyeDir, normal, 1.0 / waterRefrIndex);
+	float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
+	float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
+	vec3 wPosT = fWPos + T * T_targetDist;
 	vec4 projT = mPV * vec4(wPosT, 1.0);
 	projT.xyz /= projT.w;
+	float assumed_T_dist = length(wPosT - eyePos);
 
-	vec2 refractCoord = projT.xy * 0.5 + 0.5;//screenCoord;
-	vec4 refractColor = texture(textureRefraction, refractCoord);
-	float refractAttenuation = 0.0;
-	refractColor = mix(refractColor, refractTarget, refractAttenuation);
+	vec2 transmitCoord = projT.xy * 0.5 + 0.5;//screenCoord;
+	vec4 transmitColor = texture(textureRefraction, transmitCoord);
+	float transmitZ = Zn + (Zf - Zn) * transmitColor.a;
+	float actual_T_dist = sqrt(transmitZ*transmitZ * (1 + dxyW*dxyW / (Zn*Zn)));
+	//float transmitElevation = - wPosT.y;
+	float transmitAttenuation = 0;//clamp((assumed_T_dist - actual_T_dist) / assumed_T_dist, 0, 1);
+	//transmitAttenuation = pow(transmitAttenuation, 2);
+	//transmitCoord = mix(transmitCoord, screenCoord, transmitAttenuation);
+	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
+	transmitColor = texture(textureRefraction, transmitCoord);
 
 // mix reflection and refraction:
 	float fresnelFactor = fresnel(normal, -eyeDir);
-	vec4 final = vec4(mix(refractColor.xyz, reflectColor.xyz, fresnelFactor), 1.0);
+	vec4 final = vec4(mix(transmitColor.xyz, reflectColor.xyz, fresnelFactor), 1.0);
 
 // fade out far edges of water
 	//float targetElevationNormalized = targetElevation / 2.5;
@@ -111,9 +120,10 @@ void main() {
 	//final.a = alpha;
 
 // DEBUG:
-	float f = pow(targetDist / 50, 2.2);
+	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);
+	//float f = pow(transmitAttenuation, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(refractColor.xyz, 1.0) + 0.00001 * final;
+	//final = vec4(transmitColor.xyz, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;
