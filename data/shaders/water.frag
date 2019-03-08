@@ -77,9 +77,12 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitAttenuation = pow(transmitAttenuation, 2);
 	//transmitCoord = mix(transmitCoord, screenCoord, transmitAttenuation);
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
-	transmitColor = texture(textureRefraction, transmitCoord);
+	//transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
-	return transmitColor.xyz;
+	
+	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
+	
+	return transmitColor.xyz * fresnelFactor;
 }
 
 vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float dxyW, vec3 eyeDir, float eyeDist) {
@@ -110,7 +113,7 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
 	
-	float fresnelFactor = (1 - fresnel(normal, -eyeDir, nWater, nAir)) /** (1 - fresnel(normal, -eyeDir, nAir, nWater))*/;
+	float fresnelFactor = 1 - fresnel(normal, -T, nAir, nWater);
 	
 	return transmitColor.xyz * fresnelFactor;
 }
@@ -176,13 +179,15 @@ void main() {
 
 	//vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
+	float reflectFresnelFactor = fresnel(normal, -eyeDir, isCameraUnderWater ? nWater : nAir, isCameraUnderWater ? nAir : nWater);
+	reflectColor.xyz *= reflectFresnelFactor;
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
-	reflectColor.xyz *= reflectTint;
+	//reflectColor.xyz *= reflectTint;
 	//reflectColor = vec4(0);
 
 // mix reflection and refraction:
-	vec4 final = vec4( transmitColor + reflectColor.xyz * 0, 1.0);
+	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);
 
 // fade out far edges of water
 	//float targetElevationNormalized = targetElevation / 2.5;
