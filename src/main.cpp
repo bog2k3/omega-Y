@@ -9,11 +9,13 @@
 #include "sky/SkyBox.h"
 #include "buildings/BuildingGenerator.h"
 #include "ImgDebugDraw.h"
+#include "render/frustum.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/GLText.h>
 #include <boglfw/renderOpenGL/Camera.h>
+#include <boglfw/renderOpenGL/Shape2D.h>
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/Mesh.h>
 #include <boglfw/renderOpenGL/MeshRenderer.h>
@@ -84,6 +86,34 @@ PhysBodyProxy boxBodyMeta(nullptr);
 btBoxShape* boxShape = nullptr;
 btMotionState* boxMotionState = nullptr;
 Mesh* boxMesh = nullptr;
+
+struct {
+	unsigned VAO;
+	unsigned VBO;
+	unsigned IBO;
+	unsigned shaderProgram;
+	unsigned iTexSampler;
+} postProcessData;
+
+struct {
+	unsigned refractionFB = 0;
+	unsigned refractionTex = 0;
+	unsigned refractionDepth = 0;
+	unsigned refractionFB_width = 0;
+	unsigned refractionFB_height = 0;
+	unsigned reflectionFB = 0;
+	unsigned reflectionTex = 0;
+	unsigned reflectionDepth = 0;
+	unsigned reflectionFB_width = 0;
+	unsigned reflectionFB_height = 0;
+} waterRenderData;
+
+struct {
+	Viewport *viewport = nullptr;
+	CustomRenderContext *renderCtx = nullptr;
+	unsigned windowW = 0;
+	unsigned windowH = 0;
+} renderData;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
@@ -336,33 +366,22 @@ void drawDebugTexts() {
 	}
 }
 
-struct {
-	unsigned VAO;
-	unsigned VBO;
-	unsigned IBO;
-	unsigned shaderProgram;
-	unsigned iTexSampler;
-} postProcessData;
-
-struct {
-	unsigned refractionFB = 0;
-	unsigned refractionTex = 0;
-	unsigned refractionDepth = 0;
-	unsigned refractionFB_width = 0;
-	unsigned refractionFB_height = 0;
-	unsigned reflectionFB = 0;
-	unsigned reflectionTex = 0;
-	unsigned reflectionDepth = 0;
-	unsigned reflectionFB_width = 0;
-	unsigned reflectionFB_height = 0;
-} waterRenderData;
-
-struct {
-	Viewport *viewport = nullptr;
-	CustomRenderContext *renderCtx = nullptr;
-	unsigned windowW = 0;
-	unsigned windowH = 0;
-} renderData;
+void drawDebug(RenderContext const& ctx) {
+	Frustum f(ctx.viewport.camera().matProjView());
+	Trapezoid t = projectFrustum(f, {0.f, 1.f, 0.f, 0.f}, 200);
+	auto center = glm::vec2(renderData.windowW/2, renderData.windowH/2);
+	Shape2D::get()->drawRectangleCentered(center, {400.f, 400.f}, {0.f, 1.f, 0.f});
+	Shape2D::get()->drawLine(center - glm::vec2{10, 0}, center + glm::vec2{10, 0}, {0.f, 1.f, 0.f});
+	Shape2D::get()->drawLine(center - glm::vec2{0, 10}, center + glm::vec2{0, 10}, {0.f, 1.f, 0.f});
+	for (int i=0; i<4; i++)
+		t.v[i].z *= -1;
+	for (int i=0; i<4; i++) {
+		int inext = (i+1) % 4;
+		auto p1 = center + vec3xz(t.v[i]) * 2;
+		auto p2 = center + vec3xz(t.v[inext]) * 2;
+		Shape2D::get()->drawLine(p1, p2, {0.5f, 1.f, 0.f});
+	}
+}
 
 bool initPostProcessData(unsigned winW, unsigned winH) {
 	checkGLError();
@@ -720,6 +739,7 @@ int main(int argc, char* argv[]) {
 		std::vector<drawable> drawList2D;
 		drawList2D.push_back(&sigViewer);
 		drawList2D.push_back(&infoTexts);
+		drawList2D.push_back(drawDebug);
 		drawList2D.push_back(pImgDebugDraw);
 
 		initSession(renderData.viewport->camera());
