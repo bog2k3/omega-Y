@@ -59,7 +59,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
 	//float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
-	
+
 	vec3 T = refract(-eyeDir, normal, 1.0 / nWater);
 	float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
 	float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
@@ -79,9 +79,9 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	//transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
-	
+
 	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
-	
+
 	return transmitColor.xyz * fresnelFactor;
 }
 
@@ -92,7 +92,7 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
 	//float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
-	
+
 	vec3 T = refract(-eyeDir, -normal, nWater);
 	float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
 	float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
@@ -112,9 +112,9 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
-	
+
 	float fresnelFactor = 1 - fresnel(normal, -T, nAir, nWater);
-	
+
 	return transmitColor.xyz * fresnelFactor;
 }
 
@@ -122,7 +122,7 @@ const vec3 smoothNormal = vec3(0, 1, 0);
 
 vec3 normalPerturbation(float time) {
 	const vec2 moveSpeed1 = vec2(0.02);
-	
+
 	vec2 modUV1 = fUV + time * moveSpeed1;
 	vec3 texNormal1 = texture(textureNormal, modUV1 * 0.5).rbg * 2 - 1;
 	float perturbStrength1 = 0.005;
@@ -163,14 +163,14 @@ void main() {
 // other common vars:
 	bool isCameraUnderWater = eyePos.y < 0;
 	vec2 screenCoord = fScreenUV.xy / fScreenUV.z * 0.5 + 0.5;
-	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;	
+	//float targetElevation = (texture(textureRefraction, screenCoord).a - 0.5) * 5;
 	float dxy = length((screenCoord * 2 - 1) * vec2(screenAspectRatio, 1.0)); // screen-space distance from center
 	float dxyW = dxy * Zn * tan(fov*0.5);// world-space distance from screen center at near-z plane
-	
-	vec3 transmitColor = isCameraUnderWater 
+
+	vec3 transmitColor = isCameraUnderWater
 		? aboveToUnderTransm(normal, screenCoord, Zn, Zf, dxyW, eyeDir, eyeDist)
 		: underToAboveTransm(normal, screenCoord, Zn, Zf, dxyW, eyeDir, eyeDist);
-		
+
 // compute reflection
 	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
 	float elevationReflectionFactor = 1.0;//min(abs(targetElevation), 1.0);
