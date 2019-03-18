@@ -78,7 +78,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitCoord = mix(transmitCoord, screenCoord, transmitAttenuation);
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	//transmitColor = texture(textureRefraction, transmitCoord);
-	//transmitColor = refractTarget;
+	transmitColor = refractTarget;
 
 	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
 
@@ -184,7 +184,7 @@ void main() {
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
 	//reflectColor.xyz *= reflectTint;
-	//reflectColor = vec4(0);
+	reflectColor = vec4(0);
 
 // mix reflection and refraction:
 	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);

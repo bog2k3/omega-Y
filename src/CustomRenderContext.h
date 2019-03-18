@@ -7,11 +7,11 @@
 
 enum class RenderPass {
 	None,
-	WaterReflection,
-	UnderWater,
-	AboveWater,
-	WaterSurface,
-	UI,			// 2D user interface
+	WaterReflection,	// off-screen rendering for water reflection texture
+	WaterRefraction,	// off-screen rendering for water refraction texture
+	Standard,			// standard default rendering of scene
+	WaterSurface,		// draw water surface using the reflection and refraction textures
+	UI,					// 2D user interface
 };
 
 class CustomRenderContext : public RenderContext {
@@ -26,6 +26,7 @@ public:
 	RenderPass renderPass = RenderPass::None;
 	glm::vec4 clipPlane;
 	bool enableClipPlane = false;
+	bool cameraUnderwater = false;
 };
 
 #endif // __CUST_RENDER_CONTEXT_H__

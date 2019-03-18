@@ -585,7 +585,7 @@ void Terrain::draw(RenderContext const& ctx) {
 
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
-	if (rctx.renderPass == RenderPass::AboveWater || rctx.renderPass == RenderPass::UnderWater || rctx.renderPass == RenderPass::WaterReflection) {
+	if (rctx.renderPass == RenderPass::Standard || rctx.renderPass == RenderPass::WaterReflection || rctx.renderPass == RenderPass::WaterRefraction) {
 		if (renderWireframe_) {
 			glLineWidth(2.f);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
