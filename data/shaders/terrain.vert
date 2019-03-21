@@ -17,8 +17,39 @@ uniform float subspace;	// represents the subspace we're rendering: +1 above wat
 uniform int bRefraction;
 uniform vec3 eyePos;
 
+#define PI 3.1415
+
+float approxRefractFn(float i0, float hr) {
+	float r = 1.0 - 2.7 * i0 / PI;
+	float p = 1.3 / (r+1) + pow(0.04 / hr, 2.0);
+	r = pow(r, p);
+	return clamp(r, 0, 1);
+}
+
+vec3 approxW(vec3 V, vec3 P, vec3 Wlim, vec3 P0, float n1, float n2, vec3 N) {
+	float i0 = acos(dot(normalize(V - P), N));
+	float vh = V.y;
+	float ph = -P.y;
+	float hr = vh / (1 + ph);
+	float r = approxRefractFn(i0, hr);
+	return Wlim + (P0 - Wlim) * r;
+}
+
+const vec3 N_water = vec3(0, 1, 0);
+const float n_air = 1.0;
+const float n_water = 1.33;
+const float t_lim = asin(n_air / n_water);
+const float tan_tLim = tan(t_lim);
+
 vec3 refractPos(vec3 wPos) {
-	return wPos;
+	vec3 wPos0 = vec3(wPos.x, 0, wPos.z);
+	vec3 V0 = vec3(eyePos.x, 0, eyePos.z);
+	vec3 W_lim = wPos0 + normalize(V0 - wPos0) * tan_tLim * abs(wPos.y);
+	vec3 water_intersect = approxW(eyePos, wPos, W_lim, wPos0, n_air, n_water, N_water);
+	float uw_dist = length(wPos - water_intersect);
+	vec3 newDir = normalize(water_intersect - eyePos);
+	//return wPos;
+	return water_intersect;// + newDir * uw_dist;
 }
 
 void main() {
