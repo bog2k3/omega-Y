@@ -1,0 +1,288 @@
+<html>
+<body>
+<canvas id="c1" width=512 height=512>
+</canvas>
+<body>
+<script>
+const canvas = document.getElementById("c1");
+const ctx = canvas.getContext("2d");
+
+Math.clamp = function(x, a, b) {
+	return Math.max(a, Math.min(b, x));
+}
+
+Math.lerp = function(a, b, f) {
+	var fc = Math.clamp(f, 0, 1);
+	return a + (b-a) * fc;
+}
+
+class vec2 {
+	constructor(x, y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	length() {
+		return Math.hypot(this.x, this.y);
+	}
+
+	scale(v) {
+		return new vec2(this.x*v, this.y*v);
+	}
+	
+	add(v) {
+		return new vec2(this.x + v.x, this.y + v.y);
+	}
+	
+	sub(v) {
+		return new vec2(this.x - v.x, this.y - v.y);
+	}
+
+	dot(v) {
+		return this.x * v.x + this.y * v.y;
+	}
+
+	norm() {
+		return this.scale(1.0 / this.length());
+	}
+
+	clamp(a, b) {
+		return new vec2(Math.clamp(this.x, a, b), Math.clamp(this.y, a, b));
+	}
+
+	lerp(v, f) {
+		var fc = Math.clamp(f, 0, 1);
+		return this.scale(1-fc).add(v.scale(fc));
+	}
+}
+
+ctx.setZoom = function(zoom) {
+	this.zoomFactor = zoom;
+}
+
+ctx.setOrigin = function(ox, oy) {
+	this.origin_X = ox;
+	this.origin_Y = oy;
+}
+
+ctx.mapW = function(v) {
+	// map v from world to screen space
+	var xs = v.x * this.zoomFactor + this.origin_X;
+	var ys = -v.y * this.zoomFactor + this.origin_Y;
+	return new vec2(xs, ys);
+}
+
+ctx.moveToW = function(v) {
+	var s = this.mapW(v);
+	this.moveTo(s.x, s.y);
+}
+
+ctx.lineToW = function(v) {
+	var s = this.mapW(v);
+	this.lineTo(s.x, s.y);
+}
+
+function intersect(p1, p2, q1, q2) {
+	var detA = (p2.x - p1.x) * (q1.y - q2.y) - (q1.x - q2.x)*(p2.y - p1.y);
+	var alpha = 1.0 / detA * ((q1.y - q2.y)*(q1.x - p1.x) + (q2.x - q1.x)*(q1.y - p1.y));
+	return p1.add(p2.sub(p1).scale(alpha));
+}
+
+function refract(I, N, n1, n2) {
+	var eta = n1 / n2;
+	var k = 1.0 - eta * eta * (1.0 - N.dot(I) * N.dot(I));
+	var R = null;
+	if (k < 0.0)
+		R = new vec2(0, 0);
+	else
+		R = I.scale(eta).sub(N.scale(eta * N.dot(I) + Math.sqrt(k)));
+	return R;
+}
+
+function approxFn(i0, hr) {
+	var r = 1 - 2.7*i0 / Math.PI;
+	var pow = 1.3 / (r+1) + Math.pow(0.04/hr, 2.0);
+	r = Math.pow(r, pow);
+	return Math.clamp(r, 0, 1);
+}
+
+function findW(V, P, Wlim, B, n1, n2, N) {
+	var maxAngEps = Math.PI / 1000;
+	var maxIter = 10;
+
+	var vh = V.sub(B).dot(N);
+	var ph = -P.sub(B).dot(N);
+	var VI = V.add(P.sub(V).scale(vh/(vh+ph)));
+
+	var left = Wlim.sub(B).length() > VI.sub(B).length() ? VI : Wlim;
+	var right = B;
+
+	var W = left.add(B).scale(0.5);
+	var Wnext = W;
+	var angDif = 0;
+	var iter = 0;
+
+	do {
+		iter++;
+		W = Wnext;
+		var i = Math.acos(V.sub(W).norm().dot(N));
+		var t = Math.acos(-P.sub(W).norm().dot(N));
+		angDif = n1*Math.sin(i) - n2*Math.sin(t);
+		if (angDif < 0) {
+			left = W;
+		} else if (angDif > 0) {
+			right = W;
+		} else
+			left = right = Wnext = W;
+		Wnext = left.add(right).scale(0.5);
+	} while (Math.abs(angDif) > maxAngEps && iter < maxIter);
+	if (Math.abs(angDif) <= maxAngEps)
+		console.log("Reached epsilon within ", iter, " iterations");
+	else if (iter === maxIter)
+		console.log("Max iterations reached, diff/eps=", Math.abs(angDif)/maxAngEps);
+
+	return W;
+}
+
+function approxW(V, P, Wlim, B, n1, n2, N) {
+	var i0 = Math.acos(V.sub(P).norm().dot(N));
+	var vh = V.sub(B).dot(N);
+	var ph = -P.sub(B).dot(N);
+	var hr = vh / (1 + ph);
+	var r = approxFn(i0, hr);
+	return Wlim.add(B.sub(Wlim).scale(r));
+}
+
+var hv0 = 10;		// initial view height
+var hv1 = 0.1;		// final view height
+var xv0 = 9.8;		// initial view x-coord
+var xv1 = -13;		// final view x-coord
+var hw = 0.0;		// water height
+var hp = 10;		// P's depth
+var xp = 10;		// P's x coord
+var P = new vec2(xp, -hp);
+var P0 = new vec2(P.x, hw);
+
+var n1=1.0;
+var n2=1.33;
+var N = new vec2(0.0, 1.0);	// water normal
+
+var tlim = Math.asin(n1/n2);
+var Wlim = new vec2(P0.x - hp * Math.tan(tlim), hw);
+
+var zoom = 20; // pixels per world units
+var origin_X = 256;
+var origin_Y = 256;
+
+var numSamples = 50;
+var samples = [];
+/*
+sample[i] : {
+	x: i0, // [0, PI/2] angle between N and VP
+	y: |W-Wlim| / |B-Wlim| // [0, 1] relative position of W between Wlim and B
+}
+*/
+
+function init() {
+	ctx.setZoom(zoom);
+	ctx.setOrigin(origin_X, origin_Y);
+
+	// compute samples
+	var hv_step = (hv1 - hv0) / (numSamples-1);
+	var xv_step = (xv1 - xv0) / (numSamples-1);
+	for (var i=0; i<numSamples; i++) {
+		var V = new vec2(xv0 + xv_step * i, hv0 + hv_step * i);
+		var W = findW(V, P, Wlim, P0, n1, n2, N);
+		var samp = {
+			x: Math.acos(V.sub(P).norm().dot(N)),
+			y: W.sub(Wlim).length() / P0.sub(Wlim).length()
+		};
+		samples.push(samp);
+	}
+
+	update(0.0);
+}
+
+var V0 = new vec2(xv0, hv0);
+var V1 = new vec2(xv1, hv1);
+var V = V0;
+
+function render() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// draw axes
+	ctx.beginPath();
+	ctx.moveTo(0, origin_Y);
+	ctx.lineTo(512, origin_Y);
+	ctx.moveTo(origin_X, 0);
+	ctx.lineTo(origin_X, 512);
+	ctx.closePath();
+	ctx.strokeStyle = '#000';
+	ctx.stroke();
+
+	// precomputed samples:
+	ctx.beginPath();
+	ctx.moveToW(samples[0]);
+	ctx.setZoom(zoom * 10);
+	for (var i=0; i<numSamples; i++) {
+		ctx.lineToW(samples[i]);
+	}
+	ctx.strokeStyle = 'red';
+	ctx.stroke();
+
+	// approximate function
+	ctx.beginPath();
+	ctx.moveToW(samples[0]);
+	for (var i=0; i<numSamples; i++) {
+		var x = samples[i].x;
+		var vhi = Math.lerp(hv0, hv1, i / (numSamples-1));
+		var hr = vhi / (hp + 1);
+		var y = approxFn(x, hr);
+		ctx.lineToW({x: x, y: y});
+	}
+	ctx.strokeStyle = 'orange';
+	ctx.stroke();
+
+	ctx.setZoom(zoom);
+
+	// real-time solver approx
+	//var W = findW(V, P, Wlim, P0, n1, n2, N);
+	var W = approxW(V, P, Wlim, P0, n1, n2, N);
+	ctx.beginPath();
+	ctx.moveToW(V);
+	ctx.lineToW(W);
+	ctx.lineToW(P);
+	ctx.closePath();
+	ctx.strokeStyle = 'green';
+	ctx.stroke();
+
+	// real-time solver iterative
+	var W = findW(V, P, Wlim, P0, n1, n2, N);
+	ctx.beginPath();
+	ctx.moveToW(V);
+	ctx.lineToW(W);
+	ctx.lineToW(P);
+	ctx.closePath();
+	ctx.strokeStyle = 'blue';
+	ctx.stroke();
+}
+
+var time = 0.0;
+function update(dt) {
+	time += dt;
+	var lerpSpeed = 1 / 200;
+	var lerpFactor = Math.clamp(time * lerpSpeed, 0, 0.99);
+
+	V = V0.lerp(V1, lerpFactor);
+}
+
+const updateInterval = 0.1;
+setInterval(function() {
+	update(updateInterval);
+	render();
+}, updateInterval);
+
+init();
+
+</script>
+</html>

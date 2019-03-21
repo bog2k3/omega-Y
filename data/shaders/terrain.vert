@@ -14,11 +14,22 @@ out vec4 fTexBlendFactor;
 
 uniform mat4 mPV;
 uniform float subspace;	// represents the subspace we're rendering: +1 above water, -1 below water
+uniform int bRefraction;
+uniform vec3 eyePos;
+
+vec3 refractPos(vec3 wPos) {
+	
+}
 
 void main() {
-	gl_Position = mPV * vec4(pos, 1);
+	vec3 wPos = pos;
+	if (bRefraction > 0) {
+		// refract the position of the vertex
+		wPos = refractPos(wPos);
+	}
+	gl_Position = mPV * vec4(wPos, 1);
 	gl_ClipDistance[0] = pos.y * sign(subspace);
-	fWPos.xyz = pos;
+	fWPos.xyz = pos; // ?wPos?
 	//fWPos.w = gl_Position.z;
 	fNormal = normal;
 	fColor = vec4(color, 1);
