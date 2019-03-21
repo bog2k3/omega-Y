@@ -18,7 +18,7 @@ uniform int bRefraction;
 uniform vec3 eyePos;
 
 vec3 refractPos(vec3 wPos) {
-	
+	return wPos;
 }
 
 void main() {

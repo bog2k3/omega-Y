@@ -63,8 +63,8 @@ struct Terrain::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
-	unsigned trisBelowWater_;
-	unsigned trisAboveWater_;
+	int trisBelowWater_;
+	int trisAboveWater_;
 	int shaderProgram_;
 	int iPos_;
 	int iNormal_;

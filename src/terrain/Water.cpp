@@ -4,6 +4,7 @@
 #include "PerlinNoise.h"
 #include "../CustomRenderContext.h"
 
+#include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
@@ -22,17 +23,17 @@ struct Water::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
-	unsigned shaderProgram_;
-	unsigned iPos_;
-	unsigned iFog_;
-	unsigned iUV_;
-	unsigned imPV_;
-	unsigned iEyePos_;
-	unsigned iTime_;
-	unsigned iAspectRatio_;
-	unsigned iTexture1_;
-	unsigned iTexReflection_;
-	unsigned iTexRefraction_;
+	int shaderProgram_;
+	int iPos_;
+	int iFog_;
+	int iUV_;
+	int imPV_;
+	int iEyePos_;
+	int iTime_;
+	int iAspectRatio_;
+	int iTexture1_;
+	int iTexReflection_;
+	int iTexRefraction_;
 
 	unsigned textureNormal_;
 	unsigned textureReflection_;
@@ -80,22 +81,27 @@ Water::Water()
 		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
 		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
 
+		checkGLError("Water shader load #1");
+
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 		glEnableVertexAttribArray(renderData_->iPos_);
 		glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
 			(void*)offsetof(WaterVertex, pos));
+		checkGLError("Water shader load #2");
 		if (renderData_->iFog_ > 0) {
 			glEnableVertexAttribArray(renderData_->iFog_);
 			glVertexAttribPointer(renderData_->iFog_, 1, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
 				(void*)offsetof(WaterVertex, fog));
 		}
+		checkGLError("Water shader load #3");
 		if (renderData_->iUV_ > 0) {
 			glEnableVertexAttribArray(renderData_->iUV_);
 			glVertexAttribPointer(renderData_->iUV_, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
 				(void*)(offsetof(WaterVertex, uv)));
 		}
+		checkGLError("Water shader load #4");
 		glBindVertexArray(0);
 	});
 

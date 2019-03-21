@@ -92,7 +92,7 @@ struct PostProcessData {
 	unsigned VBO = 0;
 	unsigned IBO = 0;
 	unsigned shaderProgram = 0;
-	unsigned iTexSampler = 0;
+	int iTexSampler = 0;
 };
 
 struct WaterRenderData {
@@ -399,25 +399,27 @@ bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProc
 	glGenVertexArrays(1, &postProcessData.VAO);
 	glGenBuffers(1, &postProcessData.VBO);
 	glGenBuffers(1, &postProcessData.IBO);
+	PostProcessData *pPostProcessData = &postProcessData; // need this to avoid a compiler bug where capturing a reference by reference will result in UB
 	// load shader:
-	Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag", [&](unsigned id) {
-		postProcessData.shaderProgram = id;
-		if (!postProcessData.shaderProgram) {
+	Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag", [pPostProcessData](unsigned id) {
+		pPostProcessData->shaderProgram = id;
+		if (!pPostProcessData->shaderProgram) {
 			ERROR("Unabled to load post-processing shaders!");
 			return;
 		}
-		unsigned posAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "pos");
-		unsigned uvAttrIndex = glGetAttribLocation(postProcessData.shaderProgram, "uv");
-		postProcessData.iTexSampler = glGetUniformLocation(postProcessData.shaderProgram, "texSampler");
+		unsigned posAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "pos");
+		unsigned uvAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "uv");
+		pPostProcessData->iTexSampler = glGetUniformLocation(pPostProcessData->shaderProgram, "texSampler");
 
-		glBindVertexArray(postProcessData.VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, postProcessData.VBO);
+		glBindVertexArray(pPostProcessData->VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, pPostProcessData->VBO);
 		glEnableVertexAttribArray(posAttrIndex);
 		glVertexAttribPointer(posAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0);
 		glEnableVertexAttribArray(uvAttrIndex);
 		glVertexAttribPointer(uvAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*2));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, postProcessData.IBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pPostProcessData->IBO);
 		glBindVertexArray(0);
+		checkGLError("Postprocess shader");
 	});
 	if (!postProcessData.shaderProgram)
 		return false;
@@ -444,10 +446,14 @@ bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProc
 }
 
 void renderPostProcess(PostProcessData &postProcessData) {
+	checkGLError("renderPostProcess 0");
 	// do the post-processing render
-	glUseProgram(postProcessData.shaderProgram);
 	glBindVertexArray(postProcessData.VAO);
-	glUniform1i(postProcessData.iTexSampler, 0);
+	checkGLError("renderPostProcess 0a");
+	glUseProgram(postProcessData.shaderProgram);
+	checkGLError("renderPostProcess 0b");
+	glUniform1i((GLint)postProcessData.iTexSampler, (GLint)0);
+	checkGLError("renderPostProcess 1");
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	glUseProgram(0);
 	glBindVertexArray(0);
@@ -526,7 +532,7 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	// set up post processing hook
 	if (initPostProcessData(winW, winH, out_renderData->postProcessData)) {
 		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
-		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, std::bind(renderPostProcess, out_renderData->postProcessData), multisamples);
+		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, std::bind(renderPostProcess, std::ref(out_renderData->postProcessData)), multisamples);
 	}
 
 	// set up water refraction framebuffer
@@ -641,30 +647,42 @@ void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vect
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
 	renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
 
+	checkGLError("render() setup");
+
 	// 1st pass - reflection
 	renderData.renderCtx.renderPass = RenderPass::WaterReflection;
 	setupRenderPass(renderData);
 	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
+
+	checkGLError("render() pass #1");
 
 	// 2nd pass - refraction
 	renderData.renderCtx.renderPass = RenderPass::WaterRefraction;
 	setupRenderPass(renderData);
 	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? aboveDraw : underDraw);
 
+	checkGLError("render() pass #2");
+
 	// 3rd pass - standard rendering of scene
 	renderData.renderCtx.renderPass = RenderPass::Standard;
 	setupRenderPass(renderData);
 	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
+
+	checkGLError("render() pass #3");
 
 	// 4th pass - water surface
 	renderData.renderCtx.renderPass = RenderPass::WaterSurface;
 	setupRenderPass(renderData);
 	renderData.viewport.render({pTerrain});
 
+	checkGLError("render() pass #4");
+
 	// last - 2D UI
 	renderData.renderCtx.renderPass = RenderPass::UI;
 	setupRenderPass(renderData);
 	renderData.viewport.render(drawlist2D);
+
+	checkGLError("render() final");
 
 	renderData.renderCtx.renderPass = RenderPass::None;
 }
