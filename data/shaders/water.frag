@@ -61,26 +61,35 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
 
 	vec3 T = refract(-eyeDir, normal, 1.0 / nWater);
-	float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
-	float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
-	vec3 wPosT = fWPos + T * T_targetDist;
-	vec4 projT = mPV * vec4(wPosT, 1.0);
-	projT.xyz /= projT.w;
-	float assumed_T_dist = length(wPosT - eyePos);
+	//float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
+	//float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
+	//vec3 wPosT = fWPos + T * T_targetDist;
+	//vec4 projT = mPV * vec4(wPosT, 1.0);
+	//projT.xyz /= projT.w;
+	//float assumed_T_dist = length(wPosT - eyePos);
 
-	vec2 transmitCoord = projT.xy * 0.5 + 0.5;//screenCoord;
-	vec4 transmitColor = texture(textureRefraction, transmitCoord);
-	float transmitZ = Zn + (Zf - Zn) * transmitColor.a;
-	float actual_T_dist = sqrt(transmitZ*transmitZ * (1 + dxyW*dxyW / (Zn*Zn)));
+	//vec2 transmitCoord = projT.xy * 0.5 + 0.5;//screenCoord;
+	//vec4 transmitColor = texture(textureRefraction, transmitCoord);
+	//float transmitZ = Zn + (Zf - Zn) * transmitColor.a;
+	//float actual_T_dist = sqrt(transmitZ*transmitZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	//float transmitElevation = - wPosT.y;
-	float transmitAttenuation = 0;//clamp((assumed_T_dist - actual_T_dist) / assumed_T_dist, 0, 1);
+	//float transmitAttenuation = 0;//clamp((assumed_T_dist - actual_T_dist) / assumed_T_dist, 0, 1);
 	//transmitAttenuation = pow(transmitAttenuation, 2);
 	//transmitCoord = mix(transmitCoord, screenCoord, transmitAttenuation);
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	//transmitColor = texture(textureRefraction, transmitCoord);
-	transmitColor = refractTarget;
+	//transmitColor = refractTarget;
+
+	float thicknessRefFactor = pow(abs(targetDistUW) / 2.5, 0.6);
+	float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.5));
+	vec3 w_perturbation = (smoothNormal - normal) * 1.0;
+	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xz;
+	vec2 sampleCoord = screenCoord + s_perturbation * thicknessRefFactor * distanceRefractionFactor;
+	vec4 transmitColor = texture(textureRefraction, sampleCoord);
 
 	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
+
+	//return vec3(perturbation.x, perturbation.z, 0);
 
 	return transmitColor.xyz * fresnelFactor;
 }
@@ -158,7 +167,8 @@ void main() {
 // normal:
 	vec3 perturbation = normalPerturbation(time * 1.0);
 	float perturbationDistanceFactor = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec3 normal = normalize(smoothNormal + perturbation * perturbationDistanceFactor);
+	perturbation *= perturbationDistanceFactor;
+	vec3 normal = normalize(smoothNormal + perturbation);
 
 // other common vars:
 	bool isCameraUnderWater = eyePos.y < 0;
@@ -172,10 +182,10 @@ void main() {
 		: underToAboveTransm(normal, screenCoord, Zn, Zf, dxyW, eyeDir, eyeDist);
 
 // compute reflection
-	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.4)));
-	float elevationReflectionFactor = 1.0;//min(abs(targetElevation), 1.0);
-	float reflectionPerturbFactor = distanceReflectionFactor * elevationReflectionFactor;
-	vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y) + perturbation.xz * reflectionPerturbFactor;
+	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.14)));
+	distanceReflectionFactor *= 0.5;
+	vec2 s_perturb = (mPV * vec4(perturbation, 0)).xz;
+	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + vec2(-s_perturb.x, s_perturb.y) * distanceReflectionFactor;
 
 	//vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
@@ -184,7 +194,7 @@ void main() {
 
 	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
 	//reflectColor.xyz *= reflectTint;
-	reflectColor = vec4(0);
+	//reflectColor = vec4(0);
 
 // mix reflection and refraction:
 	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);

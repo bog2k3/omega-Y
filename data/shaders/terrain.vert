@@ -48,8 +48,7 @@ vec3 refractPos(vec3 wPos) {
 	vec3 water_intersect = approxW(eyePos, wPos, W_lim, wPos0, n_air, n_water, N_water);
 	float uw_dist = length(wPos - water_intersect);
 	vec3 newDir = normalize(water_intersect - eyePos);
-	//return wPos;
-	return water_intersect;// + newDir * uw_dist;
+	return water_intersect + newDir * uw_dist;
 }
 
 void main() {
