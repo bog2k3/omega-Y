@@ -82,7 +82,7 @@ void main() {
 	vec3 D = normalize(fWPos.xyz - eyePos);
 	vec3 I = eyePos - D * h / dot(waterNormal, D); // water intersection point
 	float waterThickness = length(fWPos.xyz - I);
-	float fogFactor = 1.0 - 1.0 / (waterThickness * 0.15 + 1); //pow(min(1.0, waterThickness / 15), 0.7);
+	float fogFactor = clamp(1.0 - 1.0 / (waterThickness * 0.15 + 1), 0, 1); //pow(min(1.0, waterThickness / 15), 0.7);
 	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
 	final.xyz = mix(final.xyz, waterColor, fogFactor);
 

@@ -55,6 +55,8 @@ const float fov = 3.1415/2.5; // vertical field of view
 vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float dxyW, vec3 eyeDir, float eyeDist) {
 	const vec3 smoothNormal = vec3(0, 1, 0);
 	vec4 refractTarget = texture(textureRefraction, screenCoord);
+	//refractTarget.a = refractTarget.a > 0.2 ? 0 : refractTarget.a;
+	//return vec3(refractTarget.a);
 	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
@@ -79,11 +81,22 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	//transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
+	
+	float targetDepth = targetDistUW * dot(T, -smoothNormal);
+	//return vec3(targetDepth);
 
-	float thicknessRefFactor = pow(abs(targetDistUW) / 2.5, 0.6);
-	float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.5));
-	vec3 w_perturbation = (normal-smoothNormal) * 1.0 * thicknessRefFactor * distanceRefractionFactor;
+	//float thicknessRefFactor = pow(abs(targetDistUW) / 2.5, 0.6);
+	float thicknessRefFactor = pow(abs(targetDepth) / 2.5, 0.6);
+	float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.7));
+	float refSmoothFactor = thicknessRefFactor * distanceRefractionFactor;
+	
+	//refSmoothFactor = clamp(pow(targetDepth / eyeDist, 1), 0, 1);
+	//refSmoothFactor = clamp(targetDepth, 0, 1) * distanceRefractionFactor;
+	
+	vec3 w_perturbation = (normal-smoothNormal) * refSmoothFactor;
 	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xy;
+	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1);
+	//return vec3(s_perturbation, 0);
 	vec2 sampleCoord = screenCoord + s_perturbation;// * thicknessRefFactor * distanceRefractionFactor;
 	vec4 transmitColor = texture(textureRefraction, sampleCoord);
 

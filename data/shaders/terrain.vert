@@ -50,7 +50,6 @@ vec3 refractPos(vec3 wPos) {
 	float uw_dist = length(wPos - water_intersect);
 	vec3 newDir = normalize(water_intersect - eyePos);
 	vec3 refracted = water_intersect + newDir * uw_dist;
-	//refracted.y = min(-0.01, refracted.y);
 	float fade_dist = 0.5;
 	float depthFactor = clamp(-wPos.y / fade_dist, 0, 1); // fade refraction toward zero at water edges to avoid gaps
 	vec3 final = mix(wPos, refracted, depthFactor);
