@@ -552,7 +552,7 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	// set up water reflection framebuffer
 	out_renderData->waterRenderData.reflectionFB_width = winW / 2;
 	out_renderData->waterRenderData.reflectionFB_height = winH / 2;
-	if (!gltCreateFrameBuffer(out_renderData->waterRenderData.reflectionFB_width, out_renderData->waterRenderData.reflectionFB_height, GL_RGB8, 0,
+	if (!gltCreateFrameBuffer(out_renderData->waterRenderData.reflectionFB_width, out_renderData->waterRenderData.reflectionFB_height, GL_RGBA8, 0,
 								out_renderData->waterRenderData.reflectionFB, out_renderData->waterRenderData.reflectionTex,
 								&out_renderData->waterRenderData.reflectionDepth))
 		return false;

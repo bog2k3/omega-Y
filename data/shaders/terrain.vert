@@ -26,8 +26,7 @@ float approxRefractFn(float i0, float hr) {
 	return clamp(r, 0, 1);
 }
 
-vec3 approxW(vec3 V, vec3 P, vec3 Wlim, vec3 P0, float n1, float n2, vec3 N) {
-	float i0 = acos(dot(normalize(V - P), N));
+vec3 approxW(vec3 V, vec3 P, float i0, vec3 Wlim, vec3 P0, float n1, float n2, vec3 N) {
 	float vh = V.y;
 	float ph = -P.y;
 	float hr = vh / (1 + ph);
@@ -44,11 +43,18 @@ const float tan_tLim = tan(t_lim);
 vec3 refractPos(vec3 wPos) {
 	vec3 wPos0 = vec3(wPos.x, 0, wPos.z);
 	vec3 V0 = vec3(eyePos.x, 0, eyePos.z);
-	vec3 W_lim = wPos0 + normalize(V0 - wPos0) * tan_tLim * abs(wPos.y);
-	vec3 water_intersect = approxW(eyePos, wPos, W_lim, wPos0, n_air, n_water, N_water);
+	float i0 = acos(dot(normalize(eyePos - wPos), N_water));
+	float tan_lim = tan_tLim;//i0 > t_lim ? tan_tLim : tan(i0);
+	vec3 W_lim = wPos0 + normalize(V0 - wPos0) * tan_lim * abs(wPos.y);
+	vec3 water_intersect = approxW(eyePos, wPos, i0, W_lim, wPos0, n_air, n_water, N_water);
 	float uw_dist = length(wPos - water_intersect);
 	vec3 newDir = normalize(water_intersect - eyePos);
-	return water_intersect + newDir * uw_dist;
+	vec3 refracted = water_intersect + newDir * uw_dist;
+	//refracted.y = min(-0.01, refracted.y);
+	float fade_dist = 0.5;
+	float depthFactor = clamp(-wPos.y / fade_dist, 0, 1); // fade refraction toward zero at water edges to avoid gaps
+	vec3 final = mix(wPos, refracted, depthFactor);
+	return final;
 }
 
 void main() {
@@ -58,7 +64,7 @@ void main() {
 		wPos = refractPos(wPos);
 	}
 	gl_Position = mPV * vec4(wPos, 1);
-	gl_ClipDistance[0] = pos.y * sign(subspace);
+	gl_ClipDistance[0] = pos.y * sign(subspace) + 0.2; //* (sign(subspace) == -1 ? 1 : 0);
 	fWPos.xyz = pos; // ?wPos?
 	//fWPos.w = gl_Position.z;
 	fNormal = normal;
