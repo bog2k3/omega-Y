@@ -32,11 +32,13 @@ struct Water::RenderData {
 	int iTime_;
 	int iAspectRatio_;
 	int iTexture1_;
-	int iTexReflection_;
+	int iTexReflection_2D_;
+	//int iTexReflection_Cube_;
 	int iTexRefraction_;
 
 	unsigned textureNormal_;
-	unsigned textureReflection_;
+	unsigned textureReflection_2D_;
+	//unsigned textureReflection_Cube_;
 	unsigned textureRefraction_;
 
 	float time_ = 0.f;
@@ -78,7 +80,8 @@ Water::Water()
 		renderData_->iAspectRatio_ = glGetUniformLocation(renderData_->shaderProgram_, "screenAspectRatio");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureNormal");
-		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
+		renderData_->iTexReflection_2D_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection2D");
+		//renderData_->iTexReflection_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflectionCube");
 		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
 
 		checkGLError("Water shader load #1");
@@ -114,8 +117,9 @@ Water::~Water()
 		delete renderData_, renderData_ = nullptr;
 }
 
-void Water::setReflectionTexture(unsigned reflectionTexCubeMapId) {
-	renderData_->textureReflection_ = reflectionTexCubeMapId;
+void Water::setReflectionTexture(unsigned texId_2D, unsigned texId_Cube) {
+	renderData_->textureReflection_2D_ = texId_2D;
+	//renderData_->textureReflection_Cube_ = texId_Cube;
 }
 
 void Water::setRefractionTexture(unsigned refractionTexId) {
@@ -242,11 +246,14 @@ void Water::draw(RenderContext const& ctx) {
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	glUniform1i(renderData_->iTexture1_, 0);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_);
-	glUniform1i(renderData_->iTexReflection_, 1);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_2D_);
+	glUniform1i(renderData_->iTexReflection_2D_, 1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);
 	glUniform1i(renderData_->iTexRefraction_, 2);
+	//glActiveTexture(GL_TEXTURE3);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_Cube_);
+	//glUniform1i(renderData_->iTexReflection_Cube_, 3);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing

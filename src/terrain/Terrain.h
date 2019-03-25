@@ -70,8 +70,11 @@ public:
 	const float* getHeightField() const { return heightFieldValues_; }
 	glm::ivec2 getGridSize() const { return {cols_, rows_}; }
 
-	// set a cube map texture for water reflection
-	void setWaterReflectionTex(unsigned texId);
+	// set a 2D and a cube map texture for water reflection
+	// the 2D texture is sampled first, and if the depth value (alpha channel) is less than 1.0,
+	// then the sampled texel is used for reflection, otherwise the cube texture is sampled instead.
+	// this tecnique is employed to yield more accurate sky reflection while still keeping terrain reflection.
+	void setWaterReflectionTex(unsigned texId_2D, unsigned texId_Cube);
 	// set a 2D texture to be used as water refraction
 	void setWaterRefractionTex(unsigned texId);
 

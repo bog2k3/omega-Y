@@ -510,8 +510,7 @@ void initTerrain(WaterRenderData &waterRenderData) {
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
-	//pTerrain->setWaterReflectionTex(pSkyBox->getCubeMapTexture());
-	pTerrain->setWaterReflectionTex(waterRenderData.reflectionTex);
+	pTerrain->setWaterReflectionTex(waterRenderData.reflectionTex, pSkyBox->getCubeMapTexture());
 	pTerrain->setWaterRefractionTex(waterRenderData.refractionTex);
 
 	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);

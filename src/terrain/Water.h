@@ -22,7 +22,7 @@ public:
 
 	void generate(WaterParams params);
 
-	void setReflectionTexture(unsigned reflectionTexCubeMapId);
+	void setReflectionTexture(unsigned texId_2D, unsigned texId_Cube);
 	void setRefractionTexture(unsigned refractionTexId);
 
 	void update(float dt);

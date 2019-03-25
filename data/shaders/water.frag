@@ -11,7 +11,8 @@ uniform float screenAspectRatio;
 uniform vec3 eyePos;
 uniform mat4 mPV;
 uniform sampler2D textureNormal;
-uniform sampler2D textureReflection;
+uniform sampler2D textureReflection2D;
+//uniform samplerCube textureReflectionCube;
 uniform sampler2D textureRefraction;
 
 float fresnel(vec3 normal, vec3 incident, float n1, float n2) {
@@ -173,6 +174,8 @@ vec3 computeNormal(float time, float eyeDist) {
 
 	vec3 final = normalize(smoothNormal + texNormal1 + texNormal2 + texNormal3 + texNormal4);
 
+	//final = normalize((texture(textureNormal, uv4 * 0.5).rbg * 2 - 1).xyz + smoothNormal);
+
 	return final;
 }
 
@@ -198,7 +201,7 @@ void main() {
 	//transmitColor = vec3(0.3, 0.4, 0.6) * 0.5;
 
 // compute reflection
-	vec4 reflectTarget = texture(textureReflection, vec2(1 - screenCoord.x, screenCoord.y));
+	vec4 reflectTarget = texture(textureReflection2D, vec2(1 - screenCoord.x, screenCoord.y));
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
@@ -215,7 +218,8 @@ void main() {
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	//vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
-	vec4 reflectColor = texture(textureReflection, reflectCoord);
+	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
+	//reflectColor = texture(textureReflectionCube, reflect(-eyeDir, normal));
 	float reflectFresnelFactor = fresnel(normal, -eyeDir, isCameraUnderWater ? nWater : nAir, isCameraUnderWater ? nAir : nWater);
 	//reflectFresnelFactor = pow(reflectFresnelFactor, 0.5);
 	reflectColor.xyz *= reflectFresnelFactor;
