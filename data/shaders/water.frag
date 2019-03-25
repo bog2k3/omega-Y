@@ -81,7 +81,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//transmitColor = mix(transmitColor, refractTarget, transmitAttenuation);
 	//transmitColor = texture(textureRefraction, transmitCoord);
 	//transmitColor = refractTarget;
-	
+
 	float targetDepth = targetDistUW * dot(T, -smoothNormal);
 	//return vec3(targetDepth);
 
@@ -89,10 +89,10 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	float thicknessRefFactor = pow(abs(targetDepth) / 2.5, 0.6);
 	float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.7));
 	float refSmoothFactor = thicknessRefFactor * distanceRefractionFactor;
-	
+
 	//refSmoothFactor = clamp(pow(targetDepth / eyeDist, 1), 0, 1);
 	//refSmoothFactor = clamp(targetDepth, 0, 1) * distanceRefractionFactor;
-	
+
 	vec3 w_perturbation = (normal-smoothNormal) * refSmoothFactor;
 	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xy;
 	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1);
@@ -104,7 +104,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 
 	//return vec3(fresnelFactor);
 
-	return transmitColor.xyz * fresnelFactor;
+	return transmitColor.xyz;// * fresnelFactor;
 }
 
 vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float dxyW, vec3 eyeDir, float eyeDist) {
@@ -142,40 +142,38 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 
 const vec3 smoothNormal = vec3(0, 1, 0);
 
-vec3 normalPerturbation(float time, float eyeDist) {
-	const vec2 moveSpeed1 = vec2(0.02);
+vec3 computeNormal(float time, float eyeDist) {
+	const vec2 moveSpeed1 = vec2(0.02, 0.1) * 0.15;
+	const float density1 = 1.0;
+	const float amplitude1 = 0.2;
+	float amplitudeDistanceFactor1 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
+	vec2 uv1 = (fUV + (time * moveSpeed1)) * density1;
+	vec3 texNormal1 = (texture(textureNormal, uv1 * 0.5).rbg * 2 - 1) * amplitude1 * amplitudeDistanceFactor1;
 
-	/*vec2 modUV1 = fUV + time * moveSpeed1;
-	vec3 texNormal1 = texture(textureNormal, modUV1 * 0.5).rbg * 2 - 1;
-	float perturbStrength1 = 0.005;
-	vec3 perturb1 = (texNormal1 - smoothNormal) * perturbStrength1;*/
+	const vec2 moveSpeed2 = -vec2(0.02, 0.1) * 0.12;
+	const float density2 = 10.0;
+	const float amplitude2 = 0.2;
+	float amplitudeDistanceFactor2 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
+	vec2 uv2 = (fUV + (time * moveSpeed2)) * density2;
+	vec3 texNormal2 = (texture(textureNormal, uv2 * 0.5).rbg * 2 - 1) * amplitude2 * amplitudeDistanceFactor2;
 
-	vec2 modUV2 = fUV.yx - time * vec2(moveSpeed1.x*0.5, moveSpeed1.y);
-	vec3 texNormal2 = texture(textureNormal, modUV2 * 0.5).rbg * 2 - 1;
-	float perturbStrength2 = 0.06;
-	float perturbationDistanceFactor2 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec3 perturb2 = (texNormal2 - smoothNormal) * perturbStrength2 * perturbationDistanceFactor2;
+	const vec2 moveSpeed3 = -vec2(0.02, 0.1) * 0.05;
+	const float density3 = 25.0;
+	const float amplitude3 = 0.2;
+	float amplitudeDistanceFactor3 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
+	vec2 uv3 = (fUV + (time * moveSpeed3)) * density3;
+	vec3 texNormal3 = (texture(textureNormal, uv3 * 0.5).rbg * 2 - 1) * amplitude3 * amplitudeDistanceFactor3;
 
-	float moveSpeed3 = -0.012;
-	vec2 modUV3 = fUV + time * vec2(moveSpeed3*0.4, moveSpeed3);
-	vec3 texNormal3 = texture(textureNormal, modUV3 * 2).rbg * 2 - 1;
-	float perturbStrength3 = 0.05;
-	float perturbationDistanceFactor3 = pow(min(1.0, 40.0 / (eyeDist+1)), 2.0);
-	vec3 perturb3 = (texNormal3 - smoothNormal) * perturbStrength3 * perturbationDistanceFactor3;
+	const vec2 moveSpeed4 = -moveSpeed3;
+	const float density4 = density3;
+	const float amplitude4 = amplitude3;
+	float amplitudeDistanceFactor4 = amplitudeDistanceFactor3;
+	vec2 uv4 = (fUV + (time * moveSpeed4)) * density4;
+	vec3 texNormal4 = (texture(textureNormal, uv4 * 0.5).rbg * 2 - 1) * amplitude4 * amplitudeDistanceFactor4;
 
-	vec2 modUV4 = fUV.yx - time * vec2(moveSpeed3*0.5, moveSpeed3);
-	vec3 texNormal4 = texture(textureNormal, modUV4 * 2).rbg * 2 - 1;
-	float perturbStrength4 = 0.04;
-	float perturbationDistanceFactor4 = pow(min(1.0, 100.0 / (eyeDist+1)), 0.50);
-	vec3 perturb4 = (texNormal4 - smoothNormal) * perturbStrength4 * perturbationDistanceFactor4;
+	vec3 final = normalize(smoothNormal + texNormal1 + texNormal2 + texNormal3 + texNormal4);
 
-	vec2 modUV5 = fUV + time * vec2(moveSpeed3*0.5, -moveSpeed3) * 0.5;
-	vec3 texNormal5 = texture(textureNormal, modUV5 * 7).rbg * 2 - 1;
-	float perturbStrength5 = 0.15;
-	float perturbationDistanceFactor5 = pow(min(1.0, 100.0 / (eyeDist+1)), 1.0);
-	vec3 perturb5 = (texNormal5 - smoothNormal) * perturbStrength5 * perturbationDistanceFactor5;
-	
-	return perturb2 + perturb3 + perturb4 + perturb5;
+	return final;
 }
 
 void main() {
@@ -184,8 +182,7 @@ void main() {
 	eyeDir /= eyeDist; // normalize
 
 // normal:
-	vec3 perturbation = normalPerturbation(time * 1.0, eyeDist);
-	vec3 normal = normalize(smoothNormal + perturbation);
+	vec3 normal = computeNormal(time * 1.0, eyeDist);
 	//normal = smoothNormal;
 
 // other common vars:
@@ -204,26 +201,32 @@ void main() {
 	vec4 reflectTarget = texture(textureReflection, vec2(1 - screenCoord.x, screenCoord.y));
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
-	
-	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.14)));
-	distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
-	distanceReflectionFactor *= 0.25;
+
+	//vec2 distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.54)));
+	//distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
+	//distanceReflectionFactor *= 0.25;
 	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy;
+	vec2 distanceReflectionFactor = vec2(1 / eyeDist); //vec2(targetDist / eyeDist - 1);
+	distanceReflectionFactor = pow(distanceReflectionFactor * 6, vec2(0.6, 0.4)*1);
+	//s_perturb *= distanceReflectionFactor;
 	//s_perturb.y -= 0.05;
-	s_perturb *= clamp(distanceReflectionFactor, 0, 1);
+	//s_perturb *= clamp(distanceReflectionFactor, 0, 1);
+	//s_perturb.x *= clamp(distanceReflectionFactor, 0, 1);
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	//vec2 reflectCoord = vec2(1-screenCoord.x, screenCoord.y);
 	vec4 reflectColor = texture(textureReflection, reflectCoord);
 	float reflectFresnelFactor = fresnel(normal, -eyeDir, isCameraUnderWater ? nWater : nAir, isCameraUnderWater ? nAir : nWater);
+	//reflectFresnelFactor = pow(reflectFresnelFactor, 0.5);
 	reflectColor.xyz *= reflectFresnelFactor;
 
-	vec3 reflectTint = vec3(0.5, 0.6, 0.65) * 1.3;
-	reflectColor.xyz *= reflectTint;
+	//vec3 reflectTint = normalize(vec3(0.55, 0.6, 0.65)) * 1.5;
+	//reflectColor.xyz *= reflectTint;
 	//reflectColor = vec4(0);
 
 // mix reflection and refraction:
 	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);
+	//final = vec4(mix(transmitColor.xyz, reflectColor.xyz, reflectFresnelFactor), 1);
 
 // fade out far edges of water
 	//float targetElevationNormalized = targetElevation / 2.5;
@@ -233,15 +236,15 @@ void main() {
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	float targetDistUW = targetDist - eyeDist + 0.1;
 	float depthAlphaFactor = clamp(pow(targetDistUW * 10, 1), 0, 1);*/
-	
+
 	float alpha = /*depthAlphaFactor * */ (1-pow(fFog, 3.0));
 	final.a = alpha;
 
 // DEBUG:
 	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);
-	float f = pow(distanceReflectionFactor, 2.2);
+	float f = pow(distanceReflectionFactor.x, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(reflectTarget.xyz, 1.0) + 0.00001 * final;
+	//final = vec4(distanceReflectionFactor.xy, 0, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;
