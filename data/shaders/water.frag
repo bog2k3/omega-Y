@@ -204,13 +204,18 @@ void main() {
 	vec4 reflectTarget = texture(textureReflection2D, vec2(1 - screenCoord.x, screenCoord.y));
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
+	
+	float r_r0 = acos(dot(-eyeDir, smoothNormal)) - acos(dot(-eyeDir, normal));
+	float displacement = Zn * (targetDist - eyeDist) * tan(r_r0) / targetDist;
 
-	//vec2 distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.54)));
-	//distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
-	//distanceReflectionFactor *= 0.25;
-	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy;
-	vec2 distanceReflectionFactor = vec2(1 / eyeDist); //vec2(targetDist / eyeDist - 1);
-	distanceReflectionFactor = pow(distanceReflectionFactor * 6, vec2(0.6, 0.4)*1);
+	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.54)));
+	distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
+	distanceReflectionFactor *= 0.25;
+	//displacement = distanceReflectionFactor;
+	
+	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
+	//vec2 distanceReflectionFactor = vec2(1 / eyeDist); //vec2(targetDist / eyeDist - 1);
+	//distanceReflectionFactor = pow(distanceReflectionFactor * 6, vec2(0.6, 0.4)*1);
 	//s_perturb *= distanceReflectionFactor;
 	//s_perturb.y -= 0.05;
 	//s_perturb *= clamp(distanceReflectionFactor, 0, 1);
@@ -246,7 +251,7 @@ void main() {
 
 // DEBUG:
 	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);
-	float f = pow(distanceReflectionFactor.x, 2.2);
+	float f = pow(displacement*20, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(distanceReflectionFactor.xy, 0, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
