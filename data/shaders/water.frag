@@ -86,14 +86,14 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 	return refractTarget.xyz * fresnelFactor;
 }
 
-vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist, float distortionAmp) {
+vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
 	vec4 reflectTarget = texture(textureReflection2D, vec2(1 - screenCoord.x, screenCoord.y));
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	
 	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, smoothNormal));
 	float displacement = Zn * (targetDist - eyeDist) * tan(r_r0) / targetDist;
-	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30 * distortionAmp;
+	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
@@ -103,7 +103,7 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 
 // compute reflection above water surface
 vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist, 1);
+	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(normal, -eyeDir, nAir, nWater);
 	reflectColor.xyz *= reflectFresnelFactor;
 	
@@ -112,14 +112,14 @@ vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, flo
 
 // compute reflection below water surface
 vec3 belowReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist, 5);
+	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(-normal, -eyeDir, nWater, nAir);
 	reflectColor.xyz *= reflectFresnelFactor;
 	
 	return reflectColor.xyz;
 }
 
-vec3 computeNormal(float time, float eyeDist) {
+vec3 computeNormal(float time, float eyeDist, float perturbAmplitude) {
 	const vec2 moveSpeed1 = vec2(0.02, 0.1) * 0.15;
 	const float density1 = 1.0;
 	const float amplitude1 = 0.2;
@@ -148,7 +148,7 @@ vec3 computeNormal(float time, float eyeDist) {
 	vec2 uv4 = (fUV + (time * moveSpeed4)) * density4;
 	vec3 texNormal4 = (texture(textureNormal, uv4 * 0.5).rbg * 2 - 1) * amplitude4 * amplitudeDistanceFactor4;
 
-	vec3 final = normalize(smoothNormal + texNormal1 + texNormal2 + texNormal3 + texNormal4);
+	vec3 final = normalize(smoothNormal + (texNormal1 + texNormal2 + texNormal3 + texNormal4) * perturbAmplitude);
 
 	return final;
 }
@@ -159,7 +159,7 @@ void main() {
 	eyeDir /= eyeDist; // normalize
 
 // normal:
-	vec3 normal = computeNormal(time * 1.0, eyeDist);
+	vec3 normal = computeNormal(time * 1.0, eyeDist, eyePos.y > 0 ? 1 : 4);
 	//normal = smoothNormal;
 
 // other common vars:
