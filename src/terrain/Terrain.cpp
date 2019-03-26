@@ -76,6 +76,7 @@ struct Terrain::RenderData {
 	int iEyePos_;
 	int iSubspace_;
 	int ibRefraction_;
+	int ibReflection_;
 	TextureInfo textures_[TerrainVertex::nTextures];
 };
 
@@ -130,6 +131,7 @@ Terrain::Terrain()
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
 		renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
+		renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -617,6 +619,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindVertexArray(renderData_->VAO_);
 		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
 		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
+		glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
 		if (rctx.clipPlane.y < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);

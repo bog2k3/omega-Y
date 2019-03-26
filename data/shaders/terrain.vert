@@ -50,7 +50,7 @@ vec3 refractPos(vec3 wPos) {
 	float uw_dist = length(wPos - water_intersect);
 	vec3 newDir = normalize(water_intersect - eyePos);
 	vec3 refracted = water_intersect + newDir * uw_dist;
-	float fade_dist = 0.5;
+	float fade_dist = 0.1;
 	float depthFactor = clamp(-wPos.y / fade_dist, 0, 1); // fade refraction toward zero at water edges to avoid gaps
 	vec3 final = mix(wPos, refracted, depthFactor);
 	return final;
@@ -63,7 +63,7 @@ void main() {
 		wPos = refractPos(wPos);
 	}
 	gl_Position = mPV * vec4(wPos, 1);
-	gl_ClipDistance[0] = pos.y * sign(subspace) + 0.2; //* (sign(subspace) == -1 ? 1 : 0);
+	gl_ClipDistance[0] = pos.y * sign(subspace) + bRefraction * 0.2; //* (sign(subspace) == -1 ? 1 : 0);
 	fWPos.xyz = pos; // ?wPos?
 	//fWPos.w = gl_Position.z;
 	fNormal = normal;

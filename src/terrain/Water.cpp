@@ -33,12 +33,12 @@ struct Water::RenderData {
 	int iAspectRatio_;
 	int iTexture1_;
 	int iTexReflection_2D_;
-	//int iTexReflection_Cube_;
+	int iTexRefraction_Cube_;
 	int iTexRefraction_;
 
 	unsigned textureNormal_;
 	unsigned textureReflection_2D_;
-	//unsigned textureReflection_Cube_;
+	unsigned textureRefraction_Cube_;
 	unsigned textureRefraction_;
 
 	float time_ = 0.f;
@@ -81,7 +81,7 @@ Water::Water()
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureNormal");
 		renderData_->iTexReflection_2D_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection2D");
-		//renderData_->iTexReflection_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflectionCube");
+		renderData_->iTexRefraction_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefractionCube");
 		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
 
 		checkGLError("Water shader load #1");
@@ -119,7 +119,7 @@ Water::~Water()
 
 void Water::setReflectionTexture(unsigned texId_2D, unsigned texId_Cube) {
 	renderData_->textureReflection_2D_ = texId_2D;
-	//renderData_->textureReflection_Cube_ = texId_Cube;
+	renderData_->textureRefraction_Cube_ = texId_Cube;
 }
 
 void Water::setRefractionTexture(unsigned refractionTexId) {
@@ -251,9 +251,9 @@ void Water::draw(RenderContext const& ctx) {
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);
 	glUniform1i(renderData_->iTexRefraction_, 2);
-	//glActiveTexture(GL_TEXTURE3);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_Cube_);
-	//glUniform1i(renderData_->iTexReflection_Cube_, 3);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureRefraction_Cube_);
+	glUniform1i(renderData_->iTexRefraction_Cube_, 3);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
