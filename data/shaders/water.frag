@@ -64,6 +64,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//float targetElevation = targetDistUW * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
 
 	vec3 T = refract(-eyeDir, normal, 1.0 / nWater);
+	//vec3 T0 = refract(-eyeDir, smoothNormal, 1.0 / nWater);
 	//float T_targetDist = targetDistUW * dot(T, -smoothNormal);//(targetDist - eyeDist) // distance through water to refracted target
 	//float T_targetElevation = T_targetDist * sqrt(1.0 - pow(dot(eyeDir, smoothNormal), 2));
 	//vec3 wPosT = fWPos + T * T_targetDist;
@@ -87,14 +88,15 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 	//return vec3(targetDepth);
 
 	//float thicknessRefFactor = pow(abs(targetDistUW) / 2.5, 0.6);
-	float thicknessRefFactor = pow(abs(targetDepth) / 2.5, 0.6);
-	float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.7));
-	float refSmoothFactor = thicknessRefFactor * distanceRefractionFactor;
+	//float thicknessRefFactor = pow(abs(targetDepth) / 2.5, 0.6);
+	//float distanceRefractionFactor = 1.0 / (1 + pow(eyeDist, 0.7));
+	//float refSmoothFactor = thicknessRefFactor * distanceRefractionFactor;
+	
+	//float t_t0 = abs(acos(dot(-T, normal)) - acos(dot(-eyeDir, smoothNormal)) + 2);
+	float t_t0 = acos(dot(-T, normal)) - acos(dot(-T, smoothNormal));
+	float displacement = Zn * (targetDist - eyeDist) * tan(t_t0) / targetDist;
 
-	//refSmoothFactor = clamp(pow(targetDepth / eyeDist, 1), 0, 1);
-	//refSmoothFactor = clamp(targetDepth, 0, 1) * distanceRefractionFactor;
-
-	vec3 w_perturbation = (normal-smoothNormal) * refSmoothFactor;
+	vec3 w_perturbation = (normal-smoothNormal) * displacement * 40;
 	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xy;
 	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1);
 	//return vec3(s_perturbation, 0);
@@ -103,7 +105,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float Zn, float Zf, float
 
 	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
 
-	//return vec3(fresnelFactor);
+	//return vec3(refSmoothFactor);
 
 	return transmitColor.xyz;// * fresnelFactor;
 }
@@ -205,12 +207,12 @@ void main() {
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	
-	float r_r0 = acos(dot(-eyeDir, smoothNormal)) - acos(dot(-eyeDir, normal));
+	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, smoothNormal));
 	float displacement = Zn * (targetDist - eyeDist) * tan(r_r0) / targetDist;
 
-	float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.54)));
-	distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
-	distanceReflectionFactor *= 0.25;
+	//float distanceReflectionFactor = min(1.0, 1.5 / (1 + pow(eyeDist, 0.54)));
+	//distanceReflectionFactor *= pow((targetDist - eyeDist) / targetDist, 0.5);
+	//distanceReflectionFactor *= 0.25;
 	//displacement = distanceReflectionFactor;
 	
 	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
