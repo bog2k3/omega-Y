@@ -78,7 +78,7 @@ vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 }
 
 vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec3 T = refract(-eyeDir, -normal, nWater);	
+	vec3 T = refract(-eyeDir, -normal, nWater);
 	vec4 refractTarget = texture(textureRefractionCube, T);
 
 	float fresnelFactor = 1 - fresnel(normal, -T, nAir, nWater);
@@ -90,14 +90,16 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 	vec4 reflectTarget = texture(textureReflection2D, vec2(1 - screenCoord.x, screenCoord.y));
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
-	
+
 	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, smoothNormal));
 	float displacement = Zn * (targetDist - eyeDist) * tan(r_r0) / targetDist;
 	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
-	
+
+	//reflectColor = vec4(vec3(displacement), 1);
+
 	return reflectColor;
 }
 
@@ -106,7 +108,7 @@ vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, flo
 	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(normal, -eyeDir, nAir, nWater);
 	reflectColor.xyz *= reflectFresnelFactor;
-	
+
 	return reflectColor.xyz;
 }
 
@@ -115,7 +117,7 @@ vec3 belowReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, flo
 	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(-normal, -eyeDir, nWater, nAir);
 	reflectColor.xyz *= reflectFresnelFactor;
-	
+
 	return reflectColor.xyz;
 }
 
@@ -159,7 +161,7 @@ void main() {
 	eyeDir /= eyeDist; // normalize
 
 // normal:
-	vec3 normal = computeNormal(time * 1.0, eyeDist, eyePos.y > 0 ? 1 : 4);
+	vec3 normal = computeNormal(time * 1.0, eyeDist, eyePos.y > 0 ? 1 : 2);
 	//normal = smoothNormal;
 
 // other common vars:
@@ -196,6 +198,8 @@ void main() {
 
 	float alpha = /*depthAlphaFactor * */ (1-pow(fFog, 3.0));
 	final.a = alpha;
+
+	//final.xyz = reflectColor;
 
 // DEBUG:
 	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);

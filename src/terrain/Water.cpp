@@ -130,7 +130,7 @@ void Water::loadTextures() {
 	renderData_->textureNormal_ = TextureLoader::loadFromPNG("data/textures/water/normal2.png", false);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);// GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

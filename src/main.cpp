@@ -93,6 +93,13 @@ struct PostProcessData {
 	unsigned IBO = 0;
 	unsigned shaderProgram = 0;
 	int iTexSampler = 0;
+	int iUnderwater = 0;
+	int iTexSize = 0;
+	int iTime = 0;
+
+	bool underwater = false;
+	glm::vec2 textureSize;
+	float time = 0;
 };
 
 struct WaterRenderData {
@@ -410,6 +417,9 @@ bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProc
 		unsigned posAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "pos");
 		unsigned uvAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "uv");
 		pPostProcessData->iTexSampler = glGetUniformLocation(pPostProcessData->shaderProgram, "texSampler");
+		pPostProcessData->iUnderwater = glGetUniformLocation(pPostProcessData->shaderProgram, "underwater");
+		pPostProcessData->iTexSize = glGetUniformLocation(pPostProcessData->shaderProgram, "texSize_inv");
+		pPostProcessData->iTime = glGetUniformLocation(pPostProcessData->shaderProgram, "time");
 
 		glBindVertexArray(pPostProcessData->VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, pPostProcessData->VBO);
@@ -423,6 +433,8 @@ bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProc
 	});
 	if (!postProcessData.shaderProgram)
 		return false;
+
+	postProcessData.textureSize = glm::vec2(1.f / winW, 1.f / winH);
 
 	// create screen quad:
 	float screenQuadPosUV[] {
@@ -452,7 +464,10 @@ void renderPostProcess(PostProcessData &postProcessData) {
 	checkGLError("renderPostProcess 0a");
 	glUseProgram(postProcessData.shaderProgram);
 	checkGLError("renderPostProcess 0b");
-	glUniform1i((GLint)postProcessData.iTexSampler, (GLint)0);
+	glUniform1i(postProcessData.iTexSampler, 0);
+	glUniform1i(postProcessData.iUnderwater, postProcessData.underwater ? 1 : 0);
+	glUniform2fv(postProcessData.iTexSize, 1, &postProcessData.textureSize.x);
+	glUniform1f(postProcessData.iTime, postProcessData.time);
 	checkGLError("renderPostProcess 1");
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	glUseProgram(0);
@@ -684,6 +699,8 @@ void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vect
 	checkGLError("render() final");
 
 	renderData.renderCtx.renderPass = RenderPass::None;
+
+	renderData.postProcessData.underwater = renderData.renderCtx.cameraUnderwater;
 }
 
 int main(int argc, char* argv[]) {
@@ -728,6 +745,11 @@ int main(int argc, char* argv[]) {
 		updateList.add(&World::getInstance());
 		updateList.add(pSkyBox);
 		updateList.add(pTerrain);
+
+		auto postProcessUpdate = [pRenderData](float dt) {
+			pRenderData->postProcessData.time += dt;
+		};
+		updateList.add(&postProcessUpdate);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
