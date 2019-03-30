@@ -605,11 +605,12 @@ void unloadRender(RenderData* &renderData) {
 }
 
 void setupRenderPass(RenderData &renderData) {
+	float waterDepthFactor = pow(1.f / (max(0.f, -renderData.viewport.camera().position().y) + 1), 0.5f);
 	switch (renderData.renderCtx.renderPass) {
 	case RenderPass::WaterReflection:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.waterRenderData.reflectionFB);
 		renderData.viewport.setArea(0, 0, renderData.waterRenderData.reflectionFB_width, renderData.waterRenderData.reflectionFB_height);
-		renderData.viewport.setBkColor(renderData.waterRenderData.waterColor);
+		renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
 		renderData.viewport.clear();
 		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? -1.f : +1.f, 0.f, 0.f};
 		renderData.renderCtx.enableClipPlane = true;
@@ -631,7 +632,7 @@ void setupRenderPass(RenderData &renderData) {
 		renderData.renderCtx.enableClipPlane = true;
 		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
 		if (renderData.renderCtx.cameraUnderwater) {
-			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor);
+			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
 			renderData.viewport.clear();
 		}
 	} break;
