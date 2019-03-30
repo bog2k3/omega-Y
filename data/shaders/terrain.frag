@@ -38,7 +38,7 @@ void main() {
 	vec4 tGrassOrSand = vec4(mix(t01, t4, clamp(fTexBlendFactor.w, 0.0, 1.0)).xyz, 1.0); // grass/dirt and sand
 	vec4 tFinal = vec4(mix(tGrassOrSand, t23, 1.0 - clamp(fTexBlendFactor.z, 0.0, 1.0)).xyz, 1.0);
 	//tFinal = vec4(clamp(fTexBlendFactor.x, 0.0, 1.0)) + tFinal*0.001;
-	
+
 	// compute lighting
 	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);
 	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.9));
@@ -48,7 +48,7 @@ void main() {
 	vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
 	float lightIntensity = 2.0;
 	lightColor *= lightIntensity;
-	
+
 	vec3 eyeDir = eyePos - fWPos;
 	float eyeDist = length(eyeDir);
 	eyeDir /= eyeDist;
@@ -84,15 +84,16 @@ void main() {
 	float waterThickness = eyeDist * (eyeHeight < 0 ? 1 : -fWPos.y / (eyeHeight - fWPos.y));
 	//waterThickness *= 0.2;
 	float fogFactor = clamp(1.0 - 1.0 / (waterThickness * 0.05 + 1), 0, 1);
+	float depthFactor = pow(1.0 / (max(0, -eyePos.y) + 1), 0.5);
 	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
-	final.xyz = mix(final.xyz, waterColor, fogFactor);
+	final.xyz = mix(final.xyz, waterColor * depthFactor, fogFactor);
 
 	// DEBUG:
 	//final = vec4(absorption, 1.0) + 0.01 * final;
 	float f = waterThickness / 20;
 	//f = eyeDist / 50;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final.xyz = D.xyz + 0.00001 * final.xyz;
+	//final.xyz = tFinal.xyz + 0.00001 * final.xyz;
 
 	gl_FragColor = final;
 }

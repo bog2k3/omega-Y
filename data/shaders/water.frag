@@ -83,7 +83,14 @@ vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 
 	float fresnelFactor = 1 - fresnel(normal, -T, nAir, nWater);
 
-	return refractTarget.xyz * fresnelFactor;
+	vec3 refractColor = refractTarget.rgb * fresnelFactor;
+
+	// simulate light absorbtion through water
+	vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 1.5; // after how many meters of water each light component is halved
+	vec3 absorbFactor = 1.0 / pow(vec3(2.0), vec3(eyeDist) / lightHalveDist);
+	refractColor *= absorbFactor;
+
+	return refractColor;
 }
 
 vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
@@ -92,13 +99,14 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
 	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, smoothNormal));
-	float displacement = Zn * (targetDist - eyeDist) * tan(r_r0) / targetDist;
+	float displacement = Zn * (targetDist - eyeDist) / targetDist * tan(r_r0);
 	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
 
-	//reflectColor = vec4(vec3(displacement), 1);
+	//reflectColor = vec4(s_perturb*30, 0, 1);
+	//reflectColor = vec4(vec3(targetZ), 1);
 
 	return reflectColor;
 }
@@ -159,9 +167,11 @@ void main() {
 	vec3 eyeDir = eyePos - fWPos;
 	float eyeDist = length(eyeDir);
 	eyeDir /= eyeDist; // normalize
+	float angleNormalFactor = 1; //pow(abs(dot(eyeDir, smoothNormal)), 0.9);
 
 // normal:
-	vec3 normal = computeNormal(time * 1.0, eyeDist, eyePos.y > 0 ? 1 : 2);
+	float perturbAmplitude = angleNormalFactor * (eyePos.y > 0 ? 1 : 2);
+	vec3 normal = computeNormal(time * 1.0, eyeDist, perturbAmplitude);
 	//normal = smoothNormal;
 
 // other common vars:
@@ -187,6 +197,12 @@ void main() {
 // mix reflection and refraction:
 	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);
 
+	const float lightIntensity = 2.0;
+	const vec3 waterColor = vec3(0.03, 0.08, 0.1) * lightIntensity;
+	float fogFactor = isCameraUnderWater ? clamp(1.0 - 1.0 / (eyeDist * 0.2 + 1), 0, 1) : 0.0;
+	float depthFactor = pow(1.0 / (max(0, -eyePos.y) + 1), 0.5);
+	final.rgb = mix(final.rgb, waterColor * depthFactor, fogFactor);
+
 // fade out far edges of water
 	//float targetElevationNormalized = targetElevation / 2.5;
 	//float elevationAlphaFactor = min(1.0, pow(abs(targetElevationNormalized) * 1, 3));
@@ -197,7 +213,7 @@ void main() {
 	float depthAlphaFactor = clamp(pow(targetDistUW * 10, 1), 0, 1);*/
 
 	float alpha = /*depthAlphaFactor * */ (1-pow(fFog, 3.0));
-	final.a = alpha;
+	final.a = !isCameraUnderWater ? alpha : 1.0;
 
 	//final.xyz = reflectColor;
 
@@ -205,7 +221,7 @@ void main() {
 	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);
 	//float f = pow(displacement*20, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final = vec4(distanceReflectionFactor.xy, 0, 1.0) + 0.00001 * final;
+	//final = vec4(reflectColor.rgb, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
 
 	gl_FragColor = final;

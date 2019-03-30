@@ -113,6 +113,8 @@ struct WaterRenderData {
 	unsigned reflectionDepth = 0;
 	unsigned reflectionFB_width = 0;
 	unsigned reflectionFB_height = 0;
+
+	glm::vec3 waterColor {0.06f, 0.16f, 0.2f};
 };
 
 struct RenderData {
@@ -460,6 +462,8 @@ bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProc
 void renderPostProcess(PostProcessData &postProcessData) {
 	checkGLError("renderPostProcess 0");
 	// do the post-processing render
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glBindVertexArray(postProcessData.VAO);
 	checkGLError("renderPostProcess 0a");
 	glUseProgram(postProcessData.shaderProgram);
@@ -605,6 +609,7 @@ void setupRenderPass(RenderData &renderData) {
 	case RenderPass::WaterReflection:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.waterRenderData.reflectionFB);
 		renderData.viewport.setArea(0, 0, renderData.waterRenderData.reflectionFB_width, renderData.waterRenderData.reflectionFB_height);
+		renderData.viewport.setBkColor(renderData.waterRenderData.waterColor);
 		renderData.viewport.clear();
 		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? -1.f : +1.f, 0.f, 0.f};
 		renderData.renderCtx.enableClipPlane = true;
@@ -625,6 +630,10 @@ void setupRenderPass(RenderData &renderData) {
 		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater  ? -1.f : +1.f, 0.f, 0.f};
 		renderData.renderCtx.enableClipPlane = true;
 		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
+		if (renderData.renderCtx.cameraUnderwater) {
+			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor);
+			renderData.viewport.clear();
+		}
 	} break;
 	case RenderPass::WaterSurface:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
