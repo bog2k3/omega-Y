@@ -1,8 +1,9 @@
 #version 330 core
 
+#include underwater.glsl
+
 in vec3 fWPos;
 in vec3 fNormal;
-in vec2 fUV;
 in float fFog;
 in vec3 fScreenUV;
 
@@ -10,7 +11,6 @@ uniform float time;
 uniform float screenAspectRatio;
 uniform vec3 eyePos;
 uniform mat4 mPV;
-uniform sampler2D textureNormal;
 uniform sampler2D textureReflection2D;
 uniform sampler2D textureRefraction;
 uniform samplerCube textureRefractionCube;
@@ -47,41 +47,33 @@ float fresnel(vec3 normal, vec3 incident, float n1, float n2) {
 	return max(0.0, min(1.0, fres));
 }
 
-const float nAir = 1.0;
-const float nWater = 1.33;
-const float Zn = 0.15;
-const float Zf = 500.0;
-const float fov = 3.1415/2.5; // vertical field of view
-
-const vec3 smoothNormal = vec3(0, 1, 0);
-
 vec3 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
 	vec4 refractTarget = texture(textureRefraction, screenCoord);
 	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
 
-	vec3 T = refract(-eyeDir, normal, 1.0 / nWater);
-	float targetDepth = targetDistUW * dot(T, -smoothNormal);
-	float t_t0 = acos(dot(-T, normal)) - acos(dot(-T, smoothNormal));
+	vec3 T = refract(-eyeDir, normal, 1.0 / n_water);
+	float targetDepth = targetDistUW * dot(T, -waterSmoothNormal);
+	float t_t0 = acos(dot(-T, normal)) - acos(dot(-T, waterSmoothNormal));
 	float displacement = Zn * (targetDist - eyeDist) * tan(t_t0) / targetDist;
 
-	vec3 w_perturbation = (normal-smoothNormal) * displacement * 40;
+	vec3 w_perturbation = (normal-waterSmoothNormal) * displacement * 40;
 	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xy;
 	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1);
 	vec2 sampleCoord = screenCoord + s_perturbation;
 	vec4 transmitColor = texture(textureRefraction, sampleCoord);
 
-	float fresnelFactor = 1 - fresnel(normal, -T, nWater, nAir);
+	float fresnelFactor = 1 - fresnel(normal, -T, n_water, n_air);
 
 	return transmitColor.xyz * fresnelFactor;
 }
 
 vec3 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec3 T = refract(-eyeDir, -normal, nWater);
+	vec3 T = refract(-eyeDir, -normal, n_water);
 	vec4 refractTarget = texture(textureRefractionCube, T);
 
-	float fresnelFactor = 1 - fresnel(normal, -T, nAir, nWater);
+	float fresnelFactor = 1 - fresnel(normal, -T, n_air, n_water);
 
 	vec3 refractColor = refractTarget.rgb * fresnelFactor;
 
@@ -98,9 +90,9 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
-	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, smoothNormal));
+	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, waterSmoothNormal));
 	float displacement = Zn * (targetDist - eyeDist) / targetDist * tan(r_r0);
-	vec2 s_perturb = (mPV * vec4(normal - smoothNormal, 0)).xy * displacement * 30;
+	vec2 s_perturb = (mPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement * 30;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
@@ -114,7 +106,7 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 // compute reflection above water surface
 vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
 	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
-	float reflectFresnelFactor = fresnel(normal, -eyeDir, nAir, nWater);
+	float reflectFresnelFactor = fresnel(normal, -eyeDir, n_air, n_water);
 	reflectColor.xyz *= reflectFresnelFactor;
 
 	return reflectColor.xyz;
@@ -123,56 +115,22 @@ vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, flo
 // compute reflection below water surface
 vec3 belowReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
 	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
-	float reflectFresnelFactor = fresnel(-normal, -eyeDir, nWater, nAir);
+	float reflectFresnelFactor = fresnel(-normal, -eyeDir, n_water, n_air);
 	reflectColor.xyz *= reflectFresnelFactor;
 
 	return reflectColor.xyz;
-}
-
-vec3 computeNormal(float time, float eyeDist, float perturbAmplitude) {
-	const vec2 moveSpeed1 = vec2(0.02, 0.1) * 0.15;
-	const float density1 = 1.0;
-	const float amplitude1 = 0.2;
-	float amplitudeDistanceFactor1 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec2 uv1 = (fUV + (time * moveSpeed1)) * density1;
-	vec3 texNormal1 = (texture(textureNormal, uv1 * 0.5).rbg * 2 - 1) * amplitude1 * amplitudeDistanceFactor1;
-
-	const vec2 moveSpeed2 = -vec2(0.02, 0.1) * 0.12;
-	const float density2 = 10.0;
-	const float amplitude2 = 0.2;
-	float amplitudeDistanceFactor2 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec2 uv2 = (fUV + (time * moveSpeed2)) * density2;
-	vec3 texNormal2 = (texture(textureNormal, uv2 * 0.5).rbg * 2 - 1) * amplitude2 * amplitudeDistanceFactor2;
-
-	const vec2 moveSpeed3 = -vec2(0.02, 0.1) * 0.05;
-	const float density3 = 25.0;
-	const float amplitude3 = 0.2;
-	float amplitudeDistanceFactor3 = pow(min(1.0, 30.0 / (eyeDist+1)), 1.0);
-	vec2 uv3 = (fUV + (time * moveSpeed3)) * density3;
-	vec3 texNormal3 = (texture(textureNormal, uv3 * 0.5).rbg * 2 - 1) * amplitude3 * amplitudeDistanceFactor3;
-
-	const vec2 moveSpeed4 = -moveSpeed3;
-	const float density4 = density3;
-	const float amplitude4 = amplitude3;
-	float amplitudeDistanceFactor4 = amplitudeDistanceFactor3;
-	vec2 uv4 = (fUV + (time * moveSpeed4)) * density4;
-	vec3 texNormal4 = (texture(textureNormal, uv4 * 0.5).rbg * 2 - 1) * amplitude4 * amplitudeDistanceFactor4;
-
-	vec3 final = normalize(smoothNormal + (texNormal1 + texNormal2 + texNormal3 + texNormal4) * perturbAmplitude);
-
-	return final;
 }
 
 void main() {
 	vec3 eyeDir = eyePos - fWPos;
 	float eyeDist = length(eyeDir);
 	eyeDir /= eyeDist; // normalize
-	float angleNormalFactor = 1; //pow(abs(dot(eyeDir, smoothNormal)), 0.9);
+	float angleNormalFactor = 1; //pow(abs(dot(eyeDir, waterSmoothNormal)), 0.9);
 
 // normal:
 	float perturbAmplitude = angleNormalFactor * (eyePos.y > 0 ? 1 : 2);
-	vec3 normal = computeNormal(time * 1.0, eyeDist, perturbAmplitude);
-	//normal = smoothNormal;
+	vec3 normal = computeWaterNormal(fWPos.xz, time * 1.0, eyeDist, perturbAmplitude);
+	//normal = waterSmoothNormal;
 
 // other common vars:
 	bool isCameraUnderWater = eyePos.y < 0;

@@ -1,11 +1,9 @@
 #version 330 core
 
 in vec3 pos;
-in vec2 uv;
 in float fog;
 
 out vec3 fWPos;
-out vec2 fUV;
 out float fFog;
 out vec3 fScreenUV;
 
@@ -18,5 +16,4 @@ void main() {
 	fScreenUV = gl_Position.xyw;
 	fWPos = pos;
    	fFog = fog;
-   	fUV = uv;
 }

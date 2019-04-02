@@ -1,5 +1,7 @@
 #version 330 core
 
+#include water-surface.glsl
+
 in vec3 fWPos;
 in vec3 fNormal;
 in vec4 fColor;
@@ -8,6 +10,7 @@ in vec4 fTexBlendFactor;
 
 uniform vec3 eyePos;
 uniform int bReflection;
+uniform float time;
 
 uniform sampler2D tex[5];
 
@@ -39,6 +42,12 @@ void main() {
 	vec4 tFinal = vec4(mix(tGrassOrSand, t23, 1.0 - clamp(fTexBlendFactor.z, 0.0, 1.0)).xyz, 1.0);
 	//tFinal = vec4(clamp(fTexBlendFactor.x, 0.0, 1.0)) + tFinal*0.001;
 
+	vec3 eyeDir = eyePos - fWPos;
+	float eyeDist = length(eyeDir);
+	eyeDir /= eyeDist;
+	float eyeHeight = eyePos.y * (bReflection > 0 ? -1 : +1);
+	const float waterLevel = 0;
+
 	// compute lighting
 	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);
 	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.9));
@@ -47,15 +56,14 @@ void main() {
 	//vec3 lightDir = lightVec / lightDist;
 	vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
 	float lightIntensity = 2.0;
+
+	// compute caustics:
+	float causticIntensity = 10 * pow(dot(-lightDir, computeWaterNormal(fWPos.xz * 0.1, time * 0.1, eyeDist, 1.0)) * 1.8, 10);
+	lightIntensity += fWPos.y < waterLevel ? causticIntensity : 0;
+
 	lightColor *= lightIntensity;
 
-	vec3 eyeDir = eyePos - fWPos;
-	float eyeDist = length(eyeDir);
-	eyeDir /= eyeDist;
-	float eyeHeight = eyePos.y * (bReflection > 0 ? -1 : +1);
-
 	// for underwater terrain, we need to simulate light absorbtion through water
-	float waterLevel = 0;
 	vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 1.5; // after how many meters of water each light component is halved
 	float lightWaterDistance = fWPos.y / lightDir.y;
 	lightWaterDistance += eyeHeight < 0 ? eyeDist : 0;

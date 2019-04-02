@@ -26,7 +26,6 @@ struct Water::RenderData {
 	int shaderProgram_;
 	int iPos_;
 	int iFog_;
-	int iUV_;
 	int imPV_;
 	int iEyePos_;
 	int iTime_;
@@ -46,7 +45,6 @@ struct Water::RenderData {
 
 struct Water::WaterVertex {
 	glm::vec3 pos;
-	glm::vec2 uv;
 	float fog;
 
 	WaterVertex() = default;
@@ -74,12 +72,11 @@ Water::Water()
 		}
 		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
 		renderData_->iFog_ = glGetAttribLocation(renderData_->shaderProgram_, "fog");
-		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
 		renderData_->iAspectRatio_ = glGetUniformLocation(renderData_->shaderProgram_, "screenAspectRatio");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureNormal");
+		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
 		renderData_->iTexReflection_2D_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection2D");
 		renderData_->iTexRefraction_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefractionCube");
 		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
@@ -99,12 +96,6 @@ Water::Water()
 				(void*)offsetof(WaterVertex, fog));
 		}
 		checkGLError("Water shader load #3");
-		if (renderData_->iUV_ > 0) {
-			glEnableVertexAttribArray(renderData_->iUV_);
-			glVertexAttribPointer(renderData_->iUV_, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
-				(void*)(offsetof(WaterVertex, uv)));
-		}
-		checkGLError("Water shader load #4");
 		glBindVertexArray(0);
 	});
 
@@ -175,7 +166,6 @@ void Water::generate(WaterParams params) {
 		for (unsigned j=0; j<cols; j++) {
 			new(&pVertices_[i*rows + j]) WaterVertex {
 				topleft + glm::vec3(dx * j, 0, dz * i),	// position
-				{dx*j / wTexW, dz*i / wTexH},			// uv
 				0.f										// fog
 			};
 		}
@@ -185,7 +175,6 @@ void Water::generate(WaterParams params) {
 		float z = extentRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows*cols+i]) WaterVertex {
 			{ x, 0, z },														// position
-			{(x+params_.innerRadius) / wTexW, (z+params_.innerRadius) / wTexH},	// uv
 			1.f																	// fog
 		};
 	}

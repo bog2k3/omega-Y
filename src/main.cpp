@@ -20,6 +20,7 @@
 #include <boglfw/renderOpenGL/Mesh.h>
 #include <boglfw/renderOpenGL/MeshRenderer.h>
 #include <boglfw/renderOpenGL/shader.h>
+#include <boglfw/renderOpenGL/DefaultShaderPreprocessor.h>
 #include <boglfw/renderOpenGL/drawable.h>
 #include <boglfw/renderOpenGL/RenderHelpers.h>
 #include <boglfw/input/GLFWInput.h>
@@ -126,6 +127,8 @@ struct RenderData {
 
 	WaterRenderData waterRenderData;
 	PostProcessData postProcessData;
+
+	DefaultShaderPreprocessor shaderPreprocessor;
 
 	RenderData(unsigned winW, unsigned winH)
 		: viewport(0, 0, winW, winH)
@@ -545,6 +548,7 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
 		return false;
 	out_renderData = new RenderData(winW, winH);
+	Shaders::useShaderPreprocessor(&out_renderData->shaderPreprocessor);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// set up post processing hook

@@ -77,7 +77,10 @@ struct Terrain::RenderData {
 	int iSubspace_;
 	int ibRefraction_;
 	int ibReflection_;
+	int iTime_;
+
 	TextureInfo textures_[TerrainVertex::nTextures];
+	float time_ = 0.f;
 };
 
 template<>
@@ -132,6 +135,7 @@ Terrain::Terrain()
 		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
 		renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
 		renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
+		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -620,6 +624,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
 		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
 		glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
+		glUniform1f(renderData_->iTime_, renderData_->time_);
 		if (rctx.clipPlane.y < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
@@ -676,4 +681,5 @@ void Terrain::setWaterRefractionTex(unsigned texId) {
 
 void Terrain::update(float dt) {
 	pWater_->update(dt);
+	renderData_->time_ += dt;
 }
