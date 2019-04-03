@@ -118,7 +118,7 @@ void Water::setRefractionTexture(unsigned refractionTexId) {
 }
 
 void Water::loadTextures() {
-	renderData_->textureNormal_ = TextureLoader::loadFromPNG("data/textures/water/normal2.png", false);
+	renderData_->textureNormal_ = TextureLoader::loadFromPNG("data/textures/water/normal.png", false);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_NEAREST_MIPMAP_LINEAR);// GL_LINEAR_MIPMAP_LINEAR);
@@ -259,4 +259,8 @@ void Water::draw(RenderContext const& ctx) {
 
 void Water::update(float dt) {
 	renderData_->time_ += dt;
+}
+
+int Water::getNormalTexture() const {
+	return renderData_->textureNormal_;
 }

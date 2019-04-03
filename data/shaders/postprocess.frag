@@ -26,7 +26,7 @@ vec3 blur(vec2 uv) {
 		val += texture2D(texSampler, uv + sampleKernel[i]).xyz;
 	return val / (kernelSize + 1);*/
 
-	return texture2D(texSampler, uv).rgb;
+	//return texture2D(texSampler, uv).rgb;
 
 	const vec2 wave_density = vec2(3, 2); // periods per screen w/h
 	const vec2 wave_amplitude = vec2(4, 4); // pixels

@@ -129,7 +129,7 @@ void main() {
 
 // normal:
 	float perturbAmplitude = angleNormalFactor * (eyePos.y > 0 ? 1 : 2);
-	vec3 normal = computeWaterNormal(fWPos.xz, time * 1.0, eyeDist, perturbAmplitude);
+	vec3 normal = computeWaterNormal(fWPos.xz, time * 1.0, eyeDist, perturbAmplitude, true);
 	//normal = waterSmoothNormal;
 
 // other common vars:

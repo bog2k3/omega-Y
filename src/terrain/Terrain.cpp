@@ -71,6 +71,7 @@ struct Terrain::RenderData {
 	int iColor_;
 	int iUV_;
 	int iTexBlendF_;
+	int iTextureWaterNormal_;
 	int imPV_;
 	int iSampler_;
 	int iEyePos_;
@@ -129,6 +130,7 @@ Terrain::Terrain()
 		renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
 		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
+		renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
@@ -609,6 +611,8 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
 		// configure backface culling
 		glFrontFace(GL_CW);
 		glCullFace(GL_BACK);
@@ -620,6 +624,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 			glUniform1i(renderData_->iSampler_ + i, i);
+		glUniform1i(renderData_->iTextureWaterNormal_, 5);
 		glBindVertexArray(renderData_->VAO_);
 		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
 		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);

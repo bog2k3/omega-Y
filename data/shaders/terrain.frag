@@ -58,17 +58,23 @@ void main() {
 	float lightIntensity = 2.0;
 
 	// compute caustics:
-	float causticIntensity = 10 * pow(dot(-lightDir, computeWaterNormal(fWPos.xz * 0.1, time * 0.1, eyeDist, 1.0)) * 1.8, 10);
-	lightIntensity += fWPos.y < waterLevel ? causticIntensity : 0;
+	const float causticTile = 0.5;
+	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(fWPos.xz * causticTile, time * causticTile, eyeDist, 1.0, false)) * 2, 5), 0, 1);
+	causticIntensity = pow(1 - abs(causticIntensity - 0.5), 10);
+	causticIntensity = fWPos.y < waterLevel ? causticIntensity : 0;
+
+	vec3 causticLight = lightColor * causticIntensity;
 
 	lightColor *= lightIntensity;
+	lightColor += causticLight;
 
 	// for underwater terrain, we need to simulate light absorbtion through water
-	vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 1.5; // after how many meters of water each light component is halved
+	vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 2; // after how many meters of water each light component is halved
 	float lightWaterDistance = fWPos.y / lightDir.y;
 	lightWaterDistance += eyeHeight < 0 ? eyeDist : 0;
 	vec3 absorbFactor = 1.0 / pow(vec3(2.0), vec3(lightWaterDistance) / lightHalveDist);
 	absorbFactor = fWPos.y < waterLevel ? absorbFactor : vec3(1.0);
+
 	lightColor *= absorbFactor;
 
 	vec3 light = lightColor * max(dot(-lightDir, normalize(fNormal)), 0.0);
@@ -101,7 +107,7 @@ void main() {
 	float f = waterThickness / 20;
 	//f = eyeDist / 50;
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final.xyz = tFinal.xyz + 0.00001 * final.xyz;
+	//final.xyz = causticLight.xyz + 0.00001 * final.xyz;
 
 	gl_FragColor = final;
 }

@@ -28,6 +28,8 @@ public:
 	void update(float dt);
 	void draw(RenderContext const& ctx);
 
+	int getNormalTexture() const;
+
 	struct WaterVertex;
 
 private:
