@@ -60,7 +60,8 @@ void main() {
 	// compute caustics:
 	const float causticTile = 0.5;
 	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(fWPos.xz * causticTile, time * causticTile, eyeDist, 1.0, false)) * 2, 5), 0, 1);
-	causticIntensity = pow(1 - abs(causticIntensity - 0.5), 10);
+	float causticSharpness = 15.0 / pow(1 - fWPos.y, 0.9);
+	causticIntensity = pow(1 - abs(causticIntensity - 0.3), causticSharpness);
 	causticIntensity = fWPos.y < waterLevel ? causticIntensity : 0;
 
 	vec3 causticLight = lightColor * causticIntensity;
