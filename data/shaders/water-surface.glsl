@@ -1,3 +1,6 @@
+#ifndef WATER_SURFACE_GLSL
+#define WATER_SURFACE_GLSL
+
 #include common.glsl
 
 uniform sampler2D textureWaterNormal;
@@ -6,6 +9,7 @@ const vec3 waterSmoothNormal = vec3(0, 1, 0);
 const vec2 waterTextureTile = vec2(0.01);
 
 vec3 computeWaterNormal(vec2 wPosXZ, float time, float eyeDist, float perturbAmplitude, bool mixLowFreq) {
+	return waterSmoothNormal;
 	vec2 uv = wPosXZ * waterTextureTile;
 
 	const float amplitudeFactor = 2;
@@ -46,3 +50,5 @@ vec3 computeWaterNormal(vec2 wPosXZ, float time, float eyeDist, float perturbAmp
 
 	return final;
 }
+
+#endif // WATER_SURFACE_GLSL

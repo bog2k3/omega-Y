@@ -298,6 +298,9 @@ void physTestInit() {
 
 	boxMesh = new Mesh();
 	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
+	Shaders::createProgram("data/shaders/custom-mesh.vert", "data/shaders/custom-mesh.frag", [](unsigned progID) {
+		boxMesh->useProgram(progID);
+	});
 }
 
 void initSession(Camera& camera) {

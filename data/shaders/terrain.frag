@@ -1,5 +1,6 @@
 #version 330 core
 
+#include common.glsl
 #include water-surface.glsl
 
 in vec3 fWPos;
@@ -8,9 +9,7 @@ in vec4 fColor;
 in vec2 fUV[5];
 in vec4 fTexBlendFactor;
 
-uniform vec3 eyePos;
 uniform int bReflection;
-uniform float time;
 
 uniform sampler2D tex[5];
 
@@ -90,8 +89,6 @@ void main() {
 	vec3 totalLight = light + ambientLight;
 
 	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
-	float Zn = 0.15;
-	float Zf = 500.0;
 	final.a = clamp((gl_FragCoord.z / gl_FragCoord.w - Zn) / (Zf - Zn), 0.0, 1.0); // fragment's z
 
 	// water fog:

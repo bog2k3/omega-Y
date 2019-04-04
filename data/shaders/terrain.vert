@@ -16,9 +16,6 @@ out vec2 fUV[5];
 out vec4 fTexBlendFactor;
 
 uniform mat4 mPV;
-uniform float subspace;	// represents the subspace we're rendering: +1 above water, -1 below water
-uniform int bRefraction;
-uniform vec3 eyePos;
 
 void main() {
 	vec3 wPos = pos;
