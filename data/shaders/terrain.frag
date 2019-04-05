@@ -41,7 +41,7 @@ void main() {
 
 	float eyeDist = length(eyePos - fWPos);
 
-	bool underwater = bRefraction > 0 ^^ eyePos.y < 0;
+	bool underwater = subspace < 0;
 
 	// compute lighting
 	vec3 light = underwater ? computeLightingUnderwater(fWPos, normalize(fNormal), eyeDist) : computeLightingAboveWater(normalize(fNormal));
@@ -52,7 +52,9 @@ void main() {
 	if (underwater)
 		color = computeWaterFog(fWPos, color, eyeDist);
 
-	vec4 final = vec4(color, computeZValue(gl_FragCoord));
+	vec4 final = vec4(color, 1);
+	if (bRefraction > 0 || bReflection > 0)
+		final.a = computeZValue(gl_FragCoord);
 
 	gl_FragColor = final;
 }

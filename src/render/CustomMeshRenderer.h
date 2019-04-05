@@ -14,6 +14,8 @@ public:
 
 	void renderMesh(Mesh& mesh, glm::mat4 const& worldTransform, RenderContext const& ctx);
 
+	void setWaterNormalTexture(int texID);
+
 private:
 	struct RenderData;
 

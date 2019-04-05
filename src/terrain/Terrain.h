@@ -78,6 +78,8 @@ public:
 	// set a 2D texture to be used as water refraction
 	void setWaterRefractionTex(unsigned texId);
 
+	int getWaterNormalTexture() const;
+
 	struct TerrainVertex;
 
 private:

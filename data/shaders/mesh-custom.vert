@@ -26,7 +26,7 @@ void main() {
 	gl_Position = mPV * vec4(wPos, 1);
 	gl_ClipDistance[0] = wPos.y * sign(subspace);// + bRefraction * 0.2;
 
-    fNormal = (mPV * (mW * vec4(normal, 0))).xyz;
+    fNormal = (mW * vec4(normal, 0)).xyz;
     fColor = color;
     fUV = uv;
 }

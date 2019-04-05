@@ -527,7 +527,7 @@ void initWorld() {
 	initPhysics();
 }
 
-void initTerrain(WaterRenderData &waterRenderData) {
+void initTerrain(RenderData &renderData) {
 	terrainConfig.vertexDensity = 1.f;	// vertices per meter
 	terrainConfig.width = 200;
 	terrainConfig.length = 200;
@@ -541,10 +541,12 @@ void initTerrain(WaterRenderData &waterRenderData) {
 	pTerrain->generate(terrainConfig);
 	pTerrain->finishGenerate();
 
-	pTerrain->setWaterReflectionTex(waterRenderData.reflectionTex, pSkyBox->getCubeMapTexture());
-	pTerrain->setWaterRefractionTex(waterRenderData.refractionTex);
+	pTerrain->setWaterReflectionTex(renderData.waterRenderData.reflectionTex, pSkyBox->getCubeMapTexture());
+	pTerrain->setWaterRefractionTex(renderData.waterRenderData.refractionTex);
 
 	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
+
+	renderData.renderCtx.meshRenderer->setWaterNormalTexture(pTerrain->getWaterNormalTexture());
 }
 
 void initSky() {
@@ -751,7 +753,7 @@ int main(int argc, char* argv[]) {
 		World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
 		initSky();
-		initTerrain(pRenderData->waterRenderData);
+		initTerrain(*pRenderData);
 
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position

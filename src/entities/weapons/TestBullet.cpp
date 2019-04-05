@@ -1,7 +1,8 @@
 #include "TestBullet.h"
+#include "../../render/CustomRenderContext.h"
+#include "../../render/CustomMeshRenderer.h"
 
 #include <boglfw/renderOpenGL/Mesh.h>
-#include <boglfw/renderOpenGL/MeshRenderer.h>
 
 #include <bullet3/BulletCollision/CollisionShapes/btBoxShape.h>
 
@@ -33,5 +34,5 @@ TestBullet::~TestBullet() {
 }
 
 void TestBullet::draw(RenderContext const& ctx) {
-	MeshRenderer::get()->renderMesh(*pMeshShared_, transform_.glMatrix());
+	CustomRenderContext::fromCtx(ctx).meshRenderer->renderMesh(*pMeshShared_, transform_.glMatrix(), ctx);
 }

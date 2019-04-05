@@ -29,6 +29,9 @@ struct CustomMeshRenderer::RenderData {
 	int ibRefraction;
 	int ibReflection;
 	int iTime;
+	int iTexWaterNorm;
+
+	int waterNormalTex = -1;
 };
 
 CustomMeshRenderer::CustomMeshRenderer()
@@ -50,6 +53,7 @@ CustomMeshRenderer::CustomMeshRenderer()
 		pRenderData_->ibRefraction = glGetUniformLocation(pRenderData_->shaderProgram_, "bRefraction");
 		pRenderData_->ibReflection = glGetUniformLocation(pRenderData_->shaderProgram_, "bReflection");
 		pRenderData_->iTime = glGetUniformLocation(pRenderData_->shaderProgram_, "time");
+		pRenderData_->iTexWaterNorm = glGetUniformLocation(pRenderData_->shaderProgram_, "textureWaterNormal");
 		checkGLError("getAttribs");
 	});
 }
@@ -75,8 +79,6 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 	glUniformMatrix4fv(pRenderData_->imPV, 1, GL_FALSE, glm::value_ptr(matPV));
 	glUniformMatrix4fv(pRenderData_->imW, 1, GL_FALSE, glm::value_ptr(matW));
 
-	checkGLError("uniforms setup 1");
-
 	if (pRenderData_->iEyePos >= 0)
 		glUniform3fv(pRenderData_->iEyePos, 1, &ctx.viewport.camera().position().x);
 	if (pRenderData_->iSubspace >= 0)
@@ -88,7 +90,13 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 	if (pRenderData_->iTime >= 0)
 		glUniform1f(pRenderData_->iTime, rctx.time);
 
-	checkGLError("uniforms setup 2");
+	if (pRenderData_->waterNormalTex) {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, pRenderData_->waterNormalTex);
+		glUniform1i(pRenderData_->iTexWaterNorm, 1);
+	}
+
+	checkGLError("uniforms setup");
 
 	if (rctx.enableClipPlane)
 		glEnable(GL_CLIP_DISTANCE0);
@@ -139,3 +147,6 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 	glDisable(GL_CLIP_DISTANCE0);
 }
 
+void CustomMeshRenderer::setWaterNormalTexture(int texID) {
+	pRenderData_->waterNormalTex = texID;
+}

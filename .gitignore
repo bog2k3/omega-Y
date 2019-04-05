@@ -6,3 +6,4 @@ build/
 *.workspace 
 .vscode 
 *.code-workspace 
+.tern-*

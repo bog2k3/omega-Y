@@ -11,7 +11,7 @@ const float lightIntensity = 2.0;
 vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
 vec3 lightDir = normalize(vec3(2.0, -1.0, -0.9));
 vec3 waterColor = vec3(0.03, 0.08, 0.1) * lightIntensity;
-vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05) * lightIntensity;
+vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05) * 2 * lightIntensity;
 
 uniform vec3 eyePos;
 uniform float subspace;	// represents the subspace we're rendering: +1 above water, -1 below water

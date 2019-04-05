@@ -686,3 +686,7 @@ void Terrain::setWaterRefractionTex(unsigned texId) {
 void Terrain::update(float dt) {
 	pWater_->update(dt);
 }
+
+int Terrain::getWaterNormalTexture() const {
+	return pWater_->getNormalTexture();
+}
