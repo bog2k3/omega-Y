@@ -1,6 +1,5 @@
 #version 330 core
 
-#include common.glsl
 #include underwater.glsl
 
 in vec3 fWPos;
@@ -8,7 +7,9 @@ in vec3 fNormal;
 in float fFog;
 in vec3 fScreenUV;
 
+uniform float time;
 uniform float screenAspectRatio;
+uniform vec3 eyePos;
 uniform mat4 mPV;
 uniform sampler2D textureReflection2D;
 uniform sampler2D textureRefraction;

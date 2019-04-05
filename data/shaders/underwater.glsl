@@ -4,8 +4,6 @@
 #include common.glsl
 #include water-surface.glsl
 
-uniform int bRefraction;
-
 float approxRefractFn(float i0, float hr) {
 	float r = 1.0 - 2.7 * i0 / PI;
 	float p = 1.3 / (r+1) + pow(0.04 / hr, 2.0);
