@@ -1,5 +1,5 @@
 #include "SkyBox.h"
-#include "../CustomRenderContext.h"
+#include "../render/CustomRenderContext.h"
 
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>

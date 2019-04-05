@@ -2,7 +2,7 @@
 
 #include "triangulation.h"
 #include "PerlinNoise.h"
-#include "../CustomRenderContext.h"
+#include "../render/CustomRenderContext.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/shader.h>
@@ -39,8 +39,6 @@ struct Water::RenderData {
 	unsigned textureReflection_2D_;
 	unsigned textureRefraction_Cube_;
 	unsigned textureRefraction_;
-
-	float time_ = 0.f;
 };
 
 struct Water::WaterVertex {
@@ -228,7 +226,7 @@ void Water::draw(RenderContext const& ctx) {
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
 	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
-	glUniform1f(renderData_->iTime_, renderData_->time_);
+	glUniform1f(renderData_->iTime_, CustomRenderContext::fromCtx(ctx).time);
 	glUniform1f(renderData_->iAspectRatio_, ctx.viewport.aspect());
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
@@ -258,7 +256,6 @@ void Water::draw(RenderContext const& ctx) {
 }
 
 void Water::update(float dt) {
-	renderData_->time_ += dt;
 }
 
 int Water::getNormalTexture() const {

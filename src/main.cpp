@@ -1,4 +1,3 @@
-#include "CustomRenderContext.h"
 #include "physics/DebugDrawer.h"
 #include "physics/CollisionChecker.h"
 #include "physics/PhysBodyProxy.h"
@@ -10,6 +9,8 @@
 #include "buildings/BuildingGenerator.h"
 #include "ImgDebugDraw.h"
 #include "render/frustum.h"
+#include "render/CustomRenderContext.h"
+#include "render/CustomMeshRenderer.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -135,7 +136,14 @@ struct RenderData {
 		, renderCtx(viewport)
 		, windowW(winW)
 		, windowH(winH)
-		{}
+		{
+			Shaders::useShaderPreprocessor(&shaderPreprocessor);
+			renderCtx.meshRenderer = new CustomMeshRenderer();
+		}
+
+	~RenderData() {
+		delete renderCtx.meshRenderer, renderCtx.meshRenderer = nullptr;
+	}
 };
 
 template<> void update(std::function<void(float)> *fn, float dt) {
@@ -334,7 +342,8 @@ void physTestDebugDraw(RenderContext const& ctx) {
 	boxMotionState->getWorldTransform(tr);
 	glm::mat4 matTr;
 	tr.getOpenGLMatrix(&matTr[0][0]);
-	MeshRenderer::get()->renderMesh(*boxMesh, matTr);
+	//MeshRenderer::get()->renderMesh(*boxMesh, matTr);
+	CustomRenderContext::fromCtx(ctx).meshRenderer->renderMesh(*boxMesh, matTr, ctx);
 
 	// draw info about simulated body
 	/*rp3d::Transform bodyTr = boxBody->getTransform();
@@ -548,7 +557,6 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
 		return false;
 	out_renderData = new RenderData(winW, winH);
-	Shaders::useShaderPreprocessor(&out_renderData->shaderPreprocessor);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// set up post processing hook
@@ -830,6 +838,7 @@ int main(int argc, char* argv[]) {
 				if (simDT > 0) {
 					PERF_MARKER("frame-update");
 					updateList.update(simDT);
+					pRenderData->renderCtx.time += simDT;
 				}
 
 				{

@@ -4,7 +4,7 @@
 #include "HeightMap.h"
 #include "PerlinNoise.h"
 #include "Water.h"
-#include "../CustomRenderContext.h"
+#include "../render/CustomRenderContext.h"
 
 #include "../BSP/BSPDebugDraw.h"
 
@@ -81,7 +81,6 @@ struct Terrain::RenderData {
 	int iTime_;
 
 	TextureInfo textures_[TerrainVertex::nTextures];
-	float time_ = 0.f;
 };
 
 template<>
@@ -629,7 +628,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
 		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
 		glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
-		glUniform1f(renderData_->iTime_, renderData_->time_);
+		glUniform1f(renderData_->iTime_, rctx.time);
 		if (rctx.clipPlane.y < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
@@ -686,5 +685,4 @@ void Terrain::setWaterRefractionTex(unsigned texId) {
 
 void Terrain::update(float dt) {
 	pWater_->update(dt);
-	renderData_->time_ += dt;
 }

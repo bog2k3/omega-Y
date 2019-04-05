@@ -14,6 +14,8 @@ enum class RenderPass {
 	UI,					// 2D user interface
 };
 
+class CustomMeshRenderer;
+
 class CustomRenderContext : public RenderContext {
 public:
 	CustomRenderContext(Viewport& viewport) : RenderContext(viewport) {
@@ -27,6 +29,9 @@ public:
 	glm::vec4 clipPlane;
 	bool enableClipPlane = false;
 	bool cameraUnderwater = false;
+	float time = 0;
+
+	CustomMeshRenderer* meshRenderer = nullptr;
 };
 
 #endif // __CUST_RENDER_CONTEXT_H__

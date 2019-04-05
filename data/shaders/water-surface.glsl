@@ -1,3 +1,6 @@
+#ifndef WATER_SURFACE_GLSL
+#define WATER_SURFACE_GLSL
+
 #include common.glsl
 
 uniform sampler2D textureWaterNormal;
@@ -46,3 +49,5 @@ vec3 computeWaterNormal(vec2 wPosXZ, float time, float eyeDist, float perturbAmp
 
 	return final;
 }
+
+#endif // WATER_SURFACE_GLSL

@@ -1,16 +1,13 @@
 #version 330 core
 
 #include water-surface.glsl
+#include underwater.glsl
 
 in vec3 fWPos;
 in vec3 fNormal;
 in vec4 fColor;
 in vec2 fUV[5];
 in vec4 fTexBlendFactor;
-
-uniform vec3 eyePos;
-uniform int bReflection;
-uniform float time;
 
 uniform sampler2D tex[5];
 
@@ -42,73 +39,20 @@ void main() {
 	vec4 tFinal = vec4(mix(tGrassOrSand, t23, 1.0 - clamp(fTexBlendFactor.z, 0.0, 1.0)).xyz, 1.0);
 	//tFinal = vec4(clamp(fTexBlendFactor.x, 0.0, 1.0)) + tFinal*0.001;
 
-	vec3 eyeDir = eyePos - fWPos;
-	float eyeDist = length(eyeDir);
-	eyeDir /= eyeDist;
-	float eyeHeight = eyePos.y * (bReflection > 0 ? -1 : +1);
-	const float waterLevel = 0;
+	float eyeDist = length(eyePos - fWPos);
+
+	bool underwater = bRefraction > 0 ^^ eyePos.y < 0;
 
 	// compute lighting
-	//vec3 lightPoint = vec3(0.0, 30.0, 0.0);
-	vec3 lightDir = normalize(vec3(2.0, -1.0, -0.9));
-	//vec3 lightVec = fWPos - lightPoint;
-	//float lightDist = length(lightVec);
-	//vec3 lightDir = lightVec / lightDist;
-	vec3 lightColor = normalize(vec3(1.0, 0.95, 0.9));
-	float lightIntensity = 2.0;
+	vec3 light = underwater ? computeLightingUnderwater(fWPos, normalize(fNormal), eyeDist) : computeLightingAboveWater(normalize(fNormal));
 
-	// compute caustics:
-	const float causticTile = 0.5;
-	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(fWPos.xz * causticTile, time * causticTile, eyeDist, 1.0, false)) * 2, 5), 0, 1);
-	float causticSharpness = 15.0 / pow(1 - fWPos.y, 0.9);
-	causticIntensity = pow(1 - abs(causticIntensity - 0.3), causticSharpness);
-	causticIntensity = fWPos.y < waterLevel ? causticIntensity : 0;
-
-	vec3 causticLight = lightColor * causticIntensity;
-
-	lightColor *= lightIntensity;
-	lightColor += causticLight;
-
-	// for underwater terrain, we need to simulate light absorbtion through water
-	vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 2; // after how many meters of water each light component is halved
-	float lightWaterDistance = fWPos.y / lightDir.y;
-	lightWaterDistance += eyeHeight < 0 ? eyeDist : 0;
-	vec3 absorbFactor = 1.0 / pow(vec3(2.0), vec3(lightWaterDistance) / lightHalveDist);
-	absorbFactor = fWPos.y < waterLevel ? absorbFactor : vec3(1.0);
-
-	lightColor *= absorbFactor;
-
-	vec3 light = lightColor * max(dot(-lightDir, normalize(fNormal)), 0.0);
-
-	vec3 waterColor = vec3(0.03, 0.08, 0.1) * lightIntensity;
-	vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05) * lightIntensity;
-	vec3 ambientLightBelow = waterColor / pow(max(1, 1 - fWPos.y), 1.5);
-	float ambientMixDistance = 1;
-	float ambientMixFactor = clamp(fWPos.y + ambientMixDistance, 0.0, 1.0);
-	vec3 ambientLight = mix(ambientLightBelow, ambientLightAbove, ambientMixFactor);
-
-	vec3 totalLight = light + ambientLight;
-
-	vec4 final = vec4(totalLight * (fColor * tFinal).xyz, 1.0);
-	float Zn = 0.15;
-	float Zf = 500.0;
-	final.a = clamp((gl_FragCoord.z / gl_FragCoord.w - Zn) / (Zf - Zn), 0.0, 1.0); // fragment's z
+	vec3 color = light * (fColor * tFinal).xyz;
 
 	// water fog:
-	vec3 waterNormal = vec3(0.0, 1.0, 0.0);
-	float waterThickness = eyeDist * (eyeHeight < 0 ? 1 : -fWPos.y / (eyeHeight - fWPos.y));
-	//waterThickness *= 0.2;
-	float fogFactor = clamp(1.0 - 1.0 / (waterThickness * 0.05 + 1), 0, 1);
-	float depthFactor = pow(1.0 / (max(0, -eyePos.y) + 1), 0.5);
-	fogFactor *= fWPos.y < waterLevel ? 1.0 : 0.0;
-	final.xyz = mix(final.xyz, waterColor * depthFactor, fogFactor);
+	if (underwater)
+		color = computeWaterFog(fWPos, color, eyeDist);
 
-	// DEBUG:
-	//final = vec4(absorption, 1.0) + 0.01 * final;
-	float f = waterThickness / 20;
-	//f = eyeDist / 50;
-	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
-	//final.xyz = causticLight.xyz + 0.00001 * final.xyz;
+	vec4 final = vec4(color, computeZValue(gl_FragCoord));
 
 	gl_FragColor = final;
 }
