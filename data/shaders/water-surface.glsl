@@ -47,7 +47,7 @@ vec3 computeWaterNormal(vec2 wPosXZ, float time, float eyeDist, float perturbAmp
 	texNormal1 *= lowFreqFactor;
 	texNormal2 *= lowFreqFactor;
 
-	vec3 final = normalize(waterSmoothNormal + (texNormal1 + texNormal2 + texNormal3 + texNormal4) * perturbAmplitude);
+	vec3 final = normalize(waterSmoothNormal * (1-perturbAmplitude) + (texNormal1 + texNormal2 + texNormal3 + texNormal4) * perturbAmplitude);
 
 	return final;
 }

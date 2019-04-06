@@ -159,7 +159,7 @@ void Water::generate(WaterParams params) {
 	float skirtVertSpacing = 30.f; // meters
 	unsigned nSkirtVerts = (2 * PI * extentRadius) / skirtVertSpacing;
 	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
-	nVertices_ = rows * cols + nSkirtVerts;
+	nVertices_ = rows * cols + 2 * nSkirtVerts;
 	pVertices_ = (WaterVertex*)malloc(sizeof(WaterVertex) * nVertices_);
 
 	glm::vec3 topleft {-params_.innerRadius, 0.f, -params_.innerRadius};
@@ -181,6 +181,13 @@ void Water::generate(WaterParams params) {
 		float z = extentRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows*cols+i]) WaterVertex {
 			{ x, 0, z },														// position
+			0.f //1.f																	// fog
+		};
+
+		x = (extentRadius + 50) * cosf(i*skirtVertSector);
+		z = (extentRadius + 50) * sinf(i*skirtVertSector);
+		new(&pVertices_[rows*cols+i + nSkirtVerts]) WaterVertex {
+			{ x, 20, z },														// position
 			1.f																	// fog
 		};
 	}

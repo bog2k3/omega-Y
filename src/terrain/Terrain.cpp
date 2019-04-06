@@ -613,11 +613,6 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
-		// configure backface culling
-		glFrontFace(GL_CW);
-		glCullFace(GL_BACK);
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_CLIP_DISTANCE0);
 		// set-up shader, vertex buffer and uniforms
 		glUseProgram(renderData_->shaderProgram_);
 		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
@@ -642,8 +637,6 @@ void Terrain::draw(RenderContext const& ctx) {
 		glUseProgram(0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_CLIP_DISTANCE0);
 
 		if (renderWireframe_) {	// reset state
 			glLineWidth(1.f);

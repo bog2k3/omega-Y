@@ -92,7 +92,8 @@ vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float ey
 	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
 
 	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, waterSmoothNormal));
-	float displacement = Zn * (targetDist - eyeDist) / targetDist * tan(r_r0);
+	// TODO: must find a better way here that doesn't produce seams
+	float displacement = 0.005; //Zn * (targetDist - eyeDist) / targetDist * tan(r_r0);
 	vec2 s_perturb = (mPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement * 30;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
@@ -129,7 +130,7 @@ void main() {
 	float angleNormalFactor = 1; //pow(abs(dot(eyeDir, waterSmoothNormal)), 0.9);
 
 // normal:
-	float perturbAmplitude = angleNormalFactor * (eyePos.y > 0 ? 1 : 2);
+	float perturbAmplitude = angleNormalFactor * (eyePos.y > 0 ? 0.6 : 1);
 	vec3 normal = computeWaterNormal(fWPos.xz, time * 1.0, eyeDist, perturbAmplitude, true);
 	//normal = waterSmoothNormal;
 
@@ -174,7 +175,7 @@ void main() {
 	foamTransp = pow(abs(foamTransp - 0.38) * 3, 5);
 	float foamFactor = pow(1 / (1 + transmitUWDist), 10);
 	vec3 foamColor = vec3(1, 0.95, 0.85);
-	final.rgb = mix(final.rgb, foamColor, foamFactor * foamTransp);
+	//final.rgb = mix(final.rgb, foamColor, foamFactor * foamTransp);
 
 // fade out far edges of water
 	float alpha = 1 - pow(fFog, 3.0);
@@ -188,6 +189,7 @@ void main() {
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(reflectColor.rgb, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
+	//final.rgb = reflectColor;
 
 	gl_FragColor = final;
 }

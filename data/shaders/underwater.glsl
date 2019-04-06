@@ -14,7 +14,7 @@ float approxRefractFn(float i0, float hr) {
 vec3 approxW(vec3 V, vec3 P, float i0, vec3 Wlim, vec3 P0, float n1, float n2, vec3 N) {
 	float vh = V.y;
 	float ph = -P.y;
-	float hr = vh / (1 + ph);
+	float hr = max(0.1, vh / (1 + ph));
 	float r = approxRefractFn(i0, hr);
 	return Wlim + (P0 - Wlim) * r;
 }
@@ -47,7 +47,7 @@ vec3 refractPos(vec3 wPos, vec3 eyePos) {
 vec3 computeLightingUnderwater(vec3 wPos, vec3 normal, float eyeDist) {
 	// compute caustics:
 	float eyeDistForCaustic = 1.0; // eyeDist
-	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(wPos.xz * causticTextureTile, time * causticTextureTile, eyeDistForCaustic, 1.0, false)) * 2, 5), 0, 1);
+	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(wPos.xz * causticTextureTile, time * causticTextureTile, eyeDistForCaustic, 0.5, false)) * 2, 5), 0, 1);
 	float causticSharpness = 15.0 / pow(1 - wPos.y, 0.9);
 	causticIntensity = pow(1 - abs(causticIntensity - 0.3), causticSharpness);
 	causticIntensity *= lightIntensity / 2;

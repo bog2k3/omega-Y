@@ -98,9 +98,6 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 
 	checkGLError("uniforms setup");
 
-	if (rctx.enableClipPlane)
-		glEnable(GL_CLIP_DISTANCE0);
-
 	glBindVertexArray(mesh.getVAO());
 	if (mesh.vertexAttribsProgramBinding_ != pRenderData_->shaderProgram_) {
 		glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
@@ -144,7 +141,6 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 	if (mesh.getRenderMode() == Mesh::RENDER_MODE_TRIANGLES_WIREFRAME) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	glDisable(GL_CLIP_DISTANCE0);
 }
 
 void CustomMeshRenderer::setWaterNormalTexture(int texID) {

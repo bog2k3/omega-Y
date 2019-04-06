@@ -559,7 +559,12 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
 		return false;
 	out_renderData = new RenderData(winW, winH);
+
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	// configure backface culling
+	glFrontFace(GL_CW);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	// set up post processing hook
 	if (initPostProcessData(winW, winH, out_renderData->postProcessData)) {
@@ -602,7 +607,7 @@ bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_rende
 	// set up viewport and camera
 	out_renderData->viewport.setBkColor({0.f, 0.f, 0.f});
 	out_renderData->viewport.camera().setFOV(PI/2.5f);
-	out_renderData->viewport.camera().setZPlanes(0.15f, 500.f);
+	out_renderData->viewport.camera().setZPlanes(0.15f, 1000.f);
 
 	// done
 	return true;
@@ -660,6 +665,11 @@ void setupRenderPass(RenderData &renderData) {
 		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
 	break;
 	}
+
+	if (renderData.renderCtx.enableClipPlane)
+		glEnable(GL_CLIP_DISTANCE0);
+	else
+		glDisable(GL_CLIP_DISTANCE0);
 }
 
 void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
