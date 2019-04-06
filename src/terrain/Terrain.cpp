@@ -118,7 +118,8 @@ Terrain::Terrain()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag", [this](unsigned id) {
+	Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	[this](unsigned id) {
 		renderData_->shaderProgram_ = id;
 		if (!renderData_->shaderProgram_) {
 			ERROR("Failed to load terrain shaders!");
