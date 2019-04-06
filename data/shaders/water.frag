@@ -166,12 +166,15 @@ void main() {
 	final.rgb = mix(final.rgb, waterColor * depthFactor, fogFactor);
 
 // foam at water edges
-	float foamTile = 1;
-	vec4 foamColor1 = texture(textureFoam, fWPos.xz * foamTile + time * vec2(0.0101020, 0.0987987));
-	vec4 foamColor2 = texture(textureFoam, fWPos.xz * foamTile - time * vec2(0.09859954, 0.112345));
-	vec4 foamColor = pow(foamColor1 * foamColor2 * 3, vec4(1));
+	float foamTile1 = 1;
+	float foamTile2 = 5;
+	vec4 foamSamp1 = texture(textureFoam, fWPos.xz * foamTile1 + time * 0.2 * vec2(0.0101020, 0.0987987));
+	vec4 foamSamp2 = texture(textureFoam, fWPos.xz * foamTile2 - time * 2 * vec2(0.09859954, 0.112345));
+	float foamTransp = (foamSamp1 + foamSamp2).x * 0.5;
+	foamTransp = pow(abs(foamTransp - 0.38) * 3, 5);
 	float foamFactor = pow(1 / (1 + transmitUWDist), 10);
-	final.rgb += foamColor.xyz * foamFactor;
+	vec3 foamColor = vec3(1, 0.95, 0.85);
+	final.rgb = mix(final.rgb, foamColor, foamFactor * foamTransp);
 
 // fade out far edges of water
 	float alpha = 1 - pow(fFog, 3.0);
