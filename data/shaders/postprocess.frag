@@ -43,7 +43,7 @@ vec3 blur(vec2 uv) {
 			float r = sqrt(i*i+j*j);
 			float r_inv = 1.f / (1 + r);
 			div += r_inv;
-			vec2 coord = uv + vec2(i, j) * texSize_inv * 2 + duv;
+			vec2 coord = uv + vec2(i, j) * texSize_inv * 3 + duv;
 			val += texture2D(texSampler, coord).rgb * r_inv;
 		}
 	}
