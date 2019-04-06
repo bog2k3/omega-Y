@@ -13,6 +13,7 @@ uniform mat4 mPV;
 uniform sampler2D textureReflection2D;
 uniform sampler2D textureRefraction;
 uniform samplerCube textureRefractionCube;
+uniform sampler2D textureFoam;
 
 float fresnel(vec3 normal, vec3 incident, float n1, float n2) {
 	// original fresnel code:
@@ -138,20 +139,22 @@ void main() {
 	float dxy = length((screenCoord * 2 - 1) * vec2(screenAspectRatio, 1.0)); // screen-space distance from center
 	float dxyW = dxy * Zn * tan(fov*0.5);// world-space distance from screen center at near-z plane
 
+// refraction:
 	vec4 transmitData = isCameraUnderWater
 		? aboveToUnderTransm(normal, screenCoord, dxyW, eyeDir, eyeDist)
 		: underToAboveTransm(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	vec3 transmitColor = transmitData.xyz;
-	float transmitUWDist = transmitData.w;
+	float transmitUWDist = max(0, transmitData.w);
+	transmitUWDist = transmitUWDist > 10 && transmitUWDist > eyeDist * 5 ? 0 : transmitUWDist;
 
-// compute reflection
+// reflection
 	vec3 reflectColor = isCameraUnderWater
 		? belowReflection(normal, screenCoord, dxyW, eyeDir, eyeDist)
 		: aboveReflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	//reflectColor = vec3(0);
 
-	//vec3 reflectTint = normalize(vec3(0.55, 0.6, 0.65)) * 1.5;
-	//reflectColor.xyz *= reflectTint;
+	vec3 reflectTint = normalize(vec3(0.55, 0.6, 0.65)) * 1.5;
+	reflectColor.xyz *= reflectTint;
 
 // mix reflection and refraction:
 	vec4 final = vec4( transmitColor + reflectColor.xyz, 1.0);
@@ -161,6 +164,14 @@ void main() {
 	float fogFactor = isCameraUnderWater ? clamp(1.0 - 1.0 / (eyeDist * 0.2 + 1), 0, 1) : 0.0;
 	float depthFactor = pow(1.0 / (max(0, -eyePos.y) + 1), 0.5);
 	final.rgb = mix(final.rgb, waterColor * depthFactor, fogFactor);
+
+// foam at water edges
+	float foamTile = 1;
+	vec4 foamColor1 = texture(textureFoam, fWPos.xz * foamTile + time * vec2(0.0101020, 0.0987987));
+	vec4 foamColor2 = texture(textureFoam, fWPos.xz * foamTile - time * vec2(0.09859954, 0.112345));
+	vec4 foamColor = pow(foamColor1 * foamColor2 * 3, vec4(1));
+	float foamFactor = pow(1 / (1 + transmitUWDist), 10);
+	final.rgb += foamColor.xyz * foamFactor;
 
 // fade out far edges of water
 	float alpha = 1 - pow(fFog, 3.0);

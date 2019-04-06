@@ -30,15 +30,17 @@ struct Water::RenderData {
 	int iEyePos_;
 	int iTime_;
 	int iAspectRatio_;
-	int iTexture1_;
+	int iTexNormal;
 	int iTexReflection_2D_;
 	int iTexRefraction_Cube_;
 	int iTexRefraction_;
+	int iTexFoam;
 
 	unsigned textureNormal_;
 	unsigned textureReflection_2D_;
 	unsigned textureRefraction_Cube_;
 	unsigned textureRefraction_;
+	unsigned textureFoam;
 };
 
 struct Water::WaterVertex {
@@ -74,10 +76,11 @@ Water::Water()
 		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
 		renderData_->iAspectRatio_ = glGetUniformLocation(renderData_->shaderProgram_, "screenAspectRatio");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-		renderData_->iTexture1_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
+		renderData_->iTexNormal = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
 		renderData_->iTexReflection_2D_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection2D");
 		renderData_->iTexRefraction_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefractionCube");
 		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
+		renderData_->iTexFoam = glGetUniformLocation(renderData_->shaderProgram_, "textureFoam");
 
 		checkGLError("Water shader load #1");
 
@@ -117,9 +120,14 @@ void Water::setRefractionTexture(unsigned refractionTexId) {
 
 void Water::loadTextures() {
 	renderData_->textureNormal_ = TextureLoader::loadFromPNG("data/textures/water/normal.png", false);
+	renderData_->textureFoam = TextureLoader::loadFromPNG("data/textures/water/foam.png", true);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_NEAREST_MIPMAP_LINEAR);// GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -231,7 +239,7 @@ void Water::draw(RenderContext const& ctx) {
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
-	glUniform1i(renderData_->iTexture1_, 0);
+	glUniform1i(renderData_->iTexNormal, 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_2D_);
 	glUniform1i(renderData_->iTexReflection_2D_, 1);
@@ -241,6 +249,9 @@ void Water::draw(RenderContext const& ctx) {
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureRefraction_Cube_);
 	glUniform1i(renderData_->iTexRefraction_Cube_, 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
+	glUniform1i(renderData_->iTexFoam, 4);
 	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
