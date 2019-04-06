@@ -1,45 +1,66 @@
 #version 330 core
 
+#include common.glsl
+#include underwater.glsl
+
 layout(triangles) in;
 layout(triangle_strip, max_vertices=5) out;
 
 in VertexData {
-	vec3 fWPos;
-	vec3 fNormal;
-	vec4 fColor;
-	vec2 fUV[5];
-	vec4 fTexBlendFactor;
+	vec3 normal;
+	vec4 color;
+	vec2 uv[5];
+	vec4 texBlendFactor;
 } vertexIn[];
 
-out VertexData {
-	vec3 fWPos;
-	vec3 fNormal;
-	vec4 fColor;
-	vec2 fUV[5];
-	vec4 fTexBlendFactor;
+out FragData {
+	vec3 wPos;
+	vec3 normal;
+	vec4 color;
+	vec2 uv[5];
+	vec4 texBlendFactor;
 } vertexOut;
+
+uniform mat4 mPV;
+
+vec4 project(vec3 wPos) {
+	return mPV * vec4(wPos, 1);
+}
+
+vec3 applyRefraction(vec3 wPos) {
+	//return wPos;
+	if (bRefraction > 0 && wPos.y < 0)
+		// refract the position of the vertex
+		return refractPos(wPos, eyePos);
+	else
+		return wPos;
+}
 
 void emitMix(int i1, int i2) {
 	float mixFactor = abs(gl_in[i1].gl_ClipDistance[0]) / (abs(gl_in[i1].gl_ClipDistance[0]) + abs(gl_in[i2].gl_ClipDistance[0]));
-	gl_Position = mix(gl_in[i1].gl_Position, gl_in[i2].gl_Position, mixFactor);
+
+	vec3 wPos = mix(gl_in[i1].gl_Position.xyz, gl_in[i2].gl_Position.xyz, mixFactor);
+	gl_Position = project(wPos);
 	gl_ClipDistance[0] = 0.0;
-	vertexOut.fWPos = mix(vertexIn[i1].fWPos, vertexIn[i2].fWPos, mixFactor);
-	vertexOut.fNormal = mix(vertexIn[i1].fNormal, vertexIn[i2].fNormal, mixFactor);
-	vertexOut.fColor = mix(vertexIn[i1].fColor, vertexIn[i2].fColor, mixFactor);
+	vertexOut.wPos = wPos;
+	vertexOut.normal = mix(vertexIn[i1].normal, vertexIn[i2].normal, mixFactor);
+	vertexOut.color = mix(vertexIn[i1].color, vertexIn[i2].color, mixFactor);
 	for (int i=0; i<5; i++)
-		vertexOut.fUV[i] = mix(vertexIn[i1].fUV[i], vertexIn[i2].fUV[i], mixFactor);
-	vertexOut.fTexBlendFactor = mix(vertexIn[i1].fTexBlendFactor, vertexIn[i2].fTexBlendFactor, mixFactor);
+		vertexOut.uv[i] = mix(vertexIn[i1].uv[i], vertexIn[i2].uv[i], mixFactor);
+	vertexOut.texBlendFactor = mix(vertexIn[i1].texBlendFactor, vertexIn[i2].texBlendFactor, mixFactor);
 	EmitVertex();
 }
 
 void emitSimple(int i) {
-	gl_Position = gl_in[i].gl_Position;
+	vec3 wPos = gl_in[i].gl_Position.xyz;
+	vec3 pos = applyRefraction(wPos);
+	gl_Position = project(pos);
 	gl_ClipDistance[0] = gl_in[i].gl_ClipDistance[0];
-	vertexOut.fWPos = vertexIn[i].fWPos;
-	vertexOut.fNormal = vertexIn[i].fNormal;
-	vertexOut.fColor = vertexIn[i].fColor;
-	vertexOut.fUV = vertexIn[i].fUV;
-	vertexOut.fTexBlendFactor = vertexIn[i].fTexBlendFactor;
+	vertexOut.wPos = wPos;
+	vertexOut.normal = vertexIn[i].normal;
+	vertexOut.color = vertexIn[i].color;
+	vertexOut.uv = vertexIn[i].uv;
+	vertexOut.texBlendFactor = vertexIn[i].texBlendFactor;
 	EmitVertex();
 }
 

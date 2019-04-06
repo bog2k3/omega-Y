@@ -3,27 +3,30 @@
 #include common.glsl
 #include underwater.glsl
 
-in vec4 fColor;
-in vec2 fUV;
-in vec3 fNormal;
-in vec3 fWPos;
+in FragData {
+	vec3 wPos;
+	vec3 normal;
+	vec4 color;
+	vec2 uv[5];
+	vec4 texBlendFactor;
+} frag;
 
 uniform sampler2D tex1;
 
 void main() {
-	vec4 dummy = fColor + vec4(fUV, 0, 0) + vec4(fNormal, 0);
+	vec4 dummy = frag.color + vec4(frag.uv[0], 0, 0) + vec4(frag.normal, 0);
 
-	float eyeDist = length(eyePos - fWPos);
+	float eyeDist = length(eyePos - frag.wPos);
 	bool underwater = subspace < 0;
 
 	// compute lighting
-	vec3 light = underwater ? computeLightingUnderwater(fWPos, normalize(fNormal), eyeDist) : computeLightingAboveWater(normalize(fNormal));
+	vec3 light = underwater ? computeLightingUnderwater(frag.wPos, normalize(frag.normal), eyeDist) : computeLightingAboveWater(normalize(frag.normal));
 
-	vec3 color = light * fColor.xyz + dummy.xyz * 0.001;
+	vec3 color = light * frag.color.xyz + dummy.xyz * 0.001;
 
 	// water fog:
 	if (underwater)
-		color = computeWaterFog(fWPos, color, eyeDist);
+		color = computeWaterFog(frag.wPos, color, eyeDist);
 
 	vec4 final = vec4(color, 1);
 	if (bRefraction > 0 || bReflection > 0)

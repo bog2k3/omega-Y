@@ -37,7 +37,7 @@ struct CustomMeshRenderer::RenderData {
 CustomMeshRenderer::CustomMeshRenderer()
 	: pRenderData_(new RenderData()) {
 	LOGPREFIX("CustomMeshRenderer::ctor");
-	Shaders::createProgram("data/shaders/mesh-custom.vert", "data/shaders/mesh-custom.frag", [this](unsigned id) {
+	Shaders::createProgramGeom("data/shaders/mesh-custom.vert", "data/shaders/watercut.geom", "data/shaders/mesh-custom.frag", [this](unsigned id) {
 		pRenderData_->shaderProgram_ = id;
 		if (pRenderData_->shaderProgram_ == 0) {
 			throw std::runtime_error("Unable to load custom mesh shaders!!");

@@ -8,25 +8,22 @@ in vec3 normal;
 in vec4 color;
 in vec2 uv;
 
-out vec4 fColor;
-out vec2 fUV;
-out vec3 fNormal;
-out vec3 fWPos;
+out VertexData {
+	vec3 normal;
+	vec3 color;
+	vec2 uv[5];
+	vec4 texBlendFactor;
+} vertexOut;
 
 uniform mat4 mPV;
 uniform mat4 mW;
 
 void main() {
 	vec3 wPos = (mW * vec4(pos, 1)).xyz;
-	if (bRefraction > 0) {
-		// refract the position of the vertex
-		wPos = refractPos(wPos, eyePos);
-	}
-	fWPos = wPos;
-	gl_Position = mPV * vec4(wPos, 1);
-	gl_ClipDistance[0] = wPos.y * sign(subspace);// + bRefraction * 0.2;
+	gl_Position = vec4(wPos, 1);
+	gl_ClipDistance[0] = wPos.y * sign(subspace);
 
-    fNormal = (mW * vec4(normal, 0)).xyz;
-    fColor = color;
-    fUV = uv;
+    vertexOut.normal = (mW * vec4(normal, 0)).xyz;
+    vertexOut.color = color.xyz;
+    vertexOut.uv[0] = uv;
 }

@@ -527,7 +527,7 @@ void Terrain::updateRenderBuffers() {
 	uint32_t *indices = (uint32_t*)malloc(6 * triangles_.size() * sizeof(uint32_t));	// allocate twice as much space to make sure we don't overrun
 																						// the buffer when computing above/below water triangles
 	renderData_->trisBelowWater_ = 0;
-	float waterLevelTolerance = 1.f;
+	float waterLevelTolerance = 0.01f;
 	// first loop: indices for tris below water
 	for (unsigned i=0; i<triangles_.size(); i++) {
 		// decide if triangle is at least partially submerged:
