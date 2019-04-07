@@ -49,13 +49,18 @@ float fresnel(vec3 normal, vec3 incident, float n1, float n2) {
 
 vec4 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
 	vec4 refractTarget = texture(textureRefraction, screenCoord);
-	float targetZ = Zn + (Zf - Zn) * refractTarget.a;
-	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
-	float targetDistUW = targetDist - eyeDist; // distance through water to target 0
-
+	//float targetZ = Zn + (Zf - Zn) * refractTarget.a;
+	//float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
+	//float targetDistUW = targetDist - eyeDist; // distance through water to target 0
 	vec3 T = refract(-eyeDir, normal, 1.0 / n_water);
-	float targetDepth = targetDistUW * dot(T, -waterSmoothNormal);
-	float t_t0 = acos(dot(-T, normal)) - acos(dot(-T, waterSmoothNormal));
+	float targetDepth = -(refractTarget.a - 0.5) * 100;
+	float h_d = dot(-T, waterSmoothNormal);
+	float t0 = acos(h_d);
+	float targetDistUW = targetDepth / h_d;
+	float targetDist = eyeDist + targetDistUW;
+
+	//float targetDepth = targetDistUW * dot(T, -waterSmoothNormal);
+	float t_t0 = acos(dot(-T, normal)) - t0;
 	float displacement = Zn * (targetDist - eyeDist) * tan(t_t0) / targetDist;
 	float transmitSampleOutsideFactor = targetDepth > 50 ? 0 : 1;
 
@@ -70,7 +75,7 @@ vec4 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 	return vec4(transmitColor.xyz * fresnelFactor, targetDistUW);
 }
 
-vec4 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
+vec4 aboveToUnderTransm(vec3 normal, vec3 eyeDir, float eyeDist) {
 	vec3 T = refract(-eyeDir, -normal, n_water);
 	vec4 refractTarget = texture(textureRefractionCube, T);
 
@@ -86,28 +91,22 @@ vec4 aboveToUnderTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 	return vec4(refractColor, eyeDist);
 }
 
-vec4 reflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec4 reflectTarget = texture(textureReflection2D, vec2(1 - screenCoord.x, screenCoord.y));
-	float targetZ = Zn + (Zf - Zn) * reflectTarget.a;
-	float targetDist = sqrt(targetZ*targetZ * (1 + dxyW*dxyW / (Zn*Zn)));
-
+vec4 reflection(vec3 normal, vec2 screenCoord, vec3 eyeDir, float eyeDist) {
 	float r_r0 = acos(dot(-eyeDir, normal)) - acos(dot(-eyeDir, waterSmoothNormal));
-	// TODO: must find a better way here that doesn't produce seams
-	float displacement = 0.005; //Zn * (targetDist - eyeDist) / targetDist * tan(r_r0);
-	vec2 s_perturb = (mPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement * 30;
+	float d_amp = 2.0; // displacement amplitude
+	float ds = 0.02;	// distance scale
+	float dp = 0.5;	// distance power
+	float displacement = d_amp * sin(r_r0) / (1 + pow(eyeDist * ds, dp));
+	vec2 s_perturb = (mPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
 	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
-
-	//reflectColor = vec4(s_perturb*30, 0, 1);
-	//reflectColor = vec4(vec3(targetZ), 1);
-
 	return reflectColor;
 }
 
 // compute reflection above water surface
-vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
+vec3 aboveReflection(vec3 normal, vec2 screenCoord, vec3 eyeDir, float eyeDist) {
+	vec4 reflectColor = reflection(normal, screenCoord, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(normal, -eyeDir, n_air, n_water);
 	reflectColor.xyz *= reflectFresnelFactor;
 
@@ -115,8 +114,8 @@ vec3 aboveReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, flo
 }
 
 // compute reflection below water surface
-vec3 belowReflection(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, float eyeDist) {
-	vec4 reflectColor = reflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
+vec3 belowReflection(vec3 normal, vec2 screenCoord, vec3 eyeDir, float eyeDist) {
+	vec4 reflectColor = reflection(normal, screenCoord, eyeDir, eyeDist);
 	float reflectFresnelFactor = fresnel(-normal, -eyeDir, n_water, n_air);
 	reflectColor.xyz *= reflectFresnelFactor;
 
@@ -142,16 +141,16 @@ void main() {
 
 // refraction:
 	vec4 transmitData = isCameraUnderWater
-		? aboveToUnderTransm(normal, screenCoord, dxyW, eyeDir, eyeDist)
+		? aboveToUnderTransm(normal, eyeDir, eyeDist)
 		: underToAboveTransm(normal, screenCoord, dxyW, eyeDir, eyeDist);
 	vec3 transmitColor = transmitData.xyz;
 	float transmitUWDist = max(0, transmitData.w);
-	transmitUWDist = transmitUWDist > 10 && transmitUWDist > eyeDist * 5 ? 0 : transmitUWDist;
+	//transmitUWDist = transmitUWDist > 10 && transmitUWDist > eyeDist * 5 ? 0 : transmitUWDist;
 
 // reflection
 	vec3 reflectColor = isCameraUnderWater
-		? belowReflection(normal, screenCoord, dxyW, eyeDir, eyeDist)
-		: aboveReflection(normal, screenCoord, dxyW, eyeDir, eyeDist);
+		? belowReflection(normal, screenCoord, eyeDir, eyeDist)
+		: aboveReflection(normal, screenCoord, eyeDir, eyeDist);
 	//reflectColor = vec3(0);
 
 	vec3 reflectTint = normalize(vec3(0.55, 0.6, 0.65)) * 1.5;
@@ -172,10 +171,11 @@ void main() {
 	vec4 foamSamp1 = texture(textureFoam, fWPos.xz * foamTile1 + time * 0.2 * vec2(0.0101020, 0.0987987));
 	vec4 foamSamp2 = texture(textureFoam, fWPos.xz * foamTile2 - time * 2 * vec2(0.09859954, 0.112345));
 	float foamTransp = (foamSamp1 + foamSamp2).x * 0.5;
-	foamTransp = pow(abs(foamTransp - 0.38) * 3, 5);
-	float foamFactor = pow(1 / (1 + transmitUWDist), 10);
+	foamTransp = pow(abs(foamTransp - 0.38) * 3, 3);
+	float foamFactor = pow(1.0 / (1 + transmitUWDist), 8);
 	vec3 foamColor = vec3(1, 0.95, 0.85);
-	//final.rgb = mix(final.rgb, foamColor, foamFactor * foamTransp);
+	float foamLight = (transmitColor.x + transmitColor.y + transmitColor.z) * 1.5;
+	final.rgb = mix(final.rgb, foamColor * foamLight, foamFactor * foamTransp);
 
 // fade out far edges of water
 	float alpha = 1 - pow(fFog, 3.0);
@@ -185,7 +185,7 @@ void main() {
 
 // DEBUG:
 	//float f = pow(abs((T_targetElevation - transmitElevation) / T_targetElevation), 2.2);
-	//float f = pow(displacement*20, 2.2);
+	//float f = pow(transmitUWDist, 2.2);
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(reflectColor.rgb, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;

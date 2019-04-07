@@ -56,7 +56,8 @@ void main() {
 
 	vec4 final = vec4(color, 1);
 	if (bRefraction > 0 || bReflection > 0)
-		final.a = computeZValue(gl_FragCoord);
+		final.a = (frag.wPos.y / 200) + 0.5;
+		//final.a = computeZValue(gl_FragCoord);
 
 	gl_FragColor = final;
 }
