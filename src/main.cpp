@@ -1,16 +1,14 @@
 #include "physics/DebugDrawer.h"
 #include "physics/CollisionChecker.h"
 #include "physics/PhysBodyProxy.h"
+
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
+
 #include "PlayerInputHandler.h"
-#include "terrain/Terrain.h"
-#include "sky/SkyBox.h"
-#include "buildings/BuildingGenerator.h"
 #include "ImgDebugDraw.h"
-#include "render/frustum.h"
-#include "render/CustomRenderContext.h"
-#include "render/CustomMeshRenderer.h"
+
+#include "render/render.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -20,22 +18,18 @@
 #include <boglfw/renderOpenGL/Shape3D.h>
 #include <boglfw/renderOpenGL/Mesh.h>
 #include <boglfw/renderOpenGL/MeshRenderer.h>
-#include <boglfw/renderOpenGL/shader.h>
-#include <boglfw/renderOpenGL/DefaultShaderPreprocessor.h>
 #include <boglfw/renderOpenGL/drawable.h>
-#include <boglfw/renderOpenGL/RenderHelpers.h>
 #include <boglfw/input/GLFWInput.h>
 #include <boglfw/input/InputEvent.h>
 #include <boglfw/World.h>
-#include <boglfw/math/math3D.h>
 #include <boglfw/OSD/SignalViewer.h>
 #include <boglfw/GUI/GuiSystem.h>
 #include <boglfw/Infrastructure.h>
+
 #include <boglfw/net/connection.h>
 #include <boglfw/net/listener.h>
 
 #include <boglfw/entities/Gizmo.h>
-#include <boglfw/entities/Box.h>
 #include <boglfw/entities/CameraController.h>
 
 #include <boglfw/utils/log.h>
@@ -72,8 +66,8 @@ bool updatePaused = false;
 bool slowMo = false;
 bool captureFrame = false;
 bool signalQuit = false;
-bool renderWireFrame = false;
-bool renderPhysicsDebug = false;
+
+RenderConfig renderCfg;
 
 physics::DebugDrawer* physDebugDraw = nullptr;
 
@@ -82,71 +76,14 @@ std::weak_ptr<PlayerEntity> player;
 std::weak_ptr<CameraController> cameraCtrl;
 PlayerInputHandler playerInputHandler;
 
-Terrain* pTerrain = nullptr;
-TerrainConfig terrainConfig;
-SkyBox* pSkyBox = nullptr;
+//Terrain* pTerrain = nullptr;
+//TerrainConfig terrainConfig;
+//SkyBox* pSkyBox = nullptr;
 
-PhysBodyProxy boxBodyMeta(nullptr);
-btBoxShape* boxShape = nullptr;
-btMotionState* boxMotionState = nullptr;
-Mesh* boxMesh = nullptr;
-
-struct PostProcessData {
-	unsigned VAO = 0;
-	unsigned VBO = 0;
-	unsigned IBO = 0;
-	unsigned shaderProgram = 0;
-	int iTexSampler = 0;
-	int iUnderwater = 0;
-	int iTexSize = 0;
-	int iTime = 0;
-
-	bool underwater = false;
-	glm::vec2 textureSize;
-	float time = 0;
-};
-
-struct WaterRenderData {
-	unsigned refractionFB = 0;
-	unsigned refractionTex = 0;
-	unsigned refractionDepth = 0;
-	unsigned refractionFB_width = 0;
-	unsigned refractionFB_height = 0;
-	unsigned reflectionFB = 0;
-	unsigned reflectionTex = 0;
-	unsigned reflectionDepth = 0;
-	unsigned reflectionFB_width = 0;
-	unsigned reflectionFB_height = 0;
-
-	glm::vec3 waterColor {0.06f, 0.16f, 0.2f};
-};
-
-struct RenderData {
-	Viewport viewport;
-	CustomRenderContext renderCtx;
-	unsigned windowW = 0;
-	unsigned windowH = 0;
-	int defaultFrameBuffer = 0;
-
-	WaterRenderData waterRenderData;
-	PostProcessData postProcessData;
-
-	DefaultShaderPreprocessor shaderPreprocessor;
-
-	RenderData(unsigned winW, unsigned winH)
-		: viewport(0, 0, winW, winH)
-		, renderCtx(viewport)
-		, windowW(winW)
-		, windowH(winH)
-		{
-			Shaders::useShaderPreprocessor(&shaderPreprocessor);
-			renderCtx.meshRenderer = new CustomMeshRenderer();
-		}
-
-	~RenderData() {
-		delete renderCtx.meshRenderer, renderCtx.meshRenderer = nullptr;
-	}
-};
+//PhysBodyProxy boxBodyMeta(nullptr);
+//btBoxShape* boxShape = nullptr;
+//btMotionState* boxMotionState = nullptr;
+//Mesh* boxMesh = nullptr;
 
 template<> void update(std::function<void(float)> *fn, float dt) {
 	(*fn)(dt);
@@ -204,25 +141,25 @@ void handleDebugKeys(InputEvent& ev) {
 		updatePaused ^= true;
 	break;
 	case GLFW_KEY_R: {
-		pTerrain->generate(terrainConfig);
-		pTerrain->finishGenerate();
+		//pTerrain->generate(terrainConfig);
+		//pTerrain->finishGenerate();
 
 		// reset player
-		auto sPlayer = player.lock();
-		if (sPlayer)
-			sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
+		//auto sPlayer = player.lock();
+		//if (sPlayer)
+		//	sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
 	} break;
 	case GLFW_KEY_Q:
-		renderWireFrame = !renderWireFrame;
-		pTerrain->setWireframeMode(renderWireFrame);
+		renderCfg.renderWireFrame = !renderCfg.renderWireFrame;
+		//pTerrain->setWireframeMode(renderWireFrame);
 	break;
 	case GLFW_KEY_E:
-		renderPhysicsDebug = !renderPhysicsDebug;
+		renderCfg.renderPhysicsDebug = !renderCfg.renderPhysicsDebug;
 	break;
 	case GLFW_KEY_X:
-		World::getGlobal<ImgDebugDraw>()->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
+		/*World::getGlobal<ImgDebugDraw>()->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
 			terrainConfig.minElevation, terrainConfig.maxElevation, ImgDebugDraw::FMT_GRAYSCALE, ImgDebugDraw::FILTER_LINEAR);
-		World::getGlobal<ImgDebugDraw>()->enable();
+		World::getGlobal<ImgDebugDraw>()->enable();*/
 	break;
 	case GLFW_KEY_Z:
 		World::getGlobal<ImgDebugDraw>()->disable();
@@ -277,7 +214,7 @@ bool toggleMouseCapture() {
 	return isCaptured;
 }
 
-void physTestInit() {
+/*void physTestInit() {
 	// create test body
 	boxShape = new btBoxShape({0.5f, 0.5f, 0.5f});
 	float mass = 100.f;
@@ -302,59 +239,9 @@ void physTestInit() {
 
 	boxMesh = new Mesh();
 	boxMesh->createBox(glm::vec3{0.f}, 1.f, 1.f, 1.f);
-}
+}*/
 
-void initEmptySession(Camera& camera) {
-	// origin gizmo
-	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
-	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
-
-	// free camera
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.f, 1.f, 2.f}, glm::vec3{-1.f, -0.5f, -1.f});
-	freeCam = sFreeCam;
-	World::getInstance().takeOwnershipOf(sFreeCam);
-
-	// camera controller (this one moves the render camera to the position of the target entity)
-	auto sCamCtrl = std::make_shared<CameraController>(&camera);
-	cameraCtrl = sCamCtrl;
-	World::getInstance().takeOwnershipOf(sCamCtrl);
-
-	// player
-	//auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
-	//player = sPlayer;
-	//World::getInstance().takeOwnershipOf(sPlayer);
-
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
-	playerInputHandler.setTargetObject(freeCam);
-
-	//initSky();
-	//initTerrain();
-	
-	//physTestInit();
-}
-
-void physTestDebugDraw(RenderContext const& ctx) {
-	if (renderPhysicsDebug)
-		World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
-	// draw the test body's representation:
-	btTransform tr;
-	boxMotionState->getWorldTransform(tr);
-	glm::mat4 matTr;
-	tr.getOpenGLMatrix(&matTr[0][0]);
-	//MeshRenderer::get()->renderMesh(*boxMesh, matTr);
-	CustomRenderContext::fromCtx(ctx).meshRenderer->renderMesh(*boxMesh, matTr, ctx);
-
-	// draw info about simulated body
-	/*rp3d::Transform bodyTr = boxBody->getTransform();
-	auto pos = bodyTr.getPosition();
-	std::stringstream ss;
-	ss << "Body pos: " << pos.x << "; " << pos.y << "; " << pos.z;
-	GLText::get()->print(ss.str(),
-		{20, 100, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-		0, 20, glm::vec3(1.f, 1.f, 1.f));*/
-}
-
-void physTestDestroy() {
+/*void physTestDestroy() {
 	if (boxBodyMeta.bodyPtr) {
 		World::getGlobal<btDiscreteDynamicsWorld>()->removeRigidBody(boxBodyMeta.bodyPtr);
 		delete boxBodyMeta.bodyPtr, boxBodyMeta.bodyPtr = nullptr;
@@ -362,7 +249,7 @@ void physTestDestroy() {
 		delete boxMotionState, boxMotionState = nullptr;
 	}
 	delete boxMesh;
-}
+}*/
 
 void drawDebugTexts() {
 	std::string texts[] {
@@ -414,89 +301,6 @@ void drawDebug(RenderContext const& ctx) {
 	}*/
 }
 
-bool initPostProcessData(unsigned winW, unsigned winH, PostProcessData &postProcessData) {
-	checkGLError();
-	glGenVertexArrays(1, &postProcessData.VAO);
-	glGenBuffers(1, &postProcessData.VBO);
-	glGenBuffers(1, &postProcessData.IBO);
-	PostProcessData *pPostProcessData = &postProcessData; // need this to avoid a compiler bug where capturing a reference by reference will result in UB
-	// load shader:
-	Shaders::createProgram("data/shaders/postprocess.vert", "data/shaders/postprocess.frag", [pPostProcessData](unsigned id) {
-		pPostProcessData->shaderProgram = id;
-		if (!pPostProcessData->shaderProgram) {
-			ERROR("Unabled to load post-processing shaders!");
-			return;
-		}
-		unsigned posAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "pos");
-		unsigned uvAttrIndex = glGetAttribLocation(pPostProcessData->shaderProgram, "uv");
-		pPostProcessData->iTexSampler = glGetUniformLocation(pPostProcessData->shaderProgram, "texSampler");
-		pPostProcessData->iUnderwater = glGetUniformLocation(pPostProcessData->shaderProgram, "underwater");
-		pPostProcessData->iTexSize = glGetUniformLocation(pPostProcessData->shaderProgram, "texSize_inv");
-		pPostProcessData->iTime = glGetUniformLocation(pPostProcessData->shaderProgram, "time");
-
-		glBindVertexArray(pPostProcessData->VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, pPostProcessData->VBO);
-		glEnableVertexAttribArray(posAttrIndex);
-		glVertexAttribPointer(posAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0);
-		glEnableVertexAttribArray(uvAttrIndex);
-		glVertexAttribPointer(uvAttrIndex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*2));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pPostProcessData->IBO);
-		glBindVertexArray(0);
-		checkGLError("Postprocess shader");
-	});
-	if (!postProcessData.shaderProgram)
-		return false;
-
-	postProcessData.textureSize = glm::vec2(1.f / winW, 1.f / winH);
-
-	// create screen quad:
-	float screenQuadPosUV[] {
-		-1.f, -1.f, 0.f, 0.f, 	// bottom-left
-		-1.f, +1.f, 0.f, 1.f, 	// top-left
-		+1.f, +1.f, 1.f, 1.f, 	// top-right
-		+1.f, -1.f, 1.f, 0.f, 	// bottom-right
-	};
-	uint16_t screenQuadIdx[] {
-		0, 1, 2, 0, 2, 3
-	};
-
-	glBindBuffer(GL_ARRAY_BUFFER, postProcessData.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadPosUV), screenQuadPosUV, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, postProcessData.IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(screenQuadIdx), screenQuadIdx, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	return !checkGLError("initPostProcessData");
-}
-
-void renderPostProcess(PostProcessData &postProcessData) {
-	checkGLError("renderPostProcess 0");
-	// do the post-processing render
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glBindVertexArray(postProcessData.VAO);
-	checkGLError("renderPostProcess 0a");
-	glUseProgram(postProcessData.shaderProgram);
-	checkGLError("renderPostProcess 0b");
-	glUniform1i(postProcessData.iTexSampler, 0);
-	glUniform1i(postProcessData.iUnderwater, postProcessData.underwater ? 1 : 0);
-	glUniform2fv(postProcessData.iTexSize, 1, &postProcessData.textureSize.x);
-	glUniform1f(postProcessData.iTime, postProcessData.time);
-	checkGLError("renderPostProcess 1");
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-	glUseProgram(0);
-	glBindVertexArray(0);
-
-	checkGLError("renderPostProcess 3");
-}
-
-void deletePostProcessData(PostProcessData &postProcessData) {
-	glDeleteBuffers(1, &postProcessData.VBO);
-	glDeleteBuffers(1, &postProcessData.IBO);
-	glDeleteVertexArrays(1, &postProcessData.VAO);
-}
-
 void initPhysics() {
 	// collision configuration contains default setup for memory , collision setup . Advanced users can create their own configuration .
 	auto collisionConfig = new btDefaultCollisionConfiguration();
@@ -526,7 +330,7 @@ void initWorld() {
 	initPhysics();
 }
 
-void initTerrain(RenderData &renderData) {
+/*void initTerrain(RenderData &renderData) {
 	terrainConfig.vertexDensity = 1.f;	// vertices per meter
 	terrainConfig.width = 200;
 	terrainConfig.length = 200;
@@ -551,7 +355,7 @@ void initTerrain(RenderData &renderData) {
 void initSky() {
 	pSkyBox = new SkyBox();
 	pSkyBox->load("data/textures/sky/1");
-}
+}*/
 
 bool iamhost = false;
 net::listener netlistener;
@@ -611,187 +415,34 @@ void stopNetwork() {
 		net::closeConnection(con);
 }
 
-bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_renderData) {
-	// set up window
-	if (!gltInitGLFW(winW, winH, winTitle, 0, false))
-		return false;
-	out_renderData = new RenderData(winW, winH);
+void initEmptySession(RenderData *pRenderData) {
+	// origin gizmo
+	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
+	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-	// configure backface culling
-	glFrontFace(GL_CW);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	// free camera
+	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.f, 1.f, 2.f}, glm::vec3{-1.f, -0.5f, -1.f});
+	freeCam = sFreeCam;
+	World::getInstance().takeOwnershipOf(sFreeCam);
 
-	// set up post processing hook
-	if (initPostProcessData(winW, winH, out_renderData->postProcessData)) {
-		unsigned multisamples = 4; // >0 for MSSAA, 0 to disable
-		gltSetPostProcessHook(PostProcessStep::POST_DOWNSAMPLING, std::bind(renderPostProcess, std::ref(out_renderData->postProcessData)), multisamples);
-	}
+	// camera controller (this one moves the render camera to the position of the target entity)
+	auto sCamCtrl = std::make_shared<CameraController>(&pRenderData->viewport.camera());
+	cameraCtrl = sCamCtrl;
+	World::getInstance().takeOwnershipOf(sCamCtrl);
+	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
 
-	// set up water refraction framebuffer
-	out_renderData->waterRenderData.refractionFB_width = winW / 2;
-	out_renderData->waterRenderData.refractionFB_height = winH / 2;
-	if (!gltCreateFrameBuffer(out_renderData->waterRenderData.refractionFB_width, out_renderData->waterRenderData.refractionFB_height, GL_RGBA16, 0,
-								out_renderData->waterRenderData.refractionFB, out_renderData->waterRenderData.refractionTex,
-								&out_renderData->waterRenderData.refractionDepth))
-		return false;
-	glBindTexture(GL_TEXTURE_2D, out_renderData->waterRenderData.refractionTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	// player
+	/*auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
+	player = sPlayer;
+	World::getInstance().takeOwnershipOf(sPlayer);
 
-	// set up water reflection framebuffer
-	out_renderData->waterRenderData.reflectionFB_width = winW / 2;
-	out_renderData->waterRenderData.reflectionFB_height = winH / 2;
-	if (!gltCreateFrameBuffer(out_renderData->waterRenderData.reflectionFB_width, out_renderData->waterRenderData.reflectionFB_height, GL_RGBA8, 0,
-								out_renderData->waterRenderData.reflectionFB, out_renderData->waterRenderData.reflectionTex,
-								&out_renderData->waterRenderData.reflectionDepth))
-		return false;
-	glBindTexture(GL_TEXTURE_2D, out_renderData->waterRenderData.reflectionTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
+	playerInputHandler.setTargetObject(freeCam);
 
-	// load render helpers
-	RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
-	RenderHelpers::load(rcfg);
+	initSky();
+	initTerrain(*pRenderData);
 
-	// set up viewport and camera
-	out_renderData->viewport.setBkColor({0.f, 0.f, 0.f});
-	out_renderData->viewport.camera().setFOV(PI/2.5f);
-	out_renderData->viewport.camera().setZPlanes(0.15f, 1000.f);
-
-	// done
-	return true;
-}
-
-void unloadRender(RenderData* &renderData) {
-	deletePostProcessData(renderData->postProcessData);
-	glDeleteTextures(1, &renderData->waterRenderData.refractionTex);
-	glDeleteRenderbuffers(1, &renderData->waterRenderData.refractionDepth);
-	glDeleteFramebuffers(1, &renderData->waterRenderData.refractionFB);
-	delete renderData, renderData = nullptr;
-	RenderHelpers::unload();
-	glfwDestroyWindow(gltGetWindow());
-}
-
-void setupRenderPass(RenderData &renderData) {
-	float waterDepthFactor = pow(1.f / (max(0.f, -renderData.viewport.camera().position().y) + 1), 0.5f);
-	switch (renderData.renderCtx.renderPass) {
-	case RenderPass::WaterReflection:
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.waterRenderData.reflectionFB);
-		renderData.viewport.setArea(0, 0, renderData.waterRenderData.reflectionFB_width, renderData.waterRenderData.reflectionFB_height);
-		renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
-		renderData.viewport.clear();
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? -1.f : +1.f, 0.f, 0.f};
-		renderData.renderCtx.enableClipPlane = true;
-		renderData.viewport.camera().mirror(renderData.renderCtx.clipPlane);
-	break;
-	case RenderPass::WaterRefraction: {
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.waterRenderData.refractionFB);
-		renderData.viewport.setArea(0, 0, renderData.waterRenderData.refractionFB_width, renderData.waterRenderData.refractionFB_height);
-		renderData.viewport.setBkColor(glm::vec4(0.07f, 0.16f, 0.2f, 1.f));
-		renderData.viewport.clear();
-		renderData.viewport.setBkColor(glm::vec3(0.f));
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? +1.f : -1.f, 0.f, 0.f};
-		renderData.renderCtx.enableClipPlane = true;
-		renderData.viewport.camera().mirror(renderData.renderCtx.clipPlane);
-	} break;
-	case RenderPass::Standard: {
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater  ? -1.f : +1.f, 0.f, 0.f};
-		renderData.renderCtx.enableClipPlane = true;
-		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
-		if (renderData.renderCtx.cameraUnderwater) {
-			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
-			renderData.viewport.clear();
-		}
-	} break;
-	case RenderPass::WaterSurface:
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
-		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
-		renderData.renderCtx.enableClipPlane = false;
-	break;
-	case RenderPass::UI:
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
-		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
-	break;
-	}
-
-	if (renderData.renderCtx.enableClipPlane)
-		glEnable(GL_CLIP_DISTANCE0);
-	else
-		glDisable(GL_CLIP_DISTANCE0);
-}
-
-void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
-	renderData.viewport.clear();
-
-	std::vector<drawable> underDraw = drawlist3D;
-	std::vector<Entity*> underEntities;
-	// append all drawable entities from world:
-	// TODO - use a BSP or something to only get entities under water level
-	World::getInstance().getEntities(underEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
-	for (auto e : underEntities)
-		underDraw.push_back(e);
-
-	std::vector<drawable> aboveDraw { pSkyBox };
-	aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
-	std::vector<Entity*> aboveEntities;
-	// append all drawable entities from world:
-	// TODO - use a BSP or something to only get entities above water level
-	World::getInstance().getEntities(aboveEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
-	for (auto e : aboveEntities)
-		aboveDraw.push_back(e);
-
-	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
-	renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
-
-	checkGLError("render() setup");
-
-	// 1st pass - reflection
-	renderData.renderCtx.renderPass = RenderPass::WaterReflection;
-	setupRenderPass(renderData);
-	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
-
-	checkGLError("render() pass #1");
-
-	// 2nd pass - refraction
-	renderData.renderCtx.renderPass = RenderPass::WaterRefraction;
-	setupRenderPass(renderData);
-	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? aboveDraw : underDraw);
-
-	checkGLError("render() pass #2");
-
-	// 3rd pass - standard rendering of scene
-	renderData.renderCtx.renderPass = RenderPass::Standard;
-	setupRenderPass(renderData);
-	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
-
-	checkGLError("render() pass #3");
-
-	// 4th pass - water surface
-	renderData.renderCtx.renderPass = RenderPass::WaterSurface;
-	setupRenderPass(renderData);
-	renderData.viewport.render({pTerrain});
-
-	checkGLError("render() pass #4");
-
-	// last - 2D UI
-	renderData.renderCtx.renderPass = RenderPass::UI;
-	setupRenderPass(renderData);
-	renderData.viewport.render(drawlist2D);
-
-	checkGLError("render() final");
-
-	renderData.renderCtx.renderPass = RenderPass::None;
-
-	renderData.postProcessData.underwater = renderData.renderCtx.cameraUnderwater;
+	physTestInit();*/
 }
 
 int main(int argc, char* argv[]) {
@@ -829,15 +480,10 @@ int main(int argc, char* argv[]) {
 		UpdateList updateList;
 		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 		updateList.add(&CollisionChecker::update);
-		updateList.add(&playerInputHandler);
+		//updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
 		//updateList.add(pSkyBox);
 		//updateList.add(pTerrain);
-
-		auto postProcessUpdate = [pRenderData](float dt) {
-			pRenderData->postProcessData.time += dt;
-		};
-		updateList.add(&postProcessUpdate);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -854,8 +500,8 @@ int main(int argc, char* argv[]) {
 		};
 
 		std::vector<drawable> drawList3D;
-		drawList3D.push_back(&physTestDebugDraw);
-		drawList3D.push_back(pTerrain);
+		//drawList3D.push_back(&physTestDebugDraw);
+		//drawList3D.push_back(pTerrain);
 
 		std::vector<drawable> drawList2D;
 		drawList2D.push_back(&sigViewer);
@@ -863,7 +509,7 @@ int main(int argc, char* argv[]) {
 		drawList2D.push_back(drawDebug);
 		drawList2D.push_back(pImgDebugDraw);
 
-		initEmptySession(pRenderData->viewport.camera());
+		initEmptySession(pRenderData);
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
@@ -909,6 +555,7 @@ int main(int argc, char* argv[]) {
 					PERF_MARKER("frame-update");
 					updateList.update(simDT);
 					pRenderData->renderCtx.time += simDT;
+					pRenderData->postProcessData.time += simDT;
 				}
 
 				{
