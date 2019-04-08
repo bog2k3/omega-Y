@@ -1,4 +1,5 @@
 #include "render.h"
+#include "../session/session.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/utils/log.h>
@@ -238,47 +239,47 @@ void setupRenderPass(RenderData &renderData) {
 		glDisable(GL_CLIP_DISTANCE0);
 }
 
-void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D) {
+void render(RenderData &renderData, Session &session) {
 	LOGPREFIX("RENDER");
 	renderData.viewport.clear();
 
-	//if ()
+	if (session.type() == Session::GAME) {
+		std::vector<drawable> underDraw = drawlist3D;
+		std::vector<Entity*> underEntities;
+		// append all drawable entities from world:
+		// TODO - use a BSP or something to only get entities under water level
+		World::getInstance().getEntities(underEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
+		for (auto e : underEntities)
+			underDraw.push_back(e);
 
-	std::vector<drawable> underDraw = drawlist3D;
-	std::vector<Entity*> underEntities;
-	// append all drawable entities from world:
-	// TODO - use a BSP or something to only get entities under water level
-	World::getInstance().getEntities(underEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
-	for (auto e : underEntities)
-		underDraw.push_back(e);
+		std::vector<drawable> aboveDraw {};
+		aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
+		std::vector<Entity*> aboveEntities;
+		// append all drawable entities from world:
+		// TODO - use a BSP or something to only get entities above water level
+		World::getInstance().getEntities(aboveEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
+		for (auto e : aboveEntities)
+			aboveDraw.push_back(e);
 
-	std::vector<drawable> aboveDraw {};
-	aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
-	std::vector<Entity*> aboveEntities;
-	// append all drawable entities from world:
-	// TODO - use a BSP or something to only get entities above water level
-	World::getInstance().getEntities(aboveEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
-	for (auto e : aboveEntities)
-		aboveDraw.push_back(e);
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
+		renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
 
-	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
-	renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
+		checkGLError("render() setup");
 
-	checkGLError("render() setup");
+		// 1st pass - reflection
+		renderData.renderCtx.renderPass = RenderPass::WaterReflection;
+		setupRenderPass(renderData);
+		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
 
-	// 1st pass - reflection
-	renderData.renderCtx.renderPass = RenderPass::WaterReflection;
-	setupRenderPass(renderData);
-	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw);
+		checkGLError("render() pass #1");
 
-	checkGLError("render() pass #1");
+		// 2nd pass - refraction
+		renderData.renderCtx.renderPass = RenderPass::WaterRefraction;
+		setupRenderPass(renderData);
+		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? aboveDraw : underDraw);
 
-	// 2nd pass - refraction
-	renderData.renderCtx.renderPass = RenderPass::WaterRefraction;
-	setupRenderPass(renderData);
-	renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? aboveDraw : underDraw);
-
-	checkGLError("render() pass #2");
+		checkGLError("render() pass #2");
+	}
 
 	// 3rd pass - standard rendering of scene
 	renderData.renderCtx.renderPass = RenderPass::Standard;

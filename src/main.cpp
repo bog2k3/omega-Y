@@ -480,7 +480,7 @@ int main(int argc, char* argv[]) {
 		UpdateList updateList;
 		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 		updateList.add(&CollisionChecker::update);
-		//updateList.add(&playerInputHandler);
+		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
 		//updateList.add(pSkyBox);
 		//updateList.add(pTerrain);
