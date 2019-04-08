@@ -37,11 +37,11 @@ vec3 applyRefraction(vec3 wPos) {
 }
 
 void emitMix(int i1, int i2) {
-	float mixFactor = abs(gl_in[i1].gl_ClipDistance[0]) / (abs(gl_in[i1].gl_ClipDistance[0]) + abs(gl_in[i2].gl_ClipDistance[0]));
+	float mixFactor = abs(gl_in[i1].gl_Position.y) / (abs(gl_in[i1].gl_Position.y) + abs(gl_in[i2].gl_Position.y));
 
 	vec3 wPos = mix(gl_in[i1].gl_Position.xyz, gl_in[i2].gl_Position.xyz, mixFactor);
 	gl_Position = project(wPos);
-	gl_ClipDistance[0] = 0.0;
+	gl_ClipDistance[0] = 0.01;
 	vertexOut.wPos = wPos;
 	vertexOut.normal = mix(vertexIn[i1].normal, vertexIn[i2].normal, mixFactor);
 	vertexOut.color = mix(vertexIn[i1].color, vertexIn[i2].color, mixFactor);

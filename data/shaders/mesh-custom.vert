@@ -21,7 +21,7 @@ uniform mat4 mW;
 void main() {
 	vec3 wPos = (mW * vec4(pos, 1)).xyz;
 	gl_Position = vec4(wPos, 1);
-	gl_ClipDistance[0] = wPos.y * sign(subspace) + bReflection * 0.1 + bRefraction * 0.01;
+	gl_ClipDistance[0] = wPos.y * sign(subspace);
 
     vertexOut.normal = (mW * vec4(normal, 0)).xyz;
     vertexOut.color = color.xyz;
