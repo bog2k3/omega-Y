@@ -1,7 +1,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include <boglfw/utils/drawable.h>
+#include <boglfw/renderOpenGL/drawable.h>
 #include <boglfw/utils/updatable.h>
 
 #include <vector>
@@ -19,6 +19,7 @@ public:
 	~Session();
 
 	SessionType type() const { return type_; }
+	bool enableWaterRender() const { return enableWaterRender_; }
 
 	std::vector<drawable> & drawList3D() { return drawList3D_; }
 	std::vector<drawable> & drawList2D() { return drawList2D_; }
@@ -27,8 +28,14 @@ public:
 
 private:
 	SessionType type_;
+	bool enableWaterRender_ = false;
 	std::vector<drawable> drawList3D_;
 	std::vector<drawable> drawList2D_;
+
+	friend Session* createLobbySession();
+	friend Session* createHostSession();
+	friend Session* createJoinSession();
+	friend Session* createGameSession();
 };
 
 Session* createLobbySession();

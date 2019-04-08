@@ -17,6 +17,7 @@ Session* createJoinSession() {
 
 Session* createGameSession() {
 	Session* s = new Session(Session::GAME);
+	s->enableWaterRender_ = true;
 	return s;
 }
 

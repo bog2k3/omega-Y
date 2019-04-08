@@ -243,7 +243,10 @@ void render(RenderData &renderData, Session &session) {
 	LOGPREFIX("RENDER");
 	renderData.viewport.clear();
 
-	if (session.type() == Session::GAME) {
+	auto &drawlist3D = session.drawList3D();
+	auto &drawList2D = session.drawList2D();
+
+	if (session.enableWaterRender()) {
 		std::vector<drawable> underDraw = drawlist3D;
 		std::vector<Entity*> underEntities;
 		// append all drawable entities from world:
@@ -289,11 +292,13 @@ void render(RenderData &renderData, Session &session) {
 	checkGLError("render() pass #3");
 
 	// 4th pass - water surface
-	renderData.renderCtx.renderPass = RenderPass::WaterSurface;
-	setupRenderPass(renderData);
-	//renderData.viewport.render({pTerrain});
+	if (session.enableWaterRender()) {
+		renderData.renderCtx.renderPass = RenderPass::WaterSurface;
+		setupRenderPass(renderData);
+		//renderData.viewport.render({pTerrain});
 
-	checkGLError("render() pass #4");
+		checkGLError("render() pass #4");
+	}
 
 	// last - 2D UI
 	renderData.renderCtx.renderPass = RenderPass::UI;
