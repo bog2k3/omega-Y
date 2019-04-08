@@ -4,6 +4,7 @@
 #include "HeightMap.h"
 #include "PerlinNoise.h"
 #include "Water.h"
+#include "../render/CustomRenderContext.h"
 
 #include "../BSP/BSPDebugDraw.h"
 
@@ -41,8 +42,8 @@ struct Terrain::TerrainVertex {
 	glm::vec2 uv[nTextures];	// uvs for each texture layer
 	glm::vec4 texBlendFactor;	// 4 texture blend factors: x is between grass1 & grass2,
 								// 							y between rock1 & rock2
-								//							z between grass and rock
-								//							w between everything and sand
+								//							z between grass/sand and rock (highest priority)
+								//							w between grass and sand
 
 	TerrainVertex() = default;
 };
@@ -62,14 +63,23 @@ struct Terrain::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
-	unsigned shaderProgram_;
-	unsigned iPos_;
-	unsigned iNormal_;
-	unsigned iColor_;
-	unsigned iUV_;
-	unsigned iTexBlendF_;
-	unsigned imPV_;
-	unsigned iSampler_;
+	int trisBelowWater_;
+	int trisAboveWater_;
+	int shaderProgram_;
+	int iPos_;
+	int iNormal_;
+	int iColor_;
+	int iUV_;
+	int iTexBlendF_;
+	int iTextureWaterNormal_;
+	int imPV_;
+	int iSampler_;
+	int iEyePos_;
+	int iSubspace_;
+	int ibRefraction_;
+	int ibReflection_;
+	int iTime_;
+
 	TextureInfo textures_[TerrainVertex::nTextures];
 };
 
@@ -108,19 +118,26 @@ Terrain::Terrain()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	Shaders::createProgram("data/shaders/terrain.vert", "data/shaders/terrain.frag", [this](unsigned id) {
+	Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	[this](unsigned id) {
 		renderData_->shaderProgram_ = id;
 		if (!renderData_->shaderProgram_) {
 			ERROR("Failed to load terrain shaders!");
-			throw std::runtime_error("Failed to load terrain shaders");
+			return;
 		}
 		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
 		renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
 		renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
 		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
+		renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
+		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
+		renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
+		renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
+		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -327,7 +344,6 @@ void Terrain::generate(TerrainConfig const& settings) {
 
 	LOGLN("Generating water . . .");
 	pWater_->generate(WaterParams {
-		config_.seaLevel,				// water level
 		terrainRadius,					// inner radius
 		seaBedRadius - terrainRadius + 200,// outer extent
 		max(0.05f, 2.f / terrainRadius),// vertex density
@@ -453,26 +469,50 @@ void Terrain::computeTextureWeights() {
 	for (unsigned i=0; i<rows_*cols_; i++) {
 		// grass/rock factor is determined by slope
 		// each one of grass and rock have two components blended together by a perlin factor for low-freq variance
-		float u = (pVertices_[i].pos.x - bottomLeft.x) / config_.width * 0.15;
-		float v = (pVertices_[i].pos.z - bottomLeft.z) / config_.length * 0.15;
+		float u = (pVertices_[i].pos.x - bottomLeft.x) / config_.width;
+		float v = (pVertices_[i].pos.z - bottomLeft.z) / config_.length;
+		// #1 Grass vs Dirt factor
 		pVertices_[i].texBlendFactor.x = grassBias
-											+ pnoise.getNorm(u, v, 7.f)
-											+ 0.3f * pnoise.get(u*2, v*2, 7.f)
-											+ 0.1 * pnoise.get(u*4, v*4, 2.f);	// dirt / grass
-		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v, u, 7.f) + 0.5 * pnoise.get(v*4, u*4, 2.f);	// rock1 / rock2
-		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
-		// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
-		float hFactor = (pVertices_[i].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
-		hFactor = pow(hFactor, 1.5f);	// hFactor is 1.0 at the highest elevation, 0.0 at the lowest.
-		cutoffY += (1.0 - cutoffY) * hFactor;
-		pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
+											+ pnoise.getNorm(u*0.15, v*0.15, 7.f)
+											+ 0.3f * pnoise.get(u*0.3, v*0.3, 7.f)
+											+ 0.1 * pnoise.get(u*0.6, v*0.6, 2.f);	// dirt / grass
+		// #2 Rock1 vs Rock2 factor
+		pVertices_[i].texBlendFactor.y = pnoise.getNorm(v*0.15, u*0.15, 7.f) + 0.5 * pnoise.get(v*0.6, u*0.6, 2.f);	// rock1 / rock2
 
-		// sand factor -> some distance above water level and everything below is sand
-		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*10, v*10, 1.f); // meters
-		if (pVertices_[i].pos.y < config_.seaLevel + beachHeight) {
-			float sandFactor = min(1.f, config_.seaLevel + beachHeight - pVertices_[i].pos.y);
-			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
+		// #3 Rock vs Grass/Sand factor (highest priority)
+		float cutoffY = 0.80f;	// y-component of normal above which grass is used instead of rock
+		if (pVertices_[i].pos.y > 0) {
+			// above water grass-rock coefficient
+			// height factor for grass vs rock: the higher the vertex, the more likely it is to be rock
+			float hFactor = clamp(pVertices_[i].pos.y / config_.maxElevation, 0.f, 1.f); // hFactor is 1.0 at the highest elevation, 0.0 at sea level.
+			hFactor = pow(hFactor, 1.5f);
+			cutoffY += (1.0 - cutoffY) * hFactor;
+			pVertices_[i].texBlendFactor.z = pVertices_[i].normal.y > cutoffY ? 1.f : 0.f; // grass vs rock
+		} else {
+			// this is below water
+			if (u <= 0.01 || v <= 0.01 || u >= 0.99 || v >= 0.99) {
+				// edges are always sand
+				pVertices_[i].texBlendFactor.z = 1.f;
+			} else {
+				if (pVertices_[i].normal.y > cutoffY + 0.1f) {
+					// below water rock coefficient based on perlin noise
+					float noise = pnoise.get(u*0.15, v*0.15, 7.f)
+								+ 0.3 * pnoise.get(u*0.6, v*0.6, 7.f)
+								+ 0.1 * pnoise.get(u*1.0, v*1.0, 7.f);
+					float sandBias = 0.4f * pVertices_[i].normal.y; // flat areas are more likely to be sand rather than rock
+					pVertices_[i].texBlendFactor.z = noise + sandBias > 0 ? 1.f : 0.25f;
+				} else
+					pVertices_[i].texBlendFactor.z = 0.2f; // steep underwater areas are still rock
+			}
 		}
+
+		// #4 Grass vs Sand factor -> some distance above water level and everything below is sand or rock
+		float beachHeight = 1.f + 1.5f * pnoise.getNorm(u*1.5, v*1.5, 1.f); // meters
+		if (pVertices_[i].pos.y < beachHeight) {
+			float sandFactor = min(1.f, beachHeight - pVertices_[i].pos.y);
+			pVertices_[i].texBlendFactor.w = pow(sandFactor, 1.5f);
+		} else
+			pVertices_[i].texBlendFactor.w = 0;
 	}
 }
 
@@ -484,14 +524,38 @@ void Terrain::updateRenderBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, nVertices_ * sizeof(TerrainVertex), pVertices_, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	uint32_t *indices = (uint32_t*)malloc(3 * triangles_.size() * sizeof(uint32_t));
+	uint32_t *indices = (uint32_t*)malloc(6 * triangles_.size() * sizeof(uint32_t));	// allocate twice as much space to make sure we don't overrun
+																						// the buffer when computing above/below water triangles
+	renderData_->trisBelowWater_ = 0;
+	float waterLevelTolerance = 0.01f;
+	// first loop: indices for tris below water
 	for (unsigned i=0; i<triangles_.size(); i++) {
-		indices[i*3 + 0] = triangles_[i].iV1;
-		indices[i*3 + 1] = triangles_[i].iV2;
-		indices[i*3 + 2] = triangles_[i].iV3;
+		// decide if triangle is at least partially submerged:
+		if (pVertices_[triangles_[i].iV1].pos.y >= waterLevelTolerance
+			&& pVertices_[triangles_[i].iV2].pos.y >= waterLevelTolerance
+			&& pVertices_[triangles_[i].iV3].pos.y >= waterLevelTolerance)
+			continue;
+		indices[renderData_->trisBelowWater_*3 + 0] = triangles_[i].iV1;
+		indices[renderData_->trisBelowWater_*3 + 1] = triangles_[i].iV2;
+		indices[renderData_->trisBelowWater_*3 + 2] = triangles_[i].iV3;
+		renderData_->trisBelowWater_++;
 	}
+	// second loop: indices for tris above water
+	renderData_->trisAboveWater_ = 0;
+	for (unsigned i=0; i<triangles_.size(); i++) {
+		// check if the triangle is at least partially above water
+		if (pVertices_[triangles_[i].iV1].pos.y <= -waterLevelTolerance
+			&& pVertices_[triangles_[i].iV2].pos.y <= -waterLevelTolerance
+			&& pVertices_[triangles_[i].iV3].pos.y <= -waterLevelTolerance)
+			continue;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 0] = triangles_[i].iV1;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 1] = triangles_[i].iV2;
+		indices[renderData_->trisBelowWater_*3 + renderData_->trisAboveWater_*3 + 2] = triangles_[i].iV3;
+		renderData_->trisAboveWater_++;
+	}
+	assertDbg(renderData_->trisBelowWater_ + renderData_->trisAboveWater_ >= triangles_.size());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * triangles_.size() * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * (renderData_->trisBelowWater_ + renderData_->trisAboveWater_) * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	free(indices);
 }
@@ -524,56 +588,70 @@ void Terrain::updatePhysics() {
 	physicsBodyMeta_.createBody(bodyCfg);
 }
 
-void Terrain::draw(Viewport* vp) {
-	if (renderWireframe_) {
-		glLineWidth(2.f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-	// set-up textures
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
-	// configure backface culling
-	glFrontFace(GL_CW);
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
-	// set-up shader, vertex buffer and uniforms
-	glUseProgram(renderData_->shaderProgram_);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
-	for (unsigned i=0; i<TerrainVertex::nTextures; i++)
-		glUniform1i(renderData_->iSampler_ + i, i);
-	glBindVertexArray(renderData_->VAO_);
-	// do the drawing
-	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
-	// unbind stuff
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// draw vertex normals
-	/*for (unsigned i=0; i<nVertices_; i++) {
-		Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
-	}*/
-
-	if (!renderWireframe_)
-		pWater_->draw(vp);
-
-	if (renderWireframe_) {	// reset state
-		glLineWidth(1.f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+void Terrain::draw(RenderContext const& ctx) {
+	if (!renderData_->shaderProgram_) {
+		return;
 	}
 
-	//BSPDebugDraw::draw(*pBSP_);
-	//for (unsigned i=0; i<triangles_.size() / 10; i++)
-	//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
+	auto const& rctx = CustomRenderContext::fromCtx(ctx);
+
+	if (rctx.renderPass == RenderPass::Standard || rctx.renderPass == RenderPass::WaterReflection || rctx.renderPass == RenderPass::WaterRefraction) {
+		if (renderWireframe_) {
+			glLineWidth(2.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		// set-up textures
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
+		// set-up shader, vertex buffer and uniforms
+		glUseProgram(renderData_->shaderProgram_);
+		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
+		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
+		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
+			glUniform1i(renderData_->iSampler_ + i, i);
+		glUniform1i(renderData_->iTextureWaterNormal_, 5);
+		glBindVertexArray(renderData_->VAO_);
+		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
+		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
+		glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
+		glUniform1f(renderData_->iTime_, rctx.time);
+		if (rctx.clipPlane.y < 0) {
+			// draw below-water subspace:
+			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
+		} else {
+			// draw above-water subspace:
+			glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
+		}
+		// unbind stuff}
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		if (renderWireframe_) {	// reset state
+			glLineWidth(1.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+		// draw vertex normals
+		/*for (unsigned i=0; i<nVertices_; i++) {
+			Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
+		}*/
+		//BSPDebugDraw::draw(*pBSP_);
+		//for (unsigned i=0; i<triangles_.size() / 10; i++)
+		//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
+	} else if (!renderWireframe_ && rctx.renderPass == RenderPass::WaterSurface) {
+		pWater_->draw(ctx);
+	}
 }
 
 float Terrain::getHeightValue(glm::vec3 const& where) const {
@@ -591,10 +669,18 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 	return config_.minElevation;	// no triangles exist at the given location
 }
 
-void Terrain::setWaterReflectionTex(unsigned texId) {
-	pWater_->setReflectionTexture(texId);
+void Terrain::setWaterReflectionTex(unsigned texId_2D, unsigned texId_Cube) {
+	pWater_->setReflectionTexture(texId_2D, texId_Cube);
+}
+
+void Terrain::setWaterRefractionTex(unsigned texId) {
+	pWater_->setRefractionTexture(texId);
 }
 
 void Terrain::update(float dt) {
 	pWater_->update(dt);
+}
+
+int Terrain::getWaterNormalTexture() const {
+	return pWater_->getNormalTexture();
 }

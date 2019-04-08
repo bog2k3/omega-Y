@@ -46,7 +46,7 @@ PlayerEntity::PlayerEntity(glm::vec3 position, float heading)
 PlayerEntity::~PlayerEntity() {
 }
 
-void PlayerEntity::draw(Viewport* vp) {
+void PlayerEntity::draw(RenderContext const& ctx) {
 	pWeapon_->draw(transform_);
 }
 

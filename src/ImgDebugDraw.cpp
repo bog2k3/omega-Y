@@ -152,7 +152,7 @@ void ImgDebugDraw::setValues(const float* values, int width, int height, float r
 	checkGLError("ImgDebugDraw image data");
 }
 
-void ImgDebugDraw::draw(Viewport* vp) {
+void ImgDebugDraw::draw(RenderContext const& ctx) {
 	if (!enabled_)
 		return;
 	int oldDepthFunc; glGetIntegerv(GL_DEPTH_FUNC, &oldDepthFunc);

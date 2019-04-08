@@ -2,7 +2,9 @@
 
 #include "triangulation.h"
 #include "PerlinNoise.h"
+#include "../render/CustomRenderContext.h"
 
+#include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
@@ -21,25 +23,28 @@ struct Water::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
 	unsigned IBO_;
-	unsigned shaderProgram_;
-	unsigned iPos_;
-	unsigned iFog_;
-	unsigned iUV_;
-	unsigned imPV_;
-	unsigned iEyePos_;
-	unsigned iTime_;
-	unsigned iTexDuDv_;
-	unsigned iTexReflection_;
+	int shaderProgram_;
+	int iPos_;
+	int iFog_;
+	int imPV_;
+	int iEyePos_;
+	int iTime_;
+	int iAspectRatio_;
+	int iTexNormal;
+	int iTexReflection_2D_;
+	int iTexRefraction_Cube_;
+	int iTexRefraction_;
+	int iTexFoam;
 
-	unsigned textureDuDv_;
-	unsigned textureReflection_;
-
-	float time_ = 0.f;
+	unsigned textureNormal_;
+	unsigned textureReflection_2D_;
+	unsigned textureRefraction_Cube_;
+	unsigned textureRefraction_;
+	unsigned textureFoam;
 };
 
 struct Water::WaterVertex {
 	glm::vec3 pos;
-	glm::vec2 uv;
 	float fog;
 
 	WaterVertex() = default;
@@ -63,16 +68,21 @@ Water::Water()
 		renderData_->shaderProgram_ = id;
 		if (!renderData_->shaderProgram_) {
 			ERROR("Failed to load water shaders!");
-			throw std::runtime_error("Failed to load water shaders");
+			return;
 		}
 		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
 		renderData_->iFog_ = glGetAttribLocation(renderData_->shaderProgram_, "fog");
-		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
+		renderData_->iAspectRatio_ = glGetUniformLocation(renderData_->shaderProgram_, "screenAspectRatio");
 		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
-		renderData_->iTexDuDv_ = glGetUniformLocation(renderData_->shaderProgram_, "textureDuDv");
-		renderData_->iTexReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection");
+		renderData_->iTexNormal = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
+		renderData_->iTexReflection_2D_ = glGetUniformLocation(renderData_->shaderProgram_, "textureReflection2D");
+		renderData_->iTexRefraction_Cube_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefractionCube");
+		renderData_->iTexRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "textureRefraction");
+		renderData_->iTexFoam = glGetUniformLocation(renderData_->shaderProgram_, "textureFoam");
+
+		checkGLError("Water shader load #1");
 
 		glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
@@ -80,16 +90,13 @@ Water::Water()
 		glEnableVertexAttribArray(renderData_->iPos_);
 		glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
 			(void*)offsetof(WaterVertex, pos));
+		checkGLError("Water shader load #2");
 		if (renderData_->iFog_ > 0) {
 			glEnableVertexAttribArray(renderData_->iFog_);
 			glVertexAttribPointer(renderData_->iFog_, 1, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
 				(void*)offsetof(WaterVertex, fog));
 		}
-		if (renderData_->iUV_ > 0) {
-			glEnableVertexAttribArray(renderData_->iUV_);
-			glVertexAttribPointer(renderData_->iUV_, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex),
-				(void*)(offsetof(WaterVertex, uv)));
-		}
+		checkGLError("Water shader load #3");
 		glBindVertexArray(0);
 	});
 
@@ -102,13 +109,23 @@ Water::~Water()
 		delete renderData_, renderData_ = nullptr;
 }
 
-void Water::setReflectionTexture(unsigned reflectionTexCubeMapId) {
-	renderData_->textureReflection_ = reflectionTexCubeMapId;
+void Water::setReflectionTexture(unsigned texId_2D, unsigned texId_Cube) {
+	renderData_->textureReflection_2D_ = texId_2D;
+	renderData_->textureRefraction_Cube_ = texId_Cube;
+}
+
+void Water::setRefractionTexture(unsigned refractionTexId) {
+	renderData_->textureRefraction_ = refractionTexId;
 }
 
 void Water::loadTextures() {
-	renderData_->textureDuDv_ = TextureLoader::loadFromPNG("data/textures/water/dudv.png", false);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureDuDv_);
+	renderData_->textureNormal_ = TextureLoader::loadFromPNG("data/textures/water/normal.png", false);
+	renderData_->textureFoam = TextureLoader::loadFromPNG("data/textures/water/foam.png", true);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_NEAREST_MIPMAP_LINEAR);// GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -142,7 +159,7 @@ void Water::generate(WaterParams params) {
 	float skirtVertSpacing = 30.f; // meters
 	unsigned nSkirtVerts = (2 * PI * extentRadius) / skirtVertSpacing;
 	float skirtVertSector = 2 * PI / nSkirtVerts; // sector size between two skirt vertices
-	nVertices_ = rows * cols + nSkirtVerts;
+	nVertices_ = rows * cols + 2 * nSkirtVerts;
 	pVertices_ = (WaterVertex*)malloc(sizeof(WaterVertex) * nVertices_);
 
 	glm::vec3 topleft {-params_.innerRadius, 0.f, -params_.innerRadius};
@@ -154,9 +171,8 @@ void Water::generate(WaterParams params) {
 	for (unsigned i=0; i<rows; i++)
 		for (unsigned j=0; j<cols; j++) {
 			new(&pVertices_[i*rows + j]) WaterVertex {
-				topleft + glm::vec3(dx * j, params_.waterLevel, dz * i),	// position
-				{dx*j / wTexW, dz*i / wTexH},								// uv
-				0.f															// fog
+				topleft + glm::vec3(dx * j, 0, dz * i),	// position
+				0.f										// fog
 			};
 		}
 	// compute skirt vertices
@@ -164,8 +180,14 @@ void Water::generate(WaterParams params) {
 		float x = extentRadius * cosf(i*skirtVertSector);
 		float z = extentRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows*cols+i]) WaterVertex {
-			{ x, params_.waterLevel, z },										// position
-			{(x+params_.innerRadius) / wTexW, (z+params_.innerRadius) / wTexH},	// uv
+			{ x, 0, z },														// position
+			0.f //1.f																	// fog
+		};
+
+		x = (extentRadius + 50) * cosf(i*skirtVertSector);
+		z = (extentRadius + 50) * sinf(i*skirtVertSector);
+		new(&pVertices_[rows*cols+i + nSkirtVerts]) WaterVertex {
+			{ x, 20, z },														// position
 			1.f																	// fog
 		};
 	}
@@ -209,22 +231,35 @@ void Water::updateRenderBuffers() {
 	free(indices);
 }
 
-void Water::draw(Viewport* vp) {
+void Water::draw(RenderContext const& ctx) {
+	if (!renderData_->shaderProgram_) {
+		return;
+	}
 	// configure backface culling
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
-	glUniform3fv(renderData_->iEyePos_, 1, &vp->camera()->position().x);
-	glUniform1f(renderData_->iTime_, renderData_->time_);
+	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
+	glUniform1f(renderData_->iTime_, CustomRenderContext::fromCtx(ctx).time);
+	glUniform1f(renderData_->iAspectRatio_, ctx.viewport.aspect());
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureDuDv_);
-	glUniform1i(renderData_->iTexDuDv_, 0);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
+	glUniform1i(renderData_->iTexNormal, 0);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureReflection_);
-	glUniform1i(renderData_->iTexReflection_, 1);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(vp->camera()->matProjView()));
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_2D_);
+	glUniform1i(renderData_->iTexReflection_2D_, 1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);
+	glUniform1i(renderData_->iTexRefraction_, 2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureRefraction_Cube_);
+	glUniform1i(renderData_->iTexRefraction_Cube_, 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
+	glUniform1i(renderData_->iTexFoam, 4);
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
@@ -239,5 +274,8 @@ void Water::draw(Viewport* vp) {
 }
 
 void Water::update(float dt) {
-	renderData_->time_ += dt;
+}
+
+int Water::getNormalTexture() const {
+	return renderData_->textureNormal_;
 }

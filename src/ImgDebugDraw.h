@@ -1,7 +1,7 @@
 #ifndef __IMG_DEBUG_DRAW_H__
 #define __IMG_DEBUG_DRAW_H__
 
-class Viewport;
+class RenderContext;
 
 class ImgDebugDraw {
 public:
@@ -23,7 +23,7 @@ public:
 	void enable() { enabled_ = true; }
 	void disable() { enabled_ = false; }
 
-	void draw(Viewport* vp);
+	void draw(RenderContext const& ctx);
 
 private:
 	struct RenderData;

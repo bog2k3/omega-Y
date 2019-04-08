@@ -4,7 +4,6 @@
 #include <vector>
 
 struct WaterParams {
-	float waterLevel = 0.f;
 	float innerRadius = 50.f;	// radius of 'detailed' water mesh -> should cover the playable area
 	float outerExtent = 100.f;	// extend from the innerRadius to make the water appear infinite - this area will have fewer vertices
 	float vertexDensity = 0.1f;	// vertices per meter
@@ -12,7 +11,7 @@ struct WaterParams {
 									// if false, a square of length 2*innerRadius will be used instead (faster)
 };
 
-class Viewport;
+class RenderContext;
 struct RenderData;
 struct Triangle;
 
@@ -23,10 +22,13 @@ public:
 
 	void generate(WaterParams params);
 
-	void setReflectionTexture(unsigned reflectionTexCubeMapId);
+	void setReflectionTexture(unsigned texId_2D, unsigned texId_Cube);
+	void setRefractionTexture(unsigned refractionTexId);
 
 	void update(float dt);
-	void draw(Viewport* v);
+	void draw(RenderContext const& ctx);
+
+	int getNormalTexture() const;
 
 	struct WaterVertex;
 
