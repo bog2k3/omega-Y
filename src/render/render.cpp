@@ -9,6 +9,7 @@
 #include <boglfw/math/math3D.h>
 #include <boglfw/entities/Entity.h>
 #include <boglfw/World.h>
+#include <boglfw/GUI/GuiSystem.h>
 
 #include <GLFW/glfw3.h>
 #include <GL/glew.h>
@@ -271,6 +272,7 @@ void renderPostProcess(RenderData &renderData) {
 	// now we render the UI and 2D stuff
 	setupRenderPass(renderData, RenderPass::UI);
 	renderData.viewport.render(postProcessData.uiDrawList);
+	renderData.viewport.render({World::getGlobal<GuiSystem>()});
 	renderData.viewport.render({&renderData.drawDebugData});
 
 	checkGLError("render UI");

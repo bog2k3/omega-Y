@@ -1,7 +1,21 @@
 #include "session.h"
 
+#include "../GUI/MainMenu.h"
+
+#include <boglfw/World.h>
+#include <boglfw/GUI/GuiSystem.h>
+
 Session* createLobbySession() {
 	Session* s = new Session(Session::LOBBY);
+
+	auto guiSystem = World::getGlobal<GuiSystem>();
+	auto mainMenu = std::make_shared<MainMenu>(guiSystem->getViewportSize());
+	guiSystem->addElement(mainMenu);
+
+	mainMenu->onExit.add([s]() {
+		s->onNewSessionRequest.trigger(Session::EXIT_GAME);
+	});
+
 	return s;
 }
 
@@ -26,7 +40,7 @@ Session::Session(SessionType type)
 }
 
 Session::~Session() {
-
+	World::getGlobal<GuiSystem>()->clear();
 }
 
 void Session::update(float dt) {

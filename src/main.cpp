@@ -26,6 +26,7 @@
 #include <boglfw/OSD/SignalViewer.h>
 #include <boglfw/GUI/GuiSystem.h>
 #include <boglfw/Infrastructure.h>
+#include <boglfw/utils/Event.h>
 
 #include <boglfw/net/connection.h>
 #include <boglfw/net/listener.h>
@@ -175,7 +176,7 @@ void handleDebugKeys(InputEvent& ev) {
 }
 
 void handleGUIInputs(InputEvent& ev) {
-	// call guiSystem.handleInput(ev)
+	World::getGlobal<GuiSystem>()->handleInput(ev);
 }
 
 void handlePlayerInputs(InputEvent& ev) {
@@ -338,6 +339,8 @@ void initWorld(RenderData &renderData) {
 
 	auto pImgDebugDraw = new ImgDebugDraw();
 	World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
+
+	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.renderCtx.viewport, {0.f, 0.f}, {renderData.windowW, renderData.windowH}));
 }
 
 /*void initTerrain(RenderData &renderData) {
@@ -383,11 +386,12 @@ void newConnection(net::result result, net::connection connection) {
 }
 
 bool initNetwork(int argc, char** argv) {
+	LOGPREFIX("NETWORK");
 	auto printUsage = []() {
 		LOGLN("Usage:\nOmegaY host portNumber\nOR\nOmegaY join host port");
 	};
 	if (argc < 2) {
-		ERROR("No arguments specified for networking.");
+		LOGLN("No arguments specified for networking.");
 		return true;
 	}
 	if (!strcmp(argv[1], "host")) {
@@ -425,8 +429,24 @@ void stopNetwork() {
 		net::closeConnection(con);
 }
 
-void initSession() {
-	pSession = createLobbySession();
+void changeSession(Session::SessionType type);
+
+void initSession(Session::SessionType type) {
+	switch (type) {
+	case Session::LOBBY:
+		pSession = createLobbySession();
+	break;
+	case Session::HOST_SETUP:
+	break;
+	case Session::JOIN_WAIT:
+	break;
+	case Session::EXIT_GAME:
+		signalQuit = true;
+	break;
+	}
+
+	if (pSession)
+		pSession->onNewSessionRequest.add(changeSession);
 
 	// origin gizmo
 	/*glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
@@ -455,6 +475,12 @@ void initSession() {
 	initTerrain(*pRenderData);
 
 	physTestInit();*/
+}
+
+void changeSession(Session::SessionType type) {
+	if (pSession)
+		delete pSession, pSession = nullptr;
+	initSession(type);
 }
 
 int main(int argc, char* argv[]) {
@@ -504,7 +530,7 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		initSession();
+		initSession(Session::LOBBY);
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");

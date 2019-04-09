@@ -3,6 +3,7 @@
 
 #include <boglfw/renderOpenGL/drawable.h>
 #include <boglfw/utils/updatable.h>
+#include <boglfw/utils/Event.h>
 
 #include <vector>
 #include <memory>
@@ -20,6 +21,7 @@ public:
 		HOST_SETUP,	// host game setup screen
 		JOIN_WAIT,	// after joining a session that is being setup by the host
 		GAME,		// during game play, after the session is started by the host
+		EXIT_GAME,
 	};
 
 	Session(SessionType type);
@@ -35,6 +37,8 @@ public:
 	std::weak_ptr<CameraController> cameraCtrl() const { return cameraCtrl_; }
 
 	void update(float dt);
+
+	Event<void(SessionType)> onNewSessionRequest;
 
 	bool enableWaterRender_ = false;
 	Terrain* pTerrain_ = nullptr;
