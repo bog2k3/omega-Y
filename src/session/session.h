@@ -5,6 +5,13 @@
 #include <boglfw/utils/updatable.h>
 
 #include <vector>
+#include <memory>
+
+class Terrain;
+class Water;
+class FreeCamera;
+class PlayerEntity;
+class CameraController;
 
 class Session {
 public:
@@ -19,18 +26,28 @@ public:
 	~Session();
 
 	SessionType type() const { return type_; }
-	bool enableWaterRender() const { return enableWaterRender_; }
 
 	std::vector<drawable> & drawList3D() { return drawList3D_; }
 	std::vector<drawable> & drawList2D() { return drawList2D_; }
 
+	std::weak_ptr<FreeCamera> freeCam() const { return freeCam_; }
+	std::weak_ptr<PlayerEntity> player() const { return player_; }
+	std::weak_ptr<CameraController> cameraCtrl() const { return cameraCtrl_; }
+
 	void update(float dt);
+
+	bool enableWaterRender_ = false;
+	Terrain* pTerrain_ = nullptr;
+	Water* pWater_ = nullptr;
 
 private:
 	SessionType type_;
-	bool enableWaterRender_ = false;
 	std::vector<drawable> drawList3D_;
 	std::vector<drawable> drawList2D_;
+
+	std::weak_ptr<FreeCamera> freeCam_;
+	std::weak_ptr<PlayerEntity> player_;
+	std::weak_ptr<CameraController> cameraCtrl_;
 
 	friend Session* createLobbySession();
 	friend Session* createHostSession();

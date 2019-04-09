@@ -1,6 +1,6 @@
-#include "physics/DebugDrawer.h"
 #include "physics/CollisionChecker.h"
 #include "physics/PhysBodyProxy.h"
+#include "physics/DebugDrawer.h"
 
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
@@ -9,6 +9,7 @@
 #include "ImgDebugDraw.h"
 
 #include "render/render.h"
+#include "session/session.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -69,12 +70,9 @@ bool signalQuit = false;
 
 RenderConfig renderCfg;
 
-physics::DebugDrawer* physDebugDraw = nullptr;
-
-std::weak_ptr<FreeCamera> freeCam;
-std::weak_ptr<PlayerEntity> player;
-std::weak_ptr<CameraController> cameraCtrl;
 PlayerInputHandler playerInputHandler;
+
+Session *pSession = nullptr;
 
 //Terrain* pTerrain = nullptr;
 //TerrainConfig terrainConfig;
@@ -111,13 +109,15 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 		captureFrame = true;
 	break;
 	case GLFW_KEY_TAB: {
-		auto sCamCtrl = cameraCtrl.lock();
-		if (sCamCtrl->getAttachedEntity().lock() == player.lock()) {
-			sCamCtrl->attachToEntity(freeCam, glm::vec3{0.f});
-			playerInputHandler.setTargetObject(freeCam);
+		if (!pSession)
+			break;
+		auto sCamCtrl = pSession->cameraCtrl().lock();
+		if (sCamCtrl->getAttachedEntity().lock() == pSession->player().lock()) {
+			sCamCtrl->attachToEntity(pSession->freeCam(), glm::vec3{0.f});
+			playerInputHandler.setTargetObject(pSession->freeCam());
 		} else {
-			sCamCtrl->attachToEntity(player, glm::vec3{0.f});
-			playerInputHandler.setTargetObject(player);
+			sCamCtrl->attachToEntity(pSession->player(), glm::vec3{0.f});
+			playerInputHandler.setTargetObject(pSession->player());
 		}
 	} break;
 	default:
@@ -282,9 +282,13 @@ void drawDebugTexts() {
 				{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
 				18, glm::vec3(1.f, 0.5f, 0.1f));
 	}
+
+	GLText::get()->print("Omega-Y v0.1",
+		{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
+		20, glm::vec3(0.5f, 0.9, 1.0f));
 }
 
-void drawDebug(RenderContext const& ctx) {
+void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 	/*Frustum f(ctx.viewport.camera().matProjView());
 	Trapezoid t = projectFrustum(f, {0.f, 1.f, 0.f, 0.f}, 200);
 	auto center = glm::vec2(renderData.windowW/2, renderData.windowH/2);
@@ -299,9 +303,12 @@ void drawDebug(RenderContext const& ctx) {
 		auto p2 = center + vec3xz(t.v[inext]) * 2;
 		Shape2D::get()->drawLine(p1, p2, {0.5f, 1.f, 0.f});
 	}*/
+
+	World::getGlobal<ImgDebugDraw>()->draw(ctx);
+	drawDebugTexts();
 }
 
-void initPhysics() {
+void initPhysics(RenderData const& renderData) {
 	// collision configuration contains default setup for memory , collision setup . Advanced users can create their own configuration .
 	auto collisionConfig = new btDefaultCollisionConfiguration();
 	// use the default collision dispatcher . For parallel processing you can use a diffent dispatcher ( see Extras / BulletMultiThreaded )
@@ -311,7 +318,7 @@ void initPhysics() {
 	// the default constraint solver . For parallel processing you can use a different solver ( see Extras / BulletMultiThreaded )
 	auto solver = new btSequentialImpulseConstraintSolver();
 	btDiscreteDynamicsWorld *physWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-	physWorld->setDebugDrawer(physDebugDraw = new physics::DebugDrawer());
+	physWorld->setDebugDrawer(renderData.renderCtx.physDebugDraw);
 	physWorld->setGravity(btVector3(0, -9.8f, 0));
 
 	World::setGlobal<btDiscreteDynamicsWorld>(physWorld);
@@ -322,12 +329,15 @@ void destroyPhysics() {
 	World::setGlobal<btDiscreteDynamicsWorld>(nullptr);
 }
 
-void initWorld() {
+void initWorld(RenderData &renderData) {
 	WorldConfig wldCfg;
 	wldCfg.drawBoundaries = false;
 	World::setConfig(wldCfg);
 
-	initPhysics();
+	initPhysics(renderData);
+
+	auto pImgDebugDraw = new ImgDebugDraw();
+	World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 }
 
 /*void initTerrain(RenderData &renderData) {
@@ -415,9 +425,11 @@ void stopNetwork() {
 		net::closeConnection(con);
 }
 
-void initEmptySession(RenderData *pRenderData) {
+void initSession() {
+	pSession = createLobbySession();
+
 	// origin gizmo
-	glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
+	/*glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
 
 	// free camera
@@ -429,7 +441,7 @@ void initEmptySession(RenderData *pRenderData) {
 	auto sCamCtrl = std::make_shared<CameraController>(&pRenderData->viewport.camera());
 	cameraCtrl = sCamCtrl;
 	World::getInstance().takeOwnershipOf(sCamCtrl);
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
+	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});*/
 
 	// player
 	/*auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
@@ -447,13 +459,17 @@ void initEmptySession(RenderData *pRenderData) {
 
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
+
+	int winW = 1280, winH = 900;
+	RenderData renderData(winW, winH);
+	std::vector<drawable> drawDebugList;
+	renderData.drawDebugData = std::bind(drawDebug, std::ref(drawDebugList), std::placeholders::_1);
+
 	do {
 		PERF_MARKER_FUNC;
 
 		// initialize stuff:
-		int winW = 1280, winH = 900;
-		RenderData* pRenderData = nullptr;
-		if (!initRender(winW, winH, "Omega-Y", pRenderData)) {
+		if (!initRender("Omega-Y", renderData)) {
 			ERROR("Failed to initialize OpenGL / GLFW rendering system");
 			return -1;
 		}
@@ -461,14 +477,11 @@ int main(int argc, char* argv[]) {
 		GLFWInput::initialize(gltGetWindow());
 		GLFWInput::onInputEvent.add(onInputEventHandler);
 
-		initWorld();
+		initWorld(renderData);
 
 		//randSeed(1424118659);
 		randSeed(time(NULL));
 		LOGLN("RAND seed: " << rand_seed);
-
-		auto pImgDebugDraw = new ImgDebugDraw();
-		World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
@@ -476,14 +489,13 @@ int main(int argc, char* argv[]) {
 
 		UpdateList continuousUpdateList;
 		continuousUpdateList.add(&sigViewer);
+		drawDebugList.push_back(&sigViewer);
 
 		UpdateList updateList;
 		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());
 		updateList.add(&CollisionChecker::update);
 		updateList.add(&playerInputHandler);
 		updateList.add(&World::getInstance());
-		//updateList.add(pSkyBox);
-		//updateList.add(pTerrain);
 
 		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
@@ -492,29 +504,12 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		auto infoTexts = [&](RenderContext const&) {
-			GLText::get()->print("Omega-Y v0.1",
-					{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
-					20, glm::vec3(0.5f, 0.9, 1.0f));
-			drawDebugTexts();
-		};
-
-		std::vector<drawable> drawList3D;
-		//drawList3D.push_back(&physTestDebugDraw);
-		//drawList3D.push_back(pTerrain);
-
-		std::vector<drawable> drawList2D;
-		drawList2D.push_back(&sigViewer);
-		drawList2D.push_back(&infoTexts);
-		drawList2D.push_back(drawDebug);
-		drawList2D.push_back(pImgDebugDraw);
-
-		initEmptySession(pRenderData);
+		initSession();
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
 		gltBegin();
-		render(*pRenderData, drawList3D, drawList2D);
+		render(renderData, *pSession);
 		gltEnd();
 		LOGLN("Done, we're now live.");
 
@@ -554,8 +549,7 @@ int main(int argc, char* argv[]) {
 				if (simDT > 0) {
 					PERF_MARKER("frame-update");
 					updateList.update(simDT);
-					pRenderData->renderCtx.time += simDT;
-					pRenderData->postProcessData.time += simDT;
+					renderData.renderCtx.time += simDT;
 				}
 
 				{
@@ -564,7 +558,7 @@ int main(int argc, char* argv[]) {
 					gltEnd();
 					gltBegin();
 					// start rendering the frame:
-					render(*pRenderData, drawList3D, drawList2D);
+					render(renderData, *pSession);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */
@@ -576,22 +570,22 @@ int main(int argc, char* argv[]) {
 				perf::FrameCapture::cleanup();
 			}
 		}
-
-		LOGLN("Exiting . . .");
-
-		LOGLN("Closing all network connections . . .");
-		stopNetwork();
-		LOGLN("Deleting all entities . . .");
-		World::getInstance().reset();
-		LOGLN("Destroying physics . . .");
-		destroyPhysics();
-		if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
-			delete ptr;
-			World::setGlobal<ImgDebugDraw>(nullptr);
-		}
-		unloadRender(pRenderData);
-		Infrastructure::shutDown();
 	} while (0);
+
+	LOGLN("Exiting . . .");
+
+	LOGLN("Closing all network connections . . .");
+	stopNetwork();
+	LOGLN("Deleting all entities . . .");
+	World::getInstance().reset();
+	LOGLN("Destroying physics . . .");
+	destroyPhysics();
+	if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
+		delete ptr;
+		World::setGlobal<ImgDebugDraw>(nullptr);
+	}
+	unloadRender(renderData);
+	Infrastructure::shutDown();
 
 	if (false) {
 		// print profiling stats

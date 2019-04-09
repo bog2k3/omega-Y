@@ -2,7 +2,6 @@
 #define RENDER_H
 
 #include "CustomRenderContext.h"
-#include "CustomMeshRenderer.h"
 
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
@@ -11,6 +10,10 @@
 #include <boglfw/renderOpenGL/RenderHelpers.h>
 
 #include <glm/fwd.hpp>
+
+#include <cassert>
+
+class Session;
 
 struct PostProcessData {
 	unsigned VAO = 0;
@@ -22,9 +25,9 @@ struct PostProcessData {
 	int iTexSize = 0;
 	int iTime = 0;
 
-	bool underwater = false;
 	glm::vec2 textureSize;
-	float time = 0;
+
+	std::vector<drawable> uiDrawList;
 };
 
 struct WaterRenderData {
@@ -49,6 +52,8 @@ struct RenderData {
 	unsigned windowH = 0;
 	int defaultFrameBuffer = 0;
 
+	std::function<void(RenderContext const& ctx)> drawDebugData;
+
 	WaterRenderData waterRenderData;
 	PostProcessData postProcessData;
 
@@ -60,13 +65,20 @@ struct RenderData {
 		, windowW(winW)
 		, windowH(winH)
 		{
-			Shaders::useShaderPreprocessor(&shaderPreprocessor);
-			renderCtx.meshRenderer = new CustomMeshRenderer();
 		}
 
 	~RenderData() {
-		delete renderCtx.meshRenderer, renderCtx.meshRenderer = nullptr;
+		assert(dependenciesUnloaded_ && "call unloadDependencies() before destroying this");
 	}
+
+private:
+	friend bool initRender(const char*, RenderData&);
+	friend void unloadRender(RenderData &renderData);
+
+	void setupDependencies();
+	void unloadDependencies();
+
+	bool dependenciesUnloaded_ = true;
 };
 
 struct RenderConfig {
@@ -74,10 +86,9 @@ struct RenderConfig {
 	bool renderPhysicsDebug = false;
 };
 
-bool initRender(int winW, int winH, const char* winTitle, RenderData* &out_renderData);
-void unloadRender(RenderData* &renderData);
-void render(RenderData &renderData, std::vector<drawable> &drawlist3D, std::vector<drawable> &drawlist2D);
-void renderPostProcess(PostProcessData &postProcessData);
+bool initRender(const char* winTitle, RenderData &renderData);
+void unloadRender(RenderData &renderData);
+void render(RenderData &renderData, Session &session);
 
 
 #endif // RENDER_H

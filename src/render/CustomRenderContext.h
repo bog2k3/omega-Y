@@ -15,6 +15,7 @@ enum class RenderPass {
 };
 
 class CustomMeshRenderer;
+namespace physics { class DebugDrawer; }
 
 class CustomRenderContext : public RenderContext {
 public:
@@ -32,6 +33,7 @@ public:
 	float time = 0;
 
 	CustomMeshRenderer* meshRenderer = nullptr;
+	physics::DebugDrawer* physDebugDraw = nullptr;
 };
 
 #endif // __CUST_RENDER_CONTEXT_H__
