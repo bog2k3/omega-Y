@@ -16,6 +16,7 @@
 template<class ObjectType>
 class AABBGeneratorInterface {
 public:
+	virtual ~AABBGeneratorInterface() {}
 	// return the axis-aligned bounding box for a given object
 	virtual AABB getAABB(ObjectType const&) = 0;
 };

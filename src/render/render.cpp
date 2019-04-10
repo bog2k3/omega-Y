@@ -229,8 +229,8 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 		renderData.renderCtx.enableClipPlane = false;
 	break;
 	case RenderPass::UI:
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
 		renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
+		renderData.renderCtx.enableClipPlane = false;
 	break;
 	case RenderPass::None:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.defaultFrameBuffer);
@@ -271,9 +271,11 @@ void renderPostProcess(RenderData &renderData) {
 
 	// now we render the UI and 2D stuff
 	setupRenderPass(renderData, RenderPass::UI);
+	glDisable(GL_DEPTH_TEST);
 	renderData.viewport.render(postProcessData.uiDrawList);
 	renderData.viewport.render({World::getGlobal<GuiSystem>()});
 	renderData.viewport.render({&renderData.drawDebugData});
+	glEnable(GL_DEPTH_TEST);
 
 	checkGLError("render UI");
 
@@ -282,8 +284,8 @@ void renderPostProcess(RenderData &renderData) {
 
 void render(RenderData &renderData, Session &session) {
 	LOGPREFIX("RENDER");
-	renderData.viewport.clear();
 
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
 	auto &drawlist3D = session.drawList3D();
 	auto &drawList2D = session.drawList2D();
 
@@ -305,7 +307,6 @@ void render(RenderData &renderData, Session &session) {
 		for (auto e : aboveEntities)
 			aboveDraw.push_back(e);
 
-		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
 		renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
 
 		checkGLError("render() setup");

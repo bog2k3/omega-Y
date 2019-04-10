@@ -305,6 +305,8 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 		Shape2D::get()->drawLine(p1, p2, {0.5f, 1.f, 0.f});
 	}*/
 
+	for (auto &d : list)
+		d.draw(ctx);
 	World::getGlobal<ImgDebugDraw>()->draw(ctx);
 	drawDebugTexts();
 }
@@ -434,11 +436,19 @@ void changeSession(Session::SessionType type);
 void initSession(Session::SessionType type) {
 	switch (type) {
 	case Session::LOBBY:
-		pSession = createLobbySession();
+		pSession = Session::createLobbySession();
 	break;
 	case Session::HOST_SETUP:
+		pSession = Session::createHostSession();
+	break;
+	case Session::JOIN_SELECT:
+		pSession = Session::createJoinSelectSession();
 	break;
 	case Session::JOIN_WAIT:
+		pSession = Session::createJoinSession();
+	break;
+	case Session::GAME:
+		pSession = Session::createGameSession();
 	break;
 	case Session::EXIT_GAME:
 		signalQuit = true;

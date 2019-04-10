@@ -19,6 +19,7 @@ public:
 	enum SessionType {
 		LOBBY,		// main menu before a game session is established
 		HOST_SETUP,	// host game setup screen
+		JOIN_SELECT,// select a game to join from a list or by entering IP
 		JOIN_WAIT,	// after joining a session that is being setup by the host
 		GAME,		// during game play, after the session is started by the host
 		EXIT_GAME,
@@ -44,6 +45,12 @@ public:
 	Terrain* pTerrain_ = nullptr;
 	Water* pWater_ = nullptr;
 
+	static Session* createLobbySession();
+	static Session* createHostSession();
+	static Session* createJoinSelectSession();
+	static Session* createJoinSession();
+	static Session* createGameSession();
+
 private:
 	SessionType type_;
 	std::vector<drawable> drawList3D_;
@@ -52,16 +59,6 @@ private:
 	std::weak_ptr<FreeCamera> freeCam_;
 	std::weak_ptr<PlayerEntity> player_;
 	std::weak_ptr<CameraController> cameraCtrl_;
-
-	friend Session* createLobbySession();
-	friend Session* createHostSession();
-	friend Session* createJoinSession();
-	friend Session* createGameSession();
 };
-
-Session* createLobbySession();
-Session* createHostSession();
-Session* createJoinSession();
-Session* createGameSession();
 
 #endif // SESSION_H

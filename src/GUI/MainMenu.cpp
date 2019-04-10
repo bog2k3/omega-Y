@@ -4,22 +4,16 @@ MainMenu::MainMenu(glm::vec2 size)
 	: VerticalMenu(size)
 {
 	std::vector<buttonDescriptor> buttons;
-	buttons.push_back({
-		"Single Player",
-		[this](Button* b) {
-			onSinglePlayer.trigger();
-		}
-	});
 
 	buttons.push_back({
-		"Host Multi Player",
+		"Host Game",
 		[this](Button* b) {
 			onHostMulti.trigger();
 		}
 	});
 
 	buttons.push_back({
-		"Join Multi Player",
+		"Join Game",
 		[this](Button* b) {
 			onJoinMulti.trigger();
 		}
