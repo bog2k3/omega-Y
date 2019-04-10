@@ -284,7 +284,7 @@ void drawDebugTexts() {
 				18, glm::vec3(1.f, 0.5f, 0.1f));
 	}
 
-	GLText::get()->print("Omega-Y v0.1",
+	GLText::get()->print("Omega-Y v0.2",
 		{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
 		20, glm::vec3(0.5f, 0.9, 1.0f));
 }
