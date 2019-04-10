@@ -21,8 +21,8 @@ vec3 approxW(vec3 V, vec3 P, float i0, vec3 Wlim, vec3 P0, float n1, float n2, v
 
 const float n_air = 1.0;
 const float n_water = 1.33;
-const float t_lim = asin(n_air / n_water);
-const float tan_tLim = tan(t_lim);
+float t_lim = asin(n_air / n_water);
+float tan_tLim = tan(t_lim);
 
 const float ambientLightMixDistance = 1;
 const vec3 lightHalveDist = vec3(2.0, 3.0, 4.0) * 2; // after how many meters of water each light component is halved
