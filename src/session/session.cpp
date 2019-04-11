@@ -1,6 +1,8 @@
 #include "session.h"
 
 #include "../GUI/MainMenu.h"
+#include "../GUI/HostMultiPlayerMenu.h"
+#include "../GUI/JoinMultiPlayerMenu.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
@@ -27,11 +29,29 @@ Session* Session::createLobbySession() {
 
 Session* Session::createHostSession() {
 	Session* s = new Session(Session::HOST_SETUP);
+
+	auto guiSystem = World::getGlobal<GuiSystem>();
+	auto HostMenu = std::make_shared<HostMultiPlayerMenu>(guiSystem->getViewportSize());
+	guiSystem->addElement(HostMenu);
+
+	HostMenu->onBack.add([s]() {
+		s->onNewSessionRequest.trigger(Session::LOBBY);
+	});
+
 	return s;
 }
 
 Session* Session::createJoinSelectSession() {
 	Session* s = new Session(Session::JOIN_SELECT);
+
+	auto guiSystem = World::getGlobal<GuiSystem>();
+	auto JoinMenu = std::make_shared<JoinMultiPlayerMenu>(guiSystem->getViewportSize());
+	guiSystem->addElement(JoinMenu);
+
+	JoinMenu->onBack.add([s]() {
+		s->onNewSessionRequest.trigger(Session::LOBBY);
+	});
+
 	return s;
 }
 

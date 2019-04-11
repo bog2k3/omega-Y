@@ -594,7 +594,8 @@ int main(int argc, char* argv[]) {
 					gltEnd();
 					gltBegin();
 					// start rendering the frame:
-					render(renderData, *pSession);
+					if (pSession)
+						render(renderData, *pSession);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */
