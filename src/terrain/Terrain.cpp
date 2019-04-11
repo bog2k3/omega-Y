@@ -244,12 +244,12 @@ void Terrain::loadTextures() {
 }
 
 void validateSettings(TerrainConfig const& s) {
-	assert(s.width > 0);
-	assert(s.length > 0);
-	assert(s.maxElevation > s.minElevation);
-	assert(s.vertexDensity > 0);
-	assert(s.width >= 1.f / s.vertexDensity);
-	assert(s.length >= 1.f / s.vertexDensity);
+	assertDbg(s.width > 0);
+	assertDbg(s.length > 0);
+	assertDbg(s.maxElevation > s.minElevation);
+	assertDbg(s.vertexDensity > 0);
+	assertDbg(s.width >= 1.f / s.vertexDensity);
+	assertDbg(s.length >= 1.f / s.vertexDensity);
 }
 
 void Terrain::generate(TerrainConfig const& settings) {

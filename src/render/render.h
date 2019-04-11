@@ -8,10 +8,9 @@
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/DefaultShaderPreprocessor.h>
 #include <boglfw/renderOpenGL/RenderHelpers.h>
+#include <boglfw/utils/assert.h>
 
 #include <glm/fwd.hpp>
-
-#include <cassert>
 
 class Session;
 
@@ -68,7 +67,7 @@ struct RenderData {
 		}
 
 	~RenderData() {
-		assert(dependenciesUnloaded_ && "call unloadDependencies() before destroying this");
+		assertDbg(dependenciesUnloaded_ && "call unloadDependencies() before destroying this");
 	}
 
 private:

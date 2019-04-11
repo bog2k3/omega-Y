@@ -124,7 +124,7 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 		case Mesh::RENDER_MODE_TRIANGLES_WIREFRAME:
 			drawMode = GL_TRIANGLES; break;
 		default:
-			assert(false && "Unknown mesh draw mode!");
+			assertDbg(false && "Unknown mesh draw mode!");
 	}
 	if (mesh.getRenderMode() == Mesh::RENDER_MODE_TRIANGLES_WIREFRAME || mesh.getRenderMode() == Mesh::RENDER_MODE_LINES) {
 		glLineWidth(2.f);

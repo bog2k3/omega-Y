@@ -25,8 +25,8 @@ void PhysBodyProxy::reset() {
 }
 
 void PhysBodyProxy::createBody(PhysBodyConfig const& cfg) {
-	assert(cfg.shape != nullptr);
-	assert(cfg.mass >= 0.f);
+	assertDbg(cfg.shape != nullptr);
+	assertDbg(cfg.mass >= 0.f);
 	btVector3 inertia;
 	cfg.shape->calculateLocalInertia(cfg.mass, inertia);
 

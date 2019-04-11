@@ -133,9 +133,9 @@ void Water::loadTextures() {
 }
 
 void Water::validateParams(WaterParams const& p) {
-	assert(p.innerRadius > 0);
-	assert(p.outerExtent > 0);
-	assert(p.innerRadius > 1.f / p.vertexDensity);
+	assertDbg(p.innerRadius > 0);
+	assertDbg(p.outerExtent > 0);
+	assertDbg(p.innerRadius > 1.f / p.vertexDensity);
 }
 
 void Water::clear() {

@@ -11,7 +11,7 @@ static const float jitterReductionFactor = 0.5f;	// jitter is multiplied by this
 
 // return the first power-of-two number greater than or equal to x
 unsigned nextPo2(unsigned x) {
-	assert((x << 1) > x);	// if x already uses the highest bit then we can't compute
+	assertDbg((x << 1) > x);	// if x already uses the highest bit then we can't compute
 	unsigned r = 1;
 	while (r < x)
 		r = r << 1;
@@ -23,7 +23,7 @@ HeightMap::HeightMap(HeightmapParams const& params) {
 	length_ = nextPo2(params.length) + 1;
 	baseY_ = params.minHeight;
 	elements_ = new element[width_ * length_];
-	
+
 	generate(params.maxHeight - params.minHeight);
 }
 
@@ -159,4 +159,3 @@ void HeightMap::generate(float amplitude) {
 	for (unsigned i=0; i<width_*length_; i++)
 		elements_[i].value = (elements_[i].value - vmin) * scale;
 }
-
