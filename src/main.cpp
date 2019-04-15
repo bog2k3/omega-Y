@@ -267,21 +267,24 @@ void drawDebugTexts() {
 		"P : reload all shaders"
 #endif
 	};
-	for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
-		GLText::get()->print(texts[i],
-			{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
-			20, glm::vec3(0.4f, 0.6, 1.0f));
-	}
 
-	if (updatePaused) {
-		GLText::get()->print("PAUSED",
-				{50, 50, ViewportCoord::percent},
-				32, glm::vec3(1.f, 0.8f, 0.2f));
-	}
-	if (slowMo) {
-		GLText::get()->print("~~ Slow Motion ON ~~",
-				{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
-				18, glm::vec3(1.f, 0.5f, 0.1f));
+	if (pSession && pSession->type() == Session::GAME) {
+		for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
+			GLText::get()->print(texts[i],
+				{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+				20, glm::vec3(0.4f, 0.6, 1.0f));
+		}
+
+		if (updatePaused) {
+			GLText::get()->print("PAUSED",
+					{50, 50, ViewportCoord::percent},
+					32, glm::vec3(1.f, 0.8f, 0.2f));
+		}
+		if (slowMo) {
+			GLText::get()->print("~~ Slow Motion ON ~~",
+					{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
+					18, glm::vec3(1.f, 0.5f, 0.1f));
+		}
 	}
 
 	GLText::get()->print("Omega-Y v0.2",

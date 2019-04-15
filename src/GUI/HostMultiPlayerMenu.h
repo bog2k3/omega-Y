@@ -1,16 +1,15 @@
 #pragma once
 
-#include "VerticalMenu.h"
+#include <boglfw/GUI/GuiContainerElement.h>
 #include <boglfw/utils/Event.h>
 
 #include <memory>
 
-class HostMultiPlayerMenu : public VerticalMenu {
+class HostMultiPlayerMenu : public GuiContainerElement {
 public:
-	HostMultiPlayerMenu(glm::vec2 size);
+	HostMultiPlayerMenu(glm::vec2 viewportSize);
 	~HostMultiPlayerMenu() override {}
 
-	// Event<void()> onSinglePlayer;
 	Event<void()> onBack;
 private:
 };
