@@ -1,6 +1,6 @@
 #include "VerticalMenu.h"
 
-static const float margin = 0.1f; // of screen size
+static const float margin = 0.02f; // of screen size
 
 VerticalMenu::VerticalMenu(glm::vec2 screenSize)
 	: GuiContainerElement(screenSize * margin, screenSize * (1 - 2*margin))
