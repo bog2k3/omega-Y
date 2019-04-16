@@ -4,8 +4,6 @@
 #include <boglfw/GUI/controls/Label.h>
 #include <boglfw/GUI/controls/Picture.h>
 
-#include <boglfw/renderOpenGL/TextureLoader.h>
-
 static const float margin = 0.02f; // of screen size
 
 HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
@@ -22,7 +20,10 @@ HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
 	});
 	addElement(pBack);
 
-	std::shared_ptr<Picture> pPicture = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
-	pPicture->setPictureTexture(TextureLoader::loadFromPNG("data/textures/testuv.png", false));
-	addElement(pPicture);
+	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
+	addElement(pTerrainPicture_);
+}
+
+void HostMultiPlayerMenu::setRTTexture(int texId) {
+	pTerrainPicture_->setPictureTexture(texId);
 }
