@@ -2,6 +2,9 @@
 
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
+#include <boglfw/GUI/controls/Picture.h>
+
+#include <boglfw/renderOpenGL/TextureLoader.h>
 
 static const float margin = 0.02f; // of screen size
 
@@ -10,7 +13,7 @@ HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
 {
 	glm::vec2 mySize = getSize();
 
-	std::shared_ptr<Label> pTitle = std::make_shared<Label>(glm::vec2{mySize.x / 2, 50}, 20, "Host Game");
+	std::shared_ptr<Label> pTitle = std::make_shared<Label>(glm::vec2{mySize.x / 2 - 100, 200}, 50, "Host Game");
 	addElement(pTitle);
 
 	std::shared_ptr<Button> pBack = std::make_shared<Button>(glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50}, "Back");
@@ -18,4 +21,8 @@ HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
 		onBack.trigger();
 	});
 	addElement(pBack);
+
+	std::shared_ptr<Picture> pPicture = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
+	pPicture->setPictureTexture(TextureLoader::loadFromPNG("data/textures/testuv.png", false));
+	addElement(pPicture);
 }
