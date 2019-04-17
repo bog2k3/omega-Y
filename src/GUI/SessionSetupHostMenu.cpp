@@ -1,4 +1,4 @@
-#include "HostMultiPlayerMenu.h"
+#include "SessionSetupHostMenu.h"
 
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
@@ -6,7 +6,7 @@
 
 static const float margin = 0.02f; // of screen size
 
-HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
+SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	: GuiContainerElement(viewportSize * margin, viewportSize * (1 - 2*margin))
 {
 	glm::vec2 mySize = getSize();
@@ -24,6 +24,6 @@ HostMultiPlayerMenu::HostMultiPlayerMenu(glm::vec2 viewportSize)
 	addElement(pTerrainPicture_);
 }
 
-void HostMultiPlayerMenu::setRTTexture(int texId) {
+void SessionSetupHostMenu::setRTTexture(int texId) {
 	pTerrainPicture_->setPictureTexture(texId);
 }

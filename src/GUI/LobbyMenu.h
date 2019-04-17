@@ -5,10 +5,10 @@
 
 #include <memory>
 
-class JoinMultiPlayerMenu : public VerticalMenu {
+class LobbyMenu : public VerticalMenu {
 public:
-	JoinMultiPlayerMenu(glm::vec2 size);
-	~JoinMultiPlayerMenu() override {}
+	LobbyMenu(glm::vec2 size);
+	~LobbyMenu() override {}
 
 	Event<void()> onBack;
 private:

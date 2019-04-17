@@ -9,7 +9,9 @@
 #include "ImgDebugDraw.h"
 
 #include "render/render.h"
+
 #include "game/GameState.h"
+#include "game/StateController.h"
 #include "game/Session.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
@@ -477,7 +479,7 @@ void changeGameState(GameState::StateNames stateName) {
 
 	pCrtState = GameState::createState(stateName);
 
-	pCrtState->onNewStateRequest.add(changeGameState);
+	pCrtState->controller().onNewStateRequest.add(changeGameState);
 }
 
 int main(int argc, char* argv[]) {

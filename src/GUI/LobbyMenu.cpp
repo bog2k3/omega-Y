@@ -1,6 +1,6 @@
-#include "JoinMultiPlayerMenu.h"
+#include "LobbyMenu.h"
 
-JoinMultiPlayerMenu::JoinMultiPlayerMenu(glm::vec2 size)
+LobbyMenu::LobbyMenu(glm::vec2 size)
 	: VerticalMenu(size)
 {
 	std::vector<buttonDescriptor> buttons;

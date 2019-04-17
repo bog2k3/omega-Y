@@ -1,7 +1,7 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
-#include <boglfw/utils/Event.h>
+class StateController;
 
 class GameState {
 public:
@@ -17,15 +17,15 @@ public:
 	~GameState();
 
 	StateNames name() const { return name_; }
-
-	Event<void(StateNames)> onNewStateRequest;
+	StateController& controller() { return *pController_; }
 
 	static GameState* createState(StateNames name);
 
 private:
 	GameState(StateNames name);
 
-	StateNames name_;
+	const StateNames name_;
+	StateController *pController_ = nullptr;
 
 	static GameState* createMainMenuState();
 	static GameState* createLobbyState();

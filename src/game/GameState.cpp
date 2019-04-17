@@ -1,18 +1,17 @@
 #include "GameState.h"
-
-#include "../GUI/MainMenu.h"
-#include "../GUI/HostMultiPlayerMenu.h"
-#include "../GUI/JoinMultiPlayerMenu.h"
-
-#include <boglfw/World.h>
-#include <boglfw/GUI/GuiSystem.h>
+#include "MainMenuCtrl.h"
+#include "LobbyCtrl.h"
+#include "SessionSetupHostCtrl.h"
+#include "SessionSetupClientCtrl.h"
+#include "GameCtrl.h"
 
 GameState::GameState(StateNames name)
 	: name_(name) {
 }
 
 GameState::~GameState() {
-	World::getGlobal<GuiSystem>()->clear();
+	if (pController_)
+		delete pController_;
 }
 
 GameState* GameState::createState(StateNames name) {
@@ -35,36 +34,14 @@ GameState* GameState::createState(StateNames name) {
 
 GameState* GameState::createMainMenuState() {
 	GameState* s = new GameState(StateNames::MAIN_MENU);
-
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	auto mainMenu = std::make_shared<MainMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(mainMenu);
-
-	mainMenu->onHostMulti.add([s]() {
-		s->onNewStateRequest.trigger(StateNames::SESSION_SETUP_HOST);
-	});
-	mainMenu->onJoinMulti.add([s]() {
-		s->onNewStateRequest.trigger(StateNames::LOBBY);
-	});
-	mainMenu->onExit.add([s]() {
-		s->onNewStateRequest.trigger(StateNames::EXIT_GAME);
-	});
+	s->pController_ = new MainMenuController(*s);
 
 	return s;
 }
 
 GameState* GameState::createSessionSetupHostState() {
 	GameState* s = new GameState(StateNames::SESSION_SETUP_HOST);
-
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	auto HostMenu = std::make_shared<HostMultiPlayerMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(HostMenu);
-
-	HostMenu->onBack.add([s]() {
-		// delete session
-		// ...
-		s->onNewStateRequest.trigger(StateNames::MAIN_MENU);
-	});
+	s->pController_ = new SessionSetupHostCtrl(*s);
 
 	// create the session here
 	// ...
@@ -72,22 +49,9 @@ GameState* GameState::createSessionSetupHostState() {
 	return s;
 }
 
-GameState* GameState::createLobbyState() {
-	GameState* s = new GameState(StateNames::LOBBY);
-
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	auto JoinMenu = std::make_shared<JoinMultiPlayerMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(JoinMenu);
-
-	JoinMenu->onBack.add([s]() {
-		s->onNewStateRequest.trigger(StateNames::MAIN_MENU);
-	});
-
-	return s;
-}
-
 GameState* GameState::createSessionSetupClientState() {
 	GameState* s = new GameState(StateNames::SESSION_SETUP_CLIENT);
+	s->pController_ = new SessionSetupClientCtrl(*s);
 
 	// create the session here and populate it with data received from network
 	// ...
@@ -95,11 +59,15 @@ GameState* GameState::createSessionSetupClientState() {
 	return s;
 }
 
-GameState* GameState::createGameplayState() {
-	GameState* s = new GameState(StateNames::GAMEPLAY);
+GameState* GameState::createLobbyState() {
+	GameState* s = new GameState(StateNames::LOBBY);
+	s->pController_ = new LobbyCtrl(*s);
+
 	return s;
 }
 
-/*void GameState::update(float dt) {
-
-}*/
+GameState* GameState::createGameplayState() {
+	GameState* s = new GameState(StateNames::GAMEPLAY);
+	s->pController_ = new GameCtrl(*s);
+	return s;
+}

@@ -7,10 +7,10 @@
 
 class Picture;
 
-class HostMultiPlayerMenu : public GuiContainerElement {
+class SessionSetupHostMenu : public GuiContainerElement {
 public:
-	HostMultiPlayerMenu(glm::vec2 viewportSize);
-	~HostMultiPlayerMenu() override {}
+	SessionSetupHostMenu(glm::vec2 viewportSize);
+	~SessionSetupHostMenu() override {}
 
 	Event<void()> onBack;
 
