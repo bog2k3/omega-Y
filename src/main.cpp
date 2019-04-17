@@ -9,7 +9,8 @@
 #include "ImgDebugDraw.h"
 
 #include "render/render.h"
-#include "session/session.h"
+#include "game/GameState.h"
+#include "game/Session.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -74,6 +75,7 @@ RenderConfig renderCfg;
 PlayerInputHandler playerInputHandler;
 
 Session *pSession = nullptr;
+GameState *pCrtState = nullptr;
 
 //Terrain* pTerrain = nullptr;
 //TerrainConfig terrainConfig;
@@ -268,7 +270,7 @@ void drawDebugTexts() {
 #endif
 	};
 
-	if (pSession && pSession->type() == Session::GAME) {
+	if (pCrtState && pCrtState->name() == GameState::StateNames::GAMEPLAY) {
 		for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
 			GLText::get()->print(texts[i],
 				{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
@@ -434,33 +436,7 @@ void stopNetwork() {
 		net::closeConnection(con);
 }
 
-void changeSession(Session::SessionType type);
-
-void initSession(Session::SessionType type) {
-	switch (type) {
-	case Session::LOBBY:
-		pSession = Session::createLobbySession();
-	break;
-	case Session::HOST_SETUP:
-		pSession = Session::createHostSession();
-	break;
-	case Session::JOIN_SELECT:
-		pSession = Session::createJoinSelectSession();
-	break;
-	case Session::JOIN_WAIT:
-		pSession = Session::createJoinSession();
-	break;
-	case Session::GAME:
-		pSession = Session::createGameSession();
-	break;
-	case Session::EXIT_GAME:
-		signalQuit = true;
-	break;
-	}
-
-	if (pSession)
-		pSession->onNewSessionRequest.add(changeSession);
-
+//void initSession(Session::SessionType type) {
 	// origin gizmo
 	/*glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
 	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
@@ -488,12 +464,20 @@ void initSession(Session::SessionType type) {
 	initTerrain(*pRenderData);
 
 	physTestInit();*/
-}
+//}
 
-void changeSession(Session::SessionType type) {
-	if (pSession)
-		delete pSession, pSession = nullptr;
-	initSession(type);
+void changeGameState(GameState::StateNames stateName) {
+	if (pCrtState)
+		delete pCrtState, pCrtState = nullptr;
+
+	if (stateName == GameState::StateNames::EXIT_GAME) {
+		signalQuit = true;
+		return;
+	}
+
+	pCrtState = GameState::createState(stateName);
+
+	pCrtState->onNewStateRequest.add(changeGameState);
 }
 
 int main(int argc, char* argv[]) {
@@ -543,12 +527,12 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		initSession(Session::LOBBY);
+		changeGameState(GameState::StateNames::MAIN_MENU);
 
 		// precache GPU resources by rendering the first frame before first update
 		LOGLN("Precaching . . .");
 		gltBegin();
-		render(renderData, *pSession);
+		render(renderData);
 		gltEnd();
 		LOGLN("Done, we're now live.");
 
@@ -598,7 +582,7 @@ int main(int argc, char* argv[]) {
 					gltBegin();
 					// start rendering the frame:
 					if (pSession)
-						render(renderData, *pSession);
+						render(renderData);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */

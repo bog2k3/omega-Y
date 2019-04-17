@@ -30,6 +30,7 @@ public:
 	glm::vec4 clipPlane;
 	bool enableClipPlane = false;
 	bool cameraUnderwater = false;
+	bool enableWaterRender = false;
 	float time = 0;
 
 	CustomMeshRenderer* meshRenderer = nullptr;

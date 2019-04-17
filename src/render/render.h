@@ -12,8 +12,6 @@
 
 #include <glm/fwd.hpp>
 
-class Session;
-
 struct PostProcessData {
 	unsigned VAO = 0;
 	unsigned VBO = 0;
@@ -26,7 +24,7 @@ struct PostProcessData {
 
 	glm::vec2 textureSize;
 
-	std::vector<drawable> uiDrawList;
+	//std::vector<drawable> uiDrawList;
 };
 
 struct WaterRenderData {
@@ -87,7 +85,7 @@ struct RenderConfig {
 
 bool initRender(const char* winTitle, RenderData &renderData);
 void unloadRender(RenderData &renderData);
-void render(RenderData &renderData, Session &session);
+void render(RenderData &renderData);
 
 
 #endif // RENDER_H

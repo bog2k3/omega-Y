@@ -1,7 +1,6 @@
 #include "render.h"
 #include "CustomMeshRenderer.h"
 #include "../physics/DebugDrawer.h"
-#include "../session/session.h"
 #include "../terrain/Water.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
@@ -272,7 +271,7 @@ void renderPostProcess(RenderData &renderData) {
 	// now we render the UI and 2D stuff
 	setupRenderPass(renderData, RenderPass::UI);
 	glDisable(GL_DEPTH_TEST);
-	renderData.viewport.render(postProcessData.uiDrawList);
+	//renderData.viewport.render(postProcessData.uiDrawList);
 	renderData.viewport.render({World::getGlobal<GuiSystem>()});
 	renderData.viewport.render({&renderData.drawDebugData});
 	glEnable(GL_DEPTH_TEST);
@@ -282,15 +281,15 @@ void renderPostProcess(RenderData &renderData) {
 	setupRenderPass(renderData, RenderPass::None);
 }
 
-void render(RenderData &renderData, Session &session) {
+void render(RenderData &renderData) {
 	LOGPREFIX("RENDER");
 
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &renderData.defaultFrameBuffer);
-	auto &drawlist3D = session.drawList3D();
-	auto &drawList2D = session.drawList2D();
+	//auto &drawlist3D = session.drawList3D();
+	//auto &drawList2D = session.drawList2D();
 
-	if (session.enableWaterRender_) {
-		std::vector<drawable> underDraw = drawlist3D;
+	if (renderData.renderCtx.enableWaterRender) {
+		std::vector<drawable> underDraw;// = drawlist3D;
 		std::vector<Entity*> underEntities;
 		// append all drawable entities from world:
 		// TODO - use a BSP or something to only get entities under water level
@@ -299,7 +298,7 @@ void render(RenderData &renderData, Session &session) {
 			underDraw.push_back(e);
 
 		std::vector<drawable> aboveDraw {};
-		aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
+		//aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());
 		std::vector<Entity*> aboveEntities;
 		// append all drawable entities from world:
 		// TODO - use a BSP or something to only get entities above water level
@@ -330,21 +329,21 @@ void render(RenderData &renderData, Session &session) {
 		// no water, just render everything in one pass:
 		setupRenderPass(renderData, RenderPass::Standard);
 		World::getInstance().draw(renderData.renderCtx);
-		renderData.viewport.render(drawlist3D);
+		//renderData.viewport.render(drawlist3D);
 	}
 
 	checkGLError("render() pass #3");
 
 	// 4th pass - water surface
-	if (session.enableWaterRender_) {
+	if (renderData.renderCtx.enableWaterRender) {
 		setupRenderPass(renderData, RenderPass::WaterSurface);
-		session.pWater_->draw(renderData.renderCtx);
+		//session.pWater_->draw(renderData.renderCtx);
 
 		checkGLError("render() pass #4");
 	}
 
 	// 2D and ui will be rendered after post processing
-	renderData.postProcessData.uiDrawList = drawList2D;
+	//renderData.postProcessData.uiDrawList = drawList2D;
 
 	checkGLError("render() final");
 
