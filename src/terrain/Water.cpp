@@ -109,13 +109,13 @@ Water::~Water()
 		delete renderData_, renderData_ = nullptr;
 }
 
-void Water::setReflectionTexture(unsigned texId_2D, unsigned texId_Cube) {
-	renderData_->textureReflection_2D_ = texId_2D;
-	renderData_->textureRefraction_Cube_ = texId_Cube;
+void Water::setReflectionTexture(unsigned texId) {
+	renderData_->textureReflection_2D_ = texId;
 }
 
-void Water::setRefractionTexture(unsigned refractionTexId) {
-	renderData_->textureRefraction_ = refractionTexId;
+void Water::setRefractionTexture(unsigned texId_2D, unsigned texId_Cube) {
+	renderData_->textureRefraction_ = texId_2D;
+	renderData_->textureRefraction_Cube_ = texId_Cube;
 }
 
 void Water::loadTextures() {

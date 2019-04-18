@@ -22,8 +22,8 @@ public:
 
 	void generate(WaterParams params);
 
-	void setReflectionTexture(unsigned texId_2D, unsigned texId_Cube);
-	void setRefractionTexture(unsigned refractionTexId);
+	void setReflectionTexture(unsigned texId_2D);
+	void setRefractionTexture(unsigned texId, unsigned texId_Cube);
 
 	void update(float dt);
 	void draw(RenderContext const& ctx);

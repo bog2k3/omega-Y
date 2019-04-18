@@ -40,7 +40,7 @@ vec3 blur(vec2 uv) {
 	float div = 0.0;
 	for (int i=-4; i<=4; i++) {
 		for (int j=-4; j<4; j++) {
-			float r = sqrt(i*i+j*j);
+			float r = sqrt(float(i*i+j*j));
 			float r_inv = 1.f / (1 + r);
 			div += r_inv;
 			vec2 coord = uv + vec2(i, j) * texSize_inv * 3 + duv;
