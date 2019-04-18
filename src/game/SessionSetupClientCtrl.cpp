@@ -23,6 +23,6 @@ SessionSetupClientCtrl::~SessionSetupClientCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 }
 
-void SessionSetupClientCtrl::draw(RenderContext const& ctx) {
+void SessionSetupClientCtrl::update(float dt) {
 	// prepare terrain picture
 }

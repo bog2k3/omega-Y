@@ -13,7 +13,7 @@ public:
 	SessionSetupClientCtrl(GameState &state);
 	~SessionSetupClientCtrl() override;
 
-	void draw(RenderContext const& ctx) override;
+	void update(float dt) override;
 
 private:
 	std::shared_ptr<SessionSetupClientMenu> menu_;

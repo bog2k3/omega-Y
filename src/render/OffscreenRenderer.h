@@ -18,12 +18,11 @@ public:
 	OffscreenRenderer(FrameBufferDescriptor descriptor, std::unique_ptr<RenderContext> &&renderContext);
 	~OffscreenRenderer();
 
-	// setup off-screen rendering
-	void begin();
-	// end off-screen rendering and restore the previous pipeline state
-	void end();
+	void clear();
+	void render(std::vector<drawable> const& list);
 
 	unsigned getFBTexture() const;
+	const RenderContext& getRenderContext() const;
 
 private:
 	struct PrivateData;

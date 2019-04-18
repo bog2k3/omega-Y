@@ -14,7 +14,7 @@ public:
 	SessionSetupHostCtrl(GameState &state);
 	~SessionSetupHostCtrl() override;
 
-	void draw(RenderContext const& ctx) override;
+	void update(float dt) override;
 
 private:
 	std::shared_ptr<SessionSetupHostMenu> menu_;

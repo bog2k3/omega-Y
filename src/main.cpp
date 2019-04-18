@@ -483,6 +483,10 @@ void changeGameState(GameState::StateNames stateName) {
 	pCrtState->controller().onNewStateRequest.add(changeGameState);
 }
 
+void updateStateCtrl(float dt) {
+	pCrtState->controller().update(dt);
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 
@@ -513,10 +517,11 @@ int main(int argc, char* argv[]) {
 		SignalViewer sigViewer(
 				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
 				{20, 10, ViewportCoord::percent}); 											// size
+		drawDebugList.push_back(&sigViewer);
 
 		UpdateList continuousUpdateList;
 		continuousUpdateList.add(&sigViewer);
-		drawDebugList.push_back(&sigViewer);
+		continuousUpdateList.add(updateStateCtrl);
 
 		UpdateList updateList;
 		updateList.add(World::getGlobal<btDiscreteDynamicsWorld>());

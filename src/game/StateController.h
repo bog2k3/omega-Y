@@ -5,15 +5,12 @@
 
 #include <boglfw/utils/Event.h>
 
-class RenderContext;
-
 class StateController
 {
 public:
 	virtual ~StateController() {}
 
 	virtual void update(float dt) {}
-	virtual void draw(RenderContext const&) {}
 
 	Event<void(GameState::StateNames)> onNewStateRequest;
 

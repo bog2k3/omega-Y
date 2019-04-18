@@ -36,7 +36,8 @@ SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 }
 
-void SessionSetupHostCtrl::draw(RenderContext const& ctx) {
+void SessionSetupHostCtrl::update(float dt) {
+	// prepare terrain picture
 	terrainRenderer_->begin();
 	// draw the terrain here ...
 	Shape2D::get()->drawCircleFilled({200, 100}, 90, 16, glm::vec3{1.f, 0.2, 0.4});
