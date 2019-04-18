@@ -19,8 +19,7 @@ namespace physics { class DebugDrawer; }
 
 class CustomRenderContext : public RenderContext {
 public:
-	CustomRenderContext(Viewport& viewport) : RenderContext(viewport) {
-	}
+	CustomRenderContext() {}
 
 	static CustomRenderContext const& fromCtx(RenderContext const& r) {
 		return dynamic_cast<CustomRenderContext const&>(r);

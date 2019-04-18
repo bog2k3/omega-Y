@@ -240,9 +240,9 @@ void Water::draw(RenderContext const& ctx) {
 	glEnable(GL_BLEND);
 	// set-up shader, vertex buffer and uniforms
 	glUseProgram(renderData_->shaderProgram_);
-	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
+	glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport().camera().position().x);
 	glUniform1f(renderData_->iTime_, CustomRenderContext::fromCtx(ctx).time);
-	glUniform1f(renderData_->iAspectRatio_, ctx.viewport.aspect());
+	glUniform1f(renderData_->iAspectRatio_, ctx.viewport().aspect());
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
@@ -259,7 +259,7 @@ void Water::draw(RenderContext const& ctx) {
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
 	glUniform1i(renderData_->iTexFoam, 4);
-	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
+	glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport().camera().matProjView()));
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);

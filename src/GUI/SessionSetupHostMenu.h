@@ -15,6 +15,7 @@ public:
 	Event<void()> onBack;
 
 	void setRTTexture(int texId);
+	glm::vec2 terrainPictureSize() const;
 
 private:
 	std::shared_ptr<Picture> pTerrainPicture_;

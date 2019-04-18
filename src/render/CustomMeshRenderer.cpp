@@ -75,12 +75,12 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 
 	glUseProgram(pRenderData_->shaderProgram_);
 
-	auto matPV = rctx.viewport.camera().matProjView();
+	auto matPV = rctx.viewport().camera().matProjView();
 	glUniformMatrix4fv(pRenderData_->imPV, 1, GL_FALSE, glm::value_ptr(matPV));
 	glUniformMatrix4fv(pRenderData_->imW, 1, GL_FALSE, glm::value_ptr(matW));
 
 	if (pRenderData_->iEyePos >= 0)
-		glUniform3fv(pRenderData_->iEyePos, 1, &ctx.viewport.camera().position().x);
+		glUniform3fv(pRenderData_->iEyePos, 1, &ctx.viewport().camera().position().x);
 	if (pRenderData_->iSubspace >= 0)
 		glUniform1f(pRenderData_->iSubspace, rctx.clipPlane.y);
 	if (pRenderData_->ibRefraction >= 0)

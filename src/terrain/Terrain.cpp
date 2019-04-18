@@ -615,8 +615,8 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
 		// set-up shader, vertex buffer and uniforms
 		glUseProgram(renderData_->shaderProgram_);
-		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport.camera().matProjView()));
-		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport.camera().position().x);
+		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport().camera().matProjView()));
+		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport().camera().position().x);
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 			glUniform1i(renderData_->iSampler_ + i, i);
 		glUniform1i(renderData_->iTextureWaterNormal_, 5);

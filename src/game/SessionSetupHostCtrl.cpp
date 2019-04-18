@@ -1,9 +1,13 @@
 #include "SessionSetupHostCtrl.h"
 
 #include "../GUI/SessionSetupHostMenu.h"
+#include "../render/OffscreenRenderer.h"
+#include "../render/CustomRenderContext.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
+
+#include <boglfw/renderOpenGL/Shape2D.h>
 
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
@@ -17,6 +21,15 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 		// ...
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
 	});
+
+	auto terrainPictureSize = menu_->terrainPictureSize();
+	FrameBufferDescriptor fbDesc;
+	fbDesc.format = GL_RGB;
+	fbDesc.width = terrainPictureSize.x;
+	fbDesc.height = terrainPictureSize.y;
+	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::make_unique<CustomRenderContext>());
+
+	menu_->setRTTexture(terrainRenderer_->getFBTexture());
 }
 
 SessionSetupHostCtrl::~SessionSetupHostCtrl() {
@@ -24,5 +37,8 @@ SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 }
 
 void SessionSetupHostCtrl::draw(RenderContext const& ctx) {
-	// prepare terrain picture
+	terrainRenderer_->begin();
+	// draw the terrain here ...
+	Shape2D::get()->drawCircleFilled({200, 100}, 90, 16, glm::vec3{1.f, 0.2, 0.4});
+	terrainRenderer_->end();
 }

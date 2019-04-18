@@ -8,6 +8,7 @@
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/DefaultShaderPreprocessor.h>
 #include <boglfw/renderOpenGL/RenderHelpers.h>
+#include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/utils/assert.h>
 
 #include <glm/fwd.hpp>
@@ -28,21 +29,21 @@ struct PostProcessData {
 };
 
 struct WaterRenderData {
-	unsigned refractionFB = 0;
-	unsigned refractionTex = 0;
-	unsigned refractionDepth = 0;
-	unsigned refractionFB_width = 0;
-	unsigned refractionFB_height = 0;
-	unsigned reflectionFB = 0;
-	unsigned reflectionTex = 0;
-	unsigned reflectionDepth = 0;
-	unsigned reflectionFB_width = 0;
-	unsigned reflectionFB_height = 0;
+	FrameBufferDescriptor refractionFBDesc;
+	FrameBufferDescriptor reflectionFBDesc;
+	FrameBuffer refractionFramebuffer;
+	FrameBuffer reflectionFramebuffer;
 
 	glm::vec3 waterColor {0.06f, 0.16f, 0.2f};
 };
 
+struct RenderConfig {
+	bool renderWireFrame = false;
+	bool renderPhysicsDebug = false;
+};
+
 struct RenderData {
+	RenderConfig config;
 	Viewport viewport;
 	CustomRenderContext renderCtx;
 	unsigned windowW = 0;
@@ -58,7 +59,7 @@ struct RenderData {
 
 	RenderData(unsigned winW, unsigned winH)
 		: viewport(0, 0, winW, winH)
-		, renderCtx(viewport)
+		, renderCtx()
 		, windowW(winW)
 		, windowH(winH)
 		{
@@ -76,11 +77,6 @@ private:
 	void unloadDependencies();
 
 	bool dependenciesUnloaded_ = true;
-};
-
-struct RenderConfig {
-	bool renderWireFrame = false;
-	bool renderPhysicsDebug = false;
 };
 
 bool initRender(const char* winTitle, RenderData &renderData);

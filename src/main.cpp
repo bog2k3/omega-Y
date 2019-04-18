@@ -71,8 +71,7 @@ bool updatePaused = false;
 bool slowMo = false;
 bool captureFrame = false;
 bool signalQuit = false;
-
-RenderConfig renderCfg;
+RenderConfig *pRenderCfg = nullptr;
 
 PlayerInputHandler playerInputHandler;
 
@@ -155,11 +154,13 @@ void handleDebugKeys(InputEvent& ev) {
 		//	sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
 	} break;
 	case GLFW_KEY_Q:
-		renderCfg.renderWireFrame = !renderCfg.renderWireFrame;
+		if (pRenderCfg)
+			pRenderCfg->renderWireFrame = !pRenderCfg->renderWireFrame;
 		//pTerrain->setWireframeMode(renderWireFrame);
 	break;
 	case GLFW_KEY_E:
-		renderCfg.renderPhysicsDebug = !renderCfg.renderPhysicsDebug;
+		if (pRenderCfg)
+			pRenderCfg->renderPhysicsDebug = !pRenderCfg->renderPhysicsDebug;
 	break;
 	case GLFW_KEY_X:
 		/*World::getGlobal<ImgDebugDraw>()->setValues(pTerrain->getHeightField(), pTerrain->getGridSize().x, pTerrain->getGridSize().y,
@@ -349,7 +350,7 @@ void initWorld(RenderData &renderData) {
 	auto pImgDebugDraw = new ImgDebugDraw();
 	World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
-	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.renderCtx.viewport, {0.f, 0.f}, {renderData.windowW, renderData.windowH}));
+	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.viewport, {0.f, 0.f}, {renderData.windowW, renderData.windowH}));
 }
 
 /*void initTerrain(RenderData &renderData) {
@@ -487,6 +488,7 @@ int main(int argc, char* argv[]) {
 
 	int winW = 1280, winH = 900;
 	RenderData renderData(winW, winH);
+	pRenderCfg = &renderData.config;
 	std::vector<drawable> drawDebugList;
 	renderData.drawDebugData = std::bind(drawDebug, std::ref(drawDebugList), std::placeholders::_1);
 
@@ -583,8 +585,7 @@ int main(int argc, char* argv[]) {
 					gltEnd();
 					gltBegin();
 					// start rendering the frame:
-					if (pSession)
-						render(renderData);
+					render(renderData);
 					// now rendering is on-going, move on to the next update:
 				}
 			} /* frame context */
