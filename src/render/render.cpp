@@ -184,7 +184,7 @@ void unloadRender(RenderData &renderData) {
 	renderData.waterRenderData.refractionFramebuffer.destroy();
 	renderData.unloadDependencies();
 	RenderHelpers::unload();
-	glfwDestroyWindow(gltGetWindow());
+	gltShutDown();
 }
 
 void setupRenderPass(RenderData &renderData, RenderPass pass) {
