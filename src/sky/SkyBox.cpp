@@ -155,12 +155,14 @@ void SkyBox::draw(RenderContext const& ctx) {
 
 	glUniformMatrix4fv(renderData_->iMatVP, 1, GL_FALSE, glm::value_ptr(mPV));
 
+	int oldDepthMask;
+	glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
 	glDepthMask(GL_FALSE);	// disable depth buffer writing
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
-	glDepthMask(GL_TRUE);	// enable depth buffer writing
+	glDepthMask(oldDepthMask);	// enable depth buffer writing
 
 	glBindVertexArray(0);
 	glUseProgram(0);

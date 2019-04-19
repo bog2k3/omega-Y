@@ -9,6 +9,7 @@
 #include <boglfw/renderOpenGL/DefaultShaderPreprocessor.h>
 #include <boglfw/renderOpenGL/RenderHelpers.h>
 #include <boglfw/renderOpenGL/glToolkit.h>
+#include <boglfw/renderOpenGL/Framebuffer.h>
 #include <boglfw/utils/assert.h>
 
 #include <glm/fwd.hpp>
@@ -24,8 +25,6 @@ struct PostProcessData {
 	int iTime = 0;
 
 	glm::vec2 textureSize;
-
-	//std::vector<drawable> uiDrawList;
 };
 
 struct WaterRenderData {

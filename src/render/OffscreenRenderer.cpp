@@ -6,19 +6,21 @@
 
 #include <GL/glew.h>
 
+#include <stdexcept>
+
 struct OffscreenRenderer::PrivateData {
 	std::unique_ptr<RenderContext> renderContext;
 	Viewport viewport;
 
 	FrameBuffer framebuffer;
 
-	unsigned previousFrameBuffer = 0;
+	bool offscreenActive = false;
 
 	PrivateData(unsigned bufW, unsigned bufH, std::unique_ptr<RenderContext> &&renderContext)
 		: renderContext(std::move(renderContext))
 		, viewport(0, 0, bufW, bufH)
 	{
-		renderContext->pViewport = &viewport;
+		this->renderContext->pViewport = &viewport;
 	}
 };
 
@@ -29,27 +31,46 @@ const RenderContext& OffscreenRenderer::getRenderContext() const {
 OffscreenRenderer::OffscreenRenderer(FrameBufferDescriptor desc, std::unique_ptr<RenderContext> &&renderContext)
 	: pData_(new PrivateData(desc.width, desc.height, std::move(renderContext)))
 {
-	gltCreateFrameBuffer(desc, pData_->framebuffer);
+	if (!pData_->framebuffer.create(desc))
+		throw std::runtime_error("Unable to create off-screen framebuffer!");
 }
 
 OffscreenRenderer::~OffscreenRenderer() {
-	gltDestroyFrameBuffer(pData_->framebuffer);
 	delete pData_;
 }
 
 // setup off-screen rendering
+void OffscreenRenderer::begin() {
+	assertDbg(!pData_->offscreenActive && "OffscreenRenderer already active (calling begin() twice?)");
+	pData_->framebuffer.bind();
+	pData_->offscreenActive = true;
+}
+
+// restore the initial framebuffer config
+void OffscreenRenderer::end() {
+	assertDbg(pData_->offscreenActive && "OffscreenRenderer not active (calling end() twice?)");
+	pData_->framebuffer.unbind();
+	pData_->offscreenActive = false;
+}
+
+// render stuff
+void OffscreenRenderer::render(drawable element) {
+	assertDbg(pData_->offscreenActive && "OffscreenRenderer not active (forgot to call begin()?)");
+	pData_->viewport.render(element, *pData_->renderContext);
+}
+
+// render stuff
 void OffscreenRenderer::render(std::vector<drawable> const& list) {
-	// TODO...
-	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &pData_->previousFrameBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pData_->framebuffer.framebufferId);
-	pData_->renderContext->viewport.
+	assertDbg(pData_->offscreenActive && "OffscreenRenderer not active (forgot to call begin()?)");
+	pData_->viewport.render(list, *pData_->renderContext);
 }
 
 // clear the render target
 void OffscreenRenderer::clear() {
-	// TODO...
+	assertDbg(pData_->offscreenActive && "OffscreenRenderer not active (forgot to call begin()?)");
+	pData_->viewport.clear();
 }
 
 unsigned OffscreenRenderer::getFBTexture() const {
-	return pData_->framebuffer.fbTextureId;
+	return pData_->framebuffer.fbTextureId();
 }

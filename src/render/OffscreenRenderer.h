@@ -1,9 +1,11 @@
 #ifndef OFFSCREEN_RENDERER_H
 #define OFFSCREEN_RENDERER_H
 
-#include <boglfw/renderOpenGL/glToolkit.h>
+#include <boglfw/renderOpenGL/Framebuffer.h>
+#include <boglfw/renderOpenGL/drawable.h>
 
 #include <memory>
+#include <vector>
 
 class RenderContext;
 
@@ -18,8 +20,15 @@ public:
 	OffscreenRenderer(FrameBufferDescriptor descriptor, std::unique_ptr<RenderContext> &&renderContext);
 	~OffscreenRenderer();
 
+	// set everything up for off-screen rendering
+	void begin();
+	// clear the render target (call this only between begin() and end())
 	void clear();
+	// render some stuff into the offscreen buffer (call this only between begin() and end())
 	void render(std::vector<drawable> const& list);
+	void render(drawable element);
+	// restore the previous framebuffer configuration
+	void end();
 
 	unsigned getFBTexture() const;
 	const RenderContext& getRenderContext() const;

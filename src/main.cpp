@@ -483,8 +483,10 @@ void changeGameState(GameState::StateNames stateName) {
 	pCrtState->controller().onNewStateRequest.add(changeGameState);
 }
 
+// update the current game state's controller
 void updateStateCtrl(float dt) {
-	pCrtState->controller().update(dt);
+	if (pCrtState)
+		pCrtState->controller().update(dt);
 }
 
 int main(int argc, char* argv[]) {

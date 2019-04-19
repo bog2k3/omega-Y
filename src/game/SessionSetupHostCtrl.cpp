@@ -39,7 +39,11 @@ SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 void SessionSetupHostCtrl::update(float dt) {
 	// prepare terrain picture
 	terrainRenderer_->begin();
+	terrainRenderer_->clear();
 	// draw the terrain here ...
-	Shape2D::get()->drawCircleFilled({200, 100}, 90, 16, glm::vec3{1.f, 0.2, 0.4});
+	auto drawTest = [](RenderContext const&) {
+		Shape2D::get()->drawCircleFilled({200, 100}, 90, 16, glm::vec3{1.f, 0.2, 0.4});
+	};
+	terrainRenderer_->render(&drawTest);
 	terrainRenderer_->end();
 }
