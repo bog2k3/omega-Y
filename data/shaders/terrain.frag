@@ -1,7 +1,7 @@
 #version 330 core
 
-#include water-surface.glsl
 #include underwater.glsl
+#include terrain-texture.glsl
 
 in FragData {
 	vec3 wPos;
@@ -35,11 +35,7 @@ void main() {
 	t4 = t4 * t4low * 2.5;
 
 	// blend the textures:
-	vec4 t01 = mix(t0, t1, clamp(frag.texBlendFactor.x, 0.0, 1.0)); // dirt and grass
-	vec4 t23 = mix(t2, t3, clamp(frag.texBlendFactor.y, 0.0, 1.0)); // rock 1 and rock 2
-	vec4 tGrassOrSand = vec4(mix(t01, t4, clamp(frag.texBlendFactor.w, 0.0, 1.0)).xyz, 1.0); // grass/dirt and sand
-	vec4 tFinal = vec4(mix(tGrassOrSand, t23, 1.0 - clamp(frag.texBlendFactor.z, 0.0, 1.0)).xyz, 1.0);
-	//tFinal = vec4(clamp(fTexBlendFactor.x, 0.0, 1.0)) + tFinal*0.001;
+	vec4 texColor = mixTerrainTextures(t0, t1, t2, t3, t4, frag.texBlendFactor);
 
 	float eyeDist = length(eyePos - frag.wPos);
 
@@ -48,7 +44,7 @@ void main() {
 	// compute lighting
 	vec3 light = underwater ? computeLightingUnderwater(frag.wPos, normalize(frag.normal), eyeDist) : computeLightingAboveWater(normalize(frag.normal));
 
-	vec3 color = light * (frag.color * tFinal).xyz;
+	vec3 color = light * (frag.color * texColor).xyz;
 
 	// water fog:
 	if (underwater)

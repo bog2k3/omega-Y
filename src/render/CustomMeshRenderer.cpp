@@ -46,8 +46,8 @@ CustomMeshRenderer::CustomMeshRenderer()
 		pRenderData_->iNorm = glGetAttribLocation(pRenderData_->shaderProgram_, "normal");
 		pRenderData_->iUV = glGetAttribLocation(pRenderData_->shaderProgram_, "uv");
 		pRenderData_->iColor = glGetAttribLocation(pRenderData_->shaderProgram_, "color");
-		pRenderData_->imPV = glGetUniformLocation(pRenderData_->shaderProgram_, "mPV");
-		pRenderData_->imW = glGetUniformLocation(pRenderData_->shaderProgram_, "mW");
+		pRenderData_->imPV = glGetUniformLocation(pRenderData_->shaderProgram_, "matPV");
+		pRenderData_->imW = glGetUniformLocation(pRenderData_->shaderProgram_, "matW");
 		pRenderData_->iEyePos = glGetUniformLocation(pRenderData_->shaderProgram_, "eyePos");
 		pRenderData_->iSubspace = glGetUniformLocation(pRenderData_->shaderProgram_, "subspace");
 		pRenderData_->ibRefraction = glGetUniformLocation(pRenderData_->shaderProgram_, "bRefraction");

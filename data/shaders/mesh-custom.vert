@@ -15,15 +15,14 @@ out VertexData {
 	vec4 texBlendFactor;
 } vertexOut;
 
-uniform mat4 mPV;
-uniform mat4 mW;
+uniform mat4 matW;
 
 void main() {
-	vec3 wPos = (mW * vec4(pos, 1)).xyz;
+	vec3 wPos = (matW * vec4(pos, 1)).xyz;
 	gl_Position = vec4(wPos, 1);
 	gl_ClipDistance[0] = wPos.y * sign(subspace);
 
-    vertexOut.normal = (mW * vec4(normal, 0)).xyz;
+    vertexOut.normal = (matW * vec4(normal, 0)).xyz;
     vertexOut.color = color.xyz;
     vertexOut.uv[0] = uv;
 }

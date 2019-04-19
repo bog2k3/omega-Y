@@ -32,9 +32,9 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	auto renderCtx = std::make_unique<CustomRenderContext>();
 	renderCtx->renderPass = RenderPass::Standard;
 	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::move(renderCtx));
-	terrainRenderer_->viewport().camera().setFOV(PI/2.5f);
+	terrainRenderer_->viewport().camera().setFOV(PI/5.f);
 	terrainRenderer_->viewport().camera().setZPlanes(0.15f, 500.f);
-	terrainRenderer_->viewport().camera().moveTo({90, 40, 90});
+	terrainRenderer_->viewport().camera().moveTo({100, 70, 140});
 	terrainRenderer_->viewport().camera().lookAt({0, 0, 0});
 
 	menu_->setRTTexture(terrainRenderer_->getFBTexture());

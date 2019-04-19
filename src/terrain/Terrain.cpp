@@ -73,6 +73,7 @@ struct Terrain::RenderData {
 	int iTexBlendF_;
 	int iTextureWaterNormal_;
 	int imPV_;
+	int imW_;
 	int iSampler_;
 	int iEyePos_;
 	int iSubspace_;
@@ -118,7 +119,8 @@ Terrain::Terrain()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	Shaders::createProgram("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag",
 	[this](unsigned id) {
 		renderData_->shaderProgram_ = id;
 		if (!renderData_->shaderProgram_) {
@@ -131,7 +133,8 @@ Terrain::Terrain()
 		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
 		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
 		renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
-		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "mPV");
+		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "matPV");
+		renderData_->imW_ = glGetUniformLocation(renderData_->shaderProgram_, "matW");
 		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
 		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
 		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");

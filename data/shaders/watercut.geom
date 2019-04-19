@@ -21,10 +21,10 @@ out FragData {
 	vec4 texBlendFactor;
 } vertexOut;
 
-uniform mat4 mPV;
+uniform mat4 matPV;
 
 vec4 project(vec3 wPos) {
-	return mPV * vec4(wPos, 1);
+	return matPV * vec4(wPos, 1);
 }
 
 vec3 applyRefraction(vec3 wPos) {
