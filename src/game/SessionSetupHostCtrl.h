@@ -7,6 +7,8 @@
 
 class SessionSetupHostMenu;
 class OffscreenRenderer;
+class Terrain;
+class TerrainConfig;
 
 class SessionSetupHostCtrl : public StateController
 {
@@ -20,6 +22,10 @@ private:
 	std::shared_ptr<SessionSetupHostMenu> menu_;
 
 	OffscreenRenderer *terrainRenderer_ = nullptr;
+	TerrainConfig* terrainConfig_ = nullptr;
+	Terrain* terrain_ = nullptr;
+
+	void updateTerrain();
 };
 
 #endif // SESSION_SETUP_HOST_CONTROLLER_H

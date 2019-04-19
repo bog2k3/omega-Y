@@ -8,6 +8,7 @@
 #include <vector>
 
 class RenderContext;
+class Viewport;
 
 /*
 	Use this convenience class to render to off-screen buffers/textures.
@@ -30,6 +31,7 @@ public:
 	// restore the previous framebuffer configuration
 	void end();
 
+	Viewport& viewport();
 	unsigned getFBTexture() const;
 	const RenderContext& getRenderContext() const;
 

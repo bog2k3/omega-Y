@@ -58,6 +58,8 @@ void main() {
 	if (bRefraction > 0 || bReflection > 0)
 		final.a = (frag.wPos.y / 200) + 0.5;
 		//final.a = computeZValue(gl_FragCoord);
+		
+	final.rgb = tFinal.rgb;
 
 	gl_FragColor = final;
 }

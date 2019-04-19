@@ -74,3 +74,7 @@ void OffscreenRenderer::clear() {
 unsigned OffscreenRenderer::getFBTexture() const {
 	return pData_->framebuffer.fbTextureId();
 }
+
+Viewport& OffscreenRenderer::viewport() {
+	return pData_->viewport;
+}

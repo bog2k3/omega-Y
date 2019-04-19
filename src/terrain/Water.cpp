@@ -170,22 +170,24 @@ void Water::generate(WaterParams params) {
 	// compute water vertices
 	for (unsigned i=0; i<rows; i++)
 		for (unsigned j=0; j<cols; j++) {
+			glm::vec2 jitter(srandf() * 0.1, srandf() * 0.1);
 			new(&pVertices_[i*rows + j]) WaterVertex {
-				topleft + glm::vec3(dx * j, 0, dz * i),	// position
-				0.f										// fog
+				topleft + glm::vec3(dx * j + jitter.x, 0, dz * i + jitter.y),	// position
+				0.f																// fog
 			};
 		}
 	// compute skirt vertices
 	for (unsigned i=0; i<nSkirtVerts; i++) {
-		float x = extentRadius * cosf(i*skirtVertSector);
-		float z = extentRadius * sinf(i*skirtVertSector);
+		glm::vec2 jitter(srandf() * 0.1, srandf() * 0.1);
+		float x = extentRadius * cosf(i*skirtVertSector) + jitter.x;
+		float z = extentRadius * sinf(i*skirtVertSector) + jitter.y;
 		new(&pVertices_[rows*cols+i]) WaterVertex {
 			{ x, 0, z },														// position
 			0.f //1.f																	// fog
 		};
 
-		x = (extentRadius + 50) * cosf(i*skirtVertSector);
-		z = (extentRadius + 50) * sinf(i*skirtVertSector);
+		x = (extentRadius + 50) * cosf(i*skirtVertSector) - jitter.x;
+		z = (extentRadius + 50) * sinf(i*skirtVertSector) - jitter.y;
 		new(&pVertices_[rows*cols+i + nSkirtVerts]) WaterVertex {
 			{ x, 20, z },														// position
 			1.f																	// fog
