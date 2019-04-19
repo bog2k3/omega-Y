@@ -538,13 +538,8 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		changeGameState(GameState::StateNames::MAIN_MENU);
+		changeGameState(GameState::StateNames::INITIAL_LOADING);
 
-		// precache GPU resources by rendering the first frame before first update
-		LOGLN("Precaching . . .");
-		gltBegin();
-		render(renderData);
-		gltEnd();
 		LOGLN("Done, we're now live.");
 
 		if (!initNetwork(argc, argv)) {

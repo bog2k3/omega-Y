@@ -1,35 +1,16 @@
 #include "GameState.h"
+#include "LoadingCtrl.h"
 #include "MainMenuCtrl.h"
 #include "LobbyCtrl.h"
 #include "SessionSetupHostCtrl.h"
 #include "SessionSetupClientCtrl.h"
 #include "GameCtrl.h"
 
-GameState::GameState(StateNames name)
-	: name_(name) {
-}
+GameState* GameState::createInitialLoadingState() {
+	GameState* s = new GameState(StateNames::INITIAL_LOADING);
+	s->pController_ = new LoadingCtrl(*s, LoadingCtrl::INITIAL);
 
-GameState::~GameState() {
-	if (pController_)
-		delete pController_;
-}
-
-GameState* GameState::createState(StateNames name) {
-	switch (name) {
-	case StateNames::MAIN_MENU:
-		return createMainMenuState();
-	case StateNames::LOBBY:
-		return createLobbyState();
-	case StateNames::SESSION_SETUP_HOST:
-		return createSessionSetupHostState();
-	case StateNames::SESSION_SETUP_CLIENT:
-		return createSessionSetupClientState();
-	case StateNames::GAMEPLAY:
-		return createGameplayState();
-	default:
-		assertDbg(false && "invalid state name");
-		break;
-	}
+	return s;
 }
 
 GameState* GameState::createMainMenuState() {
@@ -70,4 +51,33 @@ GameState* GameState::createGameplayState() {
 	GameState* s = new GameState(StateNames::GAMEPLAY);
 	s->pController_ = new GameCtrl(*s);
 	return s;
+}
+
+GameState::GameState(StateNames name)
+	: name_(name) {
+}
+
+GameState::~GameState() {
+	if (pController_)
+		delete pController_;
+}
+
+GameState* GameState::createState(StateNames name) {
+	switch (name) {
+	case StateNames::INITIAL_LOADING:
+		return createInitialLoadingState();
+	case StateNames::MAIN_MENU:
+		return createMainMenuState();
+	case StateNames::LOBBY:
+		return createLobbyState();
+	case StateNames::SESSION_SETUP_HOST:
+		return createSessionSetupHostState();
+	case StateNames::SESSION_SETUP_CLIENT:
+		return createSessionSetupClientState();
+	case StateNames::GAMEPLAY:
+		return createGameplayState();
+	default:
+		assertDbg(false && "invalid state name");
+		break;
+	}
 }

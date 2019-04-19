@@ -6,6 +6,7 @@ class StateController;
 class GameState {
 public:
 	enum class StateNames {
+		INITIAL_LOADING,		// initial loading screen, before menu
 		MAIN_MENU,				// main menu and other settings menus before a session is established
 		LOBBY,					// select a game to join from a list or by entering IP
 		SESSION_SETUP_HOST,		// session setup screen while hosting
@@ -27,6 +28,7 @@ private:
 	const StateNames name_;
 	StateController *pController_ = nullptr;
 
+	static GameState* createInitialLoadingState();
 	static GameState* createMainMenuState();
 	static GameState* createLobbyState();
 	static GameState* createSessionSetupHostState();

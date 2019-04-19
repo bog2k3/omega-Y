@@ -5,7 +5,6 @@
 #include <boglfw/GUI/GuiTheme.h>
 
 #include <vector>
-#include <utility>
 
 class VerticalMenu : public GuiContainerElement {
 public:
