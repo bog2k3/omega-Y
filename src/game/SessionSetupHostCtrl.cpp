@@ -1,7 +1,6 @@
 #include "SessionSetupHostCtrl.h"
 
 #include "../GUI/SessionSetupHostMenu.h"
-#include "../render/OffscreenRenderer.h"
 #include "../render/CustomRenderContext.h"
 
 #include "../terrain/Terrain.h"
@@ -10,6 +9,7 @@
 #include <boglfw/GUI/GuiSystem.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
+#include <boglfw/renderOpenGL/OffscreenRenderer.h>
 
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)

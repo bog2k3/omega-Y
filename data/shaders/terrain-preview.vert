@@ -9,7 +9,6 @@ in vec2 uv[5];
 in vec4 texBlendFactor;
 
 uniform mat4 matW;
-uniform mat4 matPV;
 
 out FragData {
 	vec3 wPos;
