@@ -1,6 +1,7 @@
 #include "LoadingCtrl.h"
 
 #include "../GUI/LoadingScreen.h"
+#include "../terrain/Terrain.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
@@ -14,17 +15,12 @@ enum TaskNames {
 	WaterTextures,
 };
 
-struct Progress {
-	unsigned completed = 0;
-	unsigned total = 0;
-};
-
 static Progress loadTerrainShaders(unsigned step) {
-	return {step+1, 20};
+	return Terrain::loadShaders(step);
 }
 
 static Progress loadTerrainTextures(unsigned step) {
-	return {step+1, 20};
+	return Terrain::loadTextures(step);
 }
 
 static Progress loadWaterShaders(unsigned step) {

@@ -1,6 +1,7 @@
 #include "render.h"
 #include "CustomMeshRenderer.h"
 #include "../physics/DebugDrawer.h"
+#include "../terrain/Terrain.h"
 #include "../terrain/Water.h"
 
 #include <boglfw/utils/log.h>
@@ -184,6 +185,7 @@ void unloadRender(RenderData &renderData) {
 	renderData.waterRenderData.refractionFramebuffer.destroy();
 	renderData.unloadDependencies();
 	RenderHelpers::unload();
+	Terrain::unloadAllResources();
 	gltShutDown();
 }
 

@@ -67,13 +67,102 @@ struct Terrain::RenderData {
 	int trisBelowWater_;
 	int trisAboveWater_;
 
-	ShaderProgram shaderProgram_;
-	int iTextureWaterNormal_;
-	int imW_;
-	int iSampler_;
+	// this is shared shader data
+	static ShaderProgram shaderProgram_;
+	static int iTextureWaterNormal_;
+	static int imW_;
+	static int iSampler_;
 
-	TextureInfo textures_[TerrainVertex::nTextures];
+	static TextureInfo textures_[TerrainVertex::nTextures];
 };
+ShaderProgram Terrain::RenderData::shaderProgram_;
+int Terrain::RenderData::iTextureWaterNormal_;
+int Terrain::RenderData::imW_;
+int Terrain::RenderData::iSampler_;
+TextureInfo Terrain::RenderData::textures_[Terrain::TerrainVertex::nTextures];
+
+Progress Terrain::loadShaders(unsigned step) {
+	RenderData::shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
+	RenderData::shaderProgram_.defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
+	RenderData::shaderProgram_.defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
+	RenderData::shaderProgram_.defineVertexAttrib("uv1", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]));
+	RenderData::shaderProgram_.defineVertexAttrib("uv2", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]));
+	RenderData::shaderProgram_.defineVertexAttrib("uv3", GL_FLOAT, 2, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]));
+	RenderData::shaderProgram_.defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
+
+	RenderData::shaderProgram_.onProgramReloaded.add([](auto const& prog) {
+		RenderData::imW_ = RenderData::shaderProgram_.getUniformLocation("matW");
+		RenderData::iSampler_ = RenderData::shaderProgram_.getUniformLocation("tex");
+		RenderData::iTextureWaterNormal_ = RenderData::shaderProgram_.getUniformLocation("textureWaterNormal");
+	});
+
+	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	if (!RenderData::shaderProgram_.load("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag")) {
+		ERROR("Failed to load terrain shaders!");
+	}
+
+	return {1, 1};
+}
+
+Progress Terrain::loadTextures(unsigned step) {
+	switch (step) {
+		case 0:
+			LOGLN("Loading terrain textures . . .");
+			RenderData::textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt3.png", true);
+			glBindTexture(GL_TEXTURE_2D, RenderData::textures_[0].texID);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			RenderData::textures_[0].wWidth = 2.f;
+			RenderData::textures_[0].wHeight = 2.f;
+		break;
+		case 1:
+			RenderData::textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png", true);
+			glBindTexture(GL_TEXTURE_2D, RenderData::textures_[1].texID);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			RenderData::textures_[1].wWidth = 3.f;
+			RenderData::textures_[1].wHeight = 3.f;
+		break;
+		case 2:
+			RenderData::textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", true);
+			glBindTexture(GL_TEXTURE_2D, RenderData::textures_[2].texID);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			RenderData::textures_[2].wWidth = 3.f;
+			RenderData::textures_[2].wHeight = 3.f;
+		break;
+		case 3:
+			RenderData::textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png", true);
+			glBindTexture(GL_TEXTURE_2D, RenderData::textures_[3].texID);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			RenderData::textures_[3].wWidth = 4.f;
+			RenderData::textures_[3].wHeight = 4.f;
+		break;
+		case 4:
+			RenderData::textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", true);
+			glBindTexture(GL_TEXTURE_2D, RenderData::textures_[4].texID);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			RenderData::textures_[4].wWidth = 4.f;
+			RenderData::textures_[4].wHeight = 4.f;
+			LOGLN("Terrain textures loaded.");
+		break;
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return {step+1, 5};
+}
+
+void Terrain::unloadAllResources() {
+	RenderData::shaderProgram_.~ShaderProgram();
+	for (unsigned i=0; i<sizeof(RenderData::textures_)/sizeof(RenderData::textures_[0]); i++)
+		RenderData::textures_[i].~TextureInfo();
+}
 
 template<>
 float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
@@ -115,31 +204,12 @@ Terrain::Terrain(std::shared_ptr<UPackCommon> unifCommon)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBindVertexArray(0);
 
-	renderData_->shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
-	renderData_->shaderProgram_.defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
-	renderData_->shaderProgram_.defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
-	renderData_->shaderProgram_.defineVertexAttrib("uv1", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]));
-	renderData_->shaderProgram_.defineVertexAttrib("uv2", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]));
-	renderData_->shaderProgram_.defineVertexAttrib("uv3", GL_FLOAT, 2, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]));
-	renderData_->shaderProgram_.defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
+	RenderData::shaderProgram_.useUniformPack(unifCommon);
 
-	renderData_->shaderProgram_.useUniformPack(unifCommon);
-
-	renderData_->shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
-		renderData_->shaderProgram_.setupVAO(renderData_->VAO_);
-
-		renderData_->imW_ = renderData_->shaderProgram_.getUniformLocation("matW");
-		renderData_->iSampler_ = renderData_->shaderProgram_.getUniformLocation("tex");
-		renderData_->iTextureWaterNormal_ = renderData_->shaderProgram_.getUniformLocation("textureWaterNormal");
+	RenderData::shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
+		RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
 	});
-
-	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
-	if (!renderData_->shaderProgram_.load("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag")) {
-		ERROR("Failed to load terrain shaders!");
-		return;
-	}
-
-	loadTextures();
+	RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
 
 	pWater_ = new Water();
 
@@ -163,53 +233,6 @@ void Terrain::clear() {
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
 	if (pBSP_)
 		delete pBSP_, pBSP_ = nullptr;
-}
-
-void Terrain::loadTextures() {
-	LOGLN("Loading textures . . .");
-	renderData_->textures_[0].texID = TextureLoader::loadFromPNG("data/textures/terrain/dirt3.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[0].wWidth = 2.f;
-	renderData_->textures_[0].wHeight = 2.f;
-
-	renderData_->textures_[1].texID = TextureLoader::loadFromPNG("data/textures/terrain/grass1.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[1].texID);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[1].wWidth = 3.f;
-	renderData_->textures_[1].wHeight = 3.f;
-
-	renderData_->textures_[2].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock1.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[2].texID);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[2].wWidth = 3.f;
-	renderData_->textures_[2].wHeight = 3.f;
-
-	renderData_->textures_[3].texID = TextureLoader::loadFromPNG("data/textures/terrain/rock3.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[3].wWidth = 4.f;
-	renderData_->textures_[3].wHeight = 4.f;
-
-	renderData_->textures_[4].texID = TextureLoader::loadFromPNG("data/textures/terrain/sand1.png", true);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	renderData_->textures_[4].wWidth = 4.f;
-	renderData_->textures_[4].wHeight = 4.f;
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	LOGLN("Textures loaded.");
 }
 
 void validateSettings(TerrainConfig const& s) {

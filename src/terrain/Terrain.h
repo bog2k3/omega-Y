@@ -4,6 +4,7 @@
 #include "../physics/PhysBodyProxy.h"
 #include "../entities/enttypes.h"
 #include "TerrainConfig.h"
+#include "../progress.h"
 
 #define ENABLE_BSP_DEBUG_DRAW
 #include "../BSP/BSP.h"
@@ -27,6 +28,10 @@ class Terrain : public Entity {
 public:
 	Terrain(std::shared_ptr<UPackCommon> unifCommon);
 	virtual ~Terrain();
+
+	static Progress loadShaders(unsigned step);
+	static Progress loadTextures(unsigned step);
+	static void unloadAllResources();
 
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
 	unsigned getEntityType() const override { return EntityTypes::TERRAIN; }
@@ -81,7 +86,6 @@ private:
 	PhysBodyProxy physicsBodyMeta_;
 	float *heightFieldValues_ = nullptr;
 
-	void loadTextures();
 	void fixTriangleWinding();
 	void computeDisplacements();
 	void meltEdges(unsigned xRadius, unsigned zRadius);
