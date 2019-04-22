@@ -5,6 +5,8 @@
 
 #include <glm/vec4.hpp>
 
+#include <memory>
+
 enum class RenderPass {
 	None,
 	WaterReflection,	// off-screen rendering for water reflection texture
@@ -15,18 +17,25 @@ enum class RenderPass {
 };
 
 class CustomMeshRenderer;
+class UPackCommon;
 namespace physics { class DebugDrawer; }
 
 class CustomRenderContext : public RenderContext {
 public:
-	CustomRenderContext() {}
+	CustomRenderContext();
 
 	static CustomRenderContext const& fromCtx(RenderContext const& r) {
 		return dynamic_cast<CustomRenderContext const&>(r);
 	}
+	static CustomRenderContext& fromCtx(RenderContext& r) {
+		return dynamic_cast<CustomRenderContext&>(r);
+	}
 
 	RenderPass renderPass = RenderPass::None;
-	glm::vec4 clipPlane;
+
+	std::shared_ptr<UPackCommon> unifCommon;
+
+	float subspace = 1.f;
 	bool enableClipPlane = false;
 	bool cameraUnderwater = false;
 	bool enableWaterRender = false;
@@ -34,6 +43,8 @@ public:
 
 	CustomMeshRenderer* meshRenderer = nullptr;
 	physics::DebugDrawer* physDebugDraw = nullptr;
+
+	void updateCommonUniforms();
 };
 
 #endif // __CUST_RENDER_CONTEXT_H__

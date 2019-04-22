@@ -13,7 +13,9 @@
 #include <bullet3/LinearMath/btScalar.h>
 
 #include <vector>
+#include <memory>
 
+class UPackCommon;
 class Viewport;
 struct Triangle;
 class Water;
@@ -23,7 +25,7 @@ class btRigidBody;
 
 class Terrain : public Entity {
 public:
-	Terrain();
+	Terrain(std::shared_ptr<UPackCommon> unifCommon);
 	virtual ~Terrain();
 
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }

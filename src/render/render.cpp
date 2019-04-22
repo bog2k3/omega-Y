@@ -198,20 +198,20 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 		renderData.viewport.setArea(0, 0, renderData.waterRenderData.reflectionFBDesc.width, renderData.waterRenderData.reflectionFBDesc.height);
 		renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
 		renderData.viewport.clear();
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? -1.f : +1.f, 0.f, 0.f};
+		renderData.renderCtx.subspace = renderData.renderCtx.cameraUnderwater ? -1.f : +1.f;
 		renderData.renderCtx.enableClipPlane = true;
-		renderData.viewport.camera().mirror(renderData.renderCtx.clipPlane);
+		renderData.viewport.camera().mirror({0.f, renderData.renderCtx.subspace, 0.f, 0.f});
 	break;
 	case RenderPass::WaterRefraction: {
 		renderData.waterRenderData.refractionFramebuffer.bind();
 		renderData.viewport.setArea(0, 0, renderData.waterRenderData.refractionFBDesc.width, renderData.waterRenderData.refractionFBDesc.height);
 		renderData.viewport.setBkColor(glm::vec4(0.07f, 0.16f, 0.2f, 1.f));
 		renderData.viewport.clear();
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater ? +1.f : -1.f, 0.f, 0.f};
+		renderData.renderCtx.subspace = renderData.renderCtx.cameraUnderwater ? +1.f : -1.f;
 		renderData.renderCtx.enableClipPlane = true;
 	} break;
 	case RenderPass::Standard: {
-		renderData.renderCtx.clipPlane = {0.f, renderData.renderCtx.cameraUnderwater  ? -1.f : +1.f, 0.f, 0.f};
+		renderData.renderCtx.subspace = renderData.renderCtx.cameraUnderwater  ? -1.f : +1.f;
 		renderData.renderCtx.enableClipPlane = true;
 		if (renderData.renderCtx.cameraUnderwater) {
 			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
@@ -248,7 +248,7 @@ void resetRenderPass(RenderData &renderData, RenderPass pass) {
 		case RenderPass::WaterReflection:
 			renderData.waterRenderData.reflectionFramebuffer.unbind();
 			renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
-			renderData.viewport.camera().mirror(renderData.renderCtx.clipPlane);
+			renderData.viewport.camera().mirror({0.f, renderData.renderCtx.subspace, 0.f, 0.f});
 			renderData.viewport.setBkColor(glm::vec3(0.f));
 		break;
 		case RenderPass::WaterRefraction:

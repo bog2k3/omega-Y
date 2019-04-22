@@ -82,7 +82,7 @@ void CustomMeshRenderer::renderMesh(Mesh& mesh, glm::mat4 const& matW, RenderCon
 	if (pRenderData_->iEyePos >= 0)
 		glUniform3fv(pRenderData_->iEyePos, 1, &ctx.viewport().camera().position().x);
 	if (pRenderData_->iSubspace >= 0)
-		glUniform1f(pRenderData_->iSubspace, rctx.clipPlane.y);
+		glUniform1f(pRenderData_->iSubspace, rctx.subspace);
 	if (pRenderData_->ibRefraction >= 0)
 		glUniform1i(pRenderData_->ibRefraction, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
 	if (pRenderData_->ibReflection >= 0)

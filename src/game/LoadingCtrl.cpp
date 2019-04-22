@@ -80,10 +80,10 @@ void LoadingCtrl::update(float dt) {
 	taskProgress_ = crtProgress.completed;
 	if (taskProgress_ == crtProgress.total) {
 		taskProgress_ = 0;
+		crtProgress.completed = 0;
 		taskPointer_++;
 	}
 
 	float totalProgress = (taskPointer_ + ((float)crtProgress.completed / crtProgress.total)) / tasks_.size();
 	loadingScreen_->setProgress(totalProgress);
 }
-

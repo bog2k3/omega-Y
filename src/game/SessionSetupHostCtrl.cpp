@@ -29,9 +29,9 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	fbDesc.format = GL_RGB;
 	fbDesc.width = terrainPictureSize.x;
 	fbDesc.height = terrainPictureSize.y;
-	auto renderCtx = std::make_unique<CustomRenderContext>();
+	auto renderCtx = new CustomRenderContext();
 	renderCtx->renderPass = RenderPass::Standard;
-	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::move(renderCtx));
+	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::unique_ptr<CustomRenderContext>(renderCtx));
 	terrainRenderer_->viewport().camera().setFOV(PI/5.f);
 	terrainRenderer_->viewport().camera().setZPlanes(0.15f, 500.f);
 	terrainRenderer_->viewport().camera().moveTo({100, 70, 140});
@@ -39,7 +39,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 
 	menu_->setRTTexture(terrainRenderer_->getFBTexture());
 
-	terrain_ = new Terrain();
+	terrain_ = new Terrain(renderCtx->unifCommon);
 	terrainConfig_ = new TerrainConfig();
 	terrainConfig_->length = 100;
 	terrainConfig_->width = 100;
@@ -59,6 +59,7 @@ void SessionSetupHostCtrl::updateTerrain() {
 }
 
 void SessionSetupHostCtrl::update(float dt) {
+	CustomRenderContext::fromCtx(terrainRenderer_->getRenderContext()).updateCommonUniforms();
 	// prepare terrain picture
 	terrainRenderer_->begin();
 	terrainRenderer_->clear();

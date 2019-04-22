@@ -10,6 +10,7 @@
 class UPackCommon : public UniformPack {
 public:
 	UPackCommon();
+	~UPackCommon() = default;
 
 	void setEyePos(glm::vec3 val)		{ setUniform(iEyePos, val); }
 	void setSubspace(float val)			{ setUniform(iSubspace, val); }

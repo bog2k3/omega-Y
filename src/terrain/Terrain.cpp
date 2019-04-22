@@ -100,7 +100,7 @@ private:
 	Terrain* pTerrain_;
 };
 
-Terrain::Terrain()
+Terrain::Terrain(std::shared_ptr<UPackCommon> unifCommon)
 	: physicsBodyMeta_(this)
 {
 	LOGPREFIX("Terrain");
@@ -115,25 +115,12 @@ Terrain::Terrain()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBindVertexArray(0);
 
-	//int imPV_;
-	//int iEyePos_;
-	//int iSubspace_;
-	//int ibRefraction_;
-	//int ibReflection_;
-	//int iTime_;
-	std::shared_ptr<UPackCommon> unifCommon { new UPackCommon() };
-	unifCommon->setbReflection(false);
-	unifCommon->setbRefraction(false);
-	unifCommon->setEyePos({10, 10, 10});
-	unifCommon->setMatProjView(glm::mat4{1.f});
-	unifCommon->setSubspace(1.f);
-	unifCommon->setTime(0.f);
-
-	//renderData_->shaderProgram_.useUniformPack(unifCommon);
 	renderData_->shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
 	renderData_->shaderProgram_.defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
 	renderData_->shaderProgram_.defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
-	renderData_->shaderProgram_.defineVertexAttrib("uv", GL_FLOAT, 2 * TerrainVertex::nTextures, sizeof(TerrainVertex), offsetof(TerrainVertex, uv));
+	renderData_->shaderProgram_.defineVertexAttrib("uv1", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]));
+	renderData_->shaderProgram_.defineVertexAttrib("uv2", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]));
+	renderData_->shaderProgram_.defineVertexAttrib("uv3", GL_FLOAT, 2, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]));
 	renderData_->shaderProgram_.defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
 
 	renderData_->shaderProgram_.useUniformPack(unifCommon);
@@ -652,14 +639,14 @@ void Terrain::draw(RenderContext const& ctx) {
 		//glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
 		//glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
 		//glUniform1f(renderData_->iTime_, rctx.time);
-		if (rctx.clipPlane.y < 0) {
+		if (rctx.subspace < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
 		} else {
 			// draw above-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
 		}
-		// unbind stuff}
+		// unbind stuff
 		glBindVertexArray(0);
 		renderData_->shaderProgram_.end();
 		glActiveTexture(GL_TEXTURE0);
