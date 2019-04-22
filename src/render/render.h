@@ -62,6 +62,7 @@ struct RenderData {
 		, windowW(winW)
 		, windowH(winH)
 		{
+			renderCtx.pViewport = &viewport;
 		}
 
 	~RenderData() {

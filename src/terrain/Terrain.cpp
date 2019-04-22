@@ -138,51 +138,6 @@ Terrain::Terrain(std::shared_ptr<UPackCommon> unifCommon)
 		ERROR("Failed to load terrain shaders!");
 		return;
 	}
-		//renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
-		//renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
-		//renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
-		//renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
-		//renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
-		//renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
-		//renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "matPV");
-		//renderData_->imW_ = glGetUniformLocation(renderData_->shaderProgram_, "matW");
-		//renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
-		//renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
-		//renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
-		//renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
-		//renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
-		//renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
-
-		/*glBindVertexArray(renderData_->VAO_);
-		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-		glEnableVertexAttribArray(renderData_->iPos_);
-		glVertexAttribPointer(renderData_->iPos_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-			(void*)offsetof(TerrainVertex, pos));
-		if (renderData_->iNormal_ > 0) {
-			glEnableVertexAttribArray(renderData_->iNormal_);
-			glVertexAttribPointer(renderData_->iNormal_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-				(void*)offsetof(TerrainVertex, normal));
-		}
-		if (renderData_->iColor_ > 0) {
-			glEnableVertexAttribArray(renderData_->iColor_);
-			glVertexAttribPointer(renderData_->iColor_, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-				(void*)offsetof(TerrainVertex, color));
-		}
-		if (renderData_->iUV_ > 0) {
-			for (unsigned i=0; i<TerrainVertex::nTextures; i++) {
-				glEnableVertexAttribArray(renderData_->iUV_ + i);
-				glVertexAttribPointer(renderData_->iUV_ + i, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-					(void*)(offsetof(TerrainVertex, uv) + i*sizeof(TerrainVertex::uv[0])));
-			}
-		}
-		if (renderData_->iTexBlendF_ > 0) {
-			glEnableVertexAttribArray(renderData_->iTexBlendF_);
-			glVertexAttribPointer(renderData_->iTexBlendF_, 4, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
-				(void*)offsetof(TerrainVertex, texBlendFactor));
-		}
-		glBindVertexArray(0);
-	});*/
 
 	loadTextures();
 
@@ -629,16 +584,10 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
 		// set-up shader, vertex buffer and uniforms
 		renderData_->shaderProgram_.begin();
-		//glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport().camera().matProjView()));
-		//glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport().camera().position().x);
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 			glUniform1i(renderData_->iSampler_ + i, i);
 		glUniform1i(renderData_->iTextureWaterNormal_, 5);
 		glBindVertexArray(renderData_->VAO_);
-		//glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
-		//glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
-		//glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
-		//glUniform1f(renderData_->iTime_, rctx.time);
 		if (rctx.subspace < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);

@@ -227,6 +227,8 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 	break;
 	}
 
+	renderData.renderCtx.updateCommonUniforms();
+
 	if (renderData.renderCtx.enableClipPlane)
 		glEnable(GL_CLIP_DISTANCE0);
 	else
