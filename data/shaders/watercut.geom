@@ -21,8 +21,6 @@ out FragData {
 	vec4 texBlendFactor;
 } vertexOut;
 
-uniform mat4 matPV;
-
 vec4 project(vec3 wPos) {
 	return matPV * vec4(wPos, 1);
 }

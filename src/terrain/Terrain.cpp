@@ -5,11 +5,12 @@
 #include "PerlinNoise.h"
 #include "Water.h"
 #include "../render/CustomRenderContext.h"
+#include "../render/programs/UPackCommon.h"
 
 #include "../BSP/BSPDebugDraw.h"
 
 #include <boglfw/renderOpenGL/Shape3D.h>
-#include <boglfw/renderOpenGL/shader.h>
+#include <boglfw/renderOpenGL/ShaderProgram.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>
@@ -65,21 +66,11 @@ struct Terrain::RenderData {
 	unsigned IBO_;
 	int trisBelowWater_;
 	int trisAboveWater_;
-	int shaderProgram_;
-	int iPos_;
-	int iNormal_;
-	int iColor_;
-	int iUV_;
-	int iTexBlendF_;
+
+	ShaderProgram shaderProgram_;
 	int iTextureWaterNormal_;
-	int imPV_;
 	int imW_;
 	int iSampler_;
-	int iEyePos_;
-	int iSubspace_;
-	int ibRefraction_;
-	int ibReflection_;
-	int iTime_;
 
 	TextureInfo textures_[TerrainVertex::nTextures];
 };
@@ -119,30 +110,63 @@ Terrain::Terrain()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
-	Shaders::createProgram("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag",
-	[this](unsigned id) {
-		renderData_->shaderProgram_ = id;
-		if (!renderData_->shaderProgram_) {
-			ERROR("Failed to load terrain shaders!");
-			return;
-		}
-		renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
-		renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
-		renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
-		renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
-		renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
-		renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
-		renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "matPV");
-		renderData_->imW_ = glGetUniformLocation(renderData_->shaderProgram_, "matW");
-		renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
-		renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
-		renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
-		renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
-		renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
-		renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
+	glBindVertexArray(renderData_->VAO_);
+		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+	glBindVertexArray(0);
 
-		glBindVertexArray(renderData_->VAO_);
+	//int imPV_;
+	//int iEyePos_;
+	//int iSubspace_;
+	//int ibRefraction_;
+	//int ibReflection_;
+	//int iTime_;
+	std::shared_ptr<UPackCommon> unifCommon { new UPackCommon() };
+	unifCommon->setbReflection(false);
+	unifCommon->setbRefraction(false);
+	unifCommon->setEyePos({10, 10, 10});
+	unifCommon->setMatProjView(glm::mat4{1.f});
+	unifCommon->setSubspace(1.f);
+	unifCommon->setTime(0.f);
+
+	//renderData_->shaderProgram_.useUniformPack(unifCommon);
+	renderData_->shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
+	renderData_->shaderProgram_.defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
+	renderData_->shaderProgram_.defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
+	renderData_->shaderProgram_.defineVertexAttrib("uv", GL_FLOAT, 2 * TerrainVertex::nTextures, sizeof(TerrainVertex), offsetof(TerrainVertex, uv));
+	renderData_->shaderProgram_.defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
+
+	renderData_->shaderProgram_.useUniformPack(unifCommon);
+
+	renderData_->shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
+		renderData_->shaderProgram_.setupVAO(renderData_->VAO_);
+
+		renderData_->imW_ = renderData_->shaderProgram_.getUniformLocation("matW");
+		renderData_->iSampler_ = renderData_->shaderProgram_.getUniformLocation("tex");
+		renderData_->iTextureWaterNormal_ = renderData_->shaderProgram_.getUniformLocation("textureWaterNormal");
+	});
+
+	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
+	if (!renderData_->shaderProgram_.load("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag")) {
+		ERROR("Failed to load terrain shaders!");
+		return;
+	}
+		//renderData_->iPos_ = glGetAttribLocation(renderData_->shaderProgram_, "pos");
+		//renderData_->iNormal_ = glGetAttribLocation(renderData_->shaderProgram_, "normal");
+		//renderData_->iColor_ = glGetAttribLocation(renderData_->shaderProgram_, "color");
+		//renderData_->iUV_ = glGetAttribLocation(renderData_->shaderProgram_, "uv");
+		//renderData_->iTexBlendF_ = glGetAttribLocation(renderData_->shaderProgram_, "texBlendFactor");
+		//renderData_->iTextureWaterNormal_ = glGetUniformLocation(renderData_->shaderProgram_, "textureWaterNormal");
+		//renderData_->imPV_ = glGetUniformLocation(renderData_->shaderProgram_, "matPV");
+		//renderData_->imW_ = glGetUniformLocation(renderData_->shaderProgram_, "matW");
+		//renderData_->iEyePos_ = glGetUniformLocation(renderData_->shaderProgram_, "eyePos");
+		//renderData_->iSampler_ = glGetUniformLocation(renderData_->shaderProgram_, "tex");
+		//renderData_->iSubspace_ = glGetUniformLocation(renderData_->shaderProgram_, "subspace");
+		//renderData_->ibRefraction_ = glGetUniformLocation(renderData_->shaderProgram_, "bRefraction");
+		//renderData_->ibReflection_ = glGetUniformLocation(renderData_->shaderProgram_, "bReflection");
+		//renderData_->iTime_ = glGetUniformLocation(renderData_->shaderProgram_, "time");
+
+		/*glBindVertexArray(renderData_->VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 		glEnableVertexAttribArray(renderData_->iPos_);
@@ -171,7 +195,7 @@ Terrain::Terrain()
 				(void*)offsetof(TerrainVertex, texBlendFactor));
 		}
 		glBindVertexArray(0);
-	});
+	});*/
 
 	loadTextures();
 
@@ -592,7 +616,7 @@ void Terrain::updatePhysics() {
 }
 
 void Terrain::draw(RenderContext const& ctx) {
-	if (!renderData_->shaderProgram_) {
+	if (!renderData_->shaderProgram_.isValid()) {
 		return;
 	}
 
@@ -617,17 +641,17 @@ void Terrain::draw(RenderContext const& ctx) {
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
 		// set-up shader, vertex buffer and uniforms
-		glUseProgram(renderData_->shaderProgram_);
-		glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport().camera().matProjView()));
-		glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport().camera().position().x);
+		renderData_->shaderProgram_.begin();
+		//glUniformMatrix4fv(renderData_->imPV_, 1, GL_FALSE, glm::value_ptr(ctx.viewport().camera().matProjView()));
+		//glUniform3fv(renderData_->iEyePos_, 1, &ctx.viewport().camera().position().x);
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
 			glUniform1i(renderData_->iSampler_ + i, i);
 		glUniform1i(renderData_->iTextureWaterNormal_, 5);
 		glBindVertexArray(renderData_->VAO_);
-		glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
-		glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
-		glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
-		glUniform1f(renderData_->iTime_, rctx.time);
+		//glUniform1f(renderData_->iSubspace_, rctx.clipPlane.y);
+		//glUniform1i(renderData_->ibRefraction_, rctx.renderPass == RenderPass::WaterRefraction ? 1 : 0);
+		//glUniform1i(renderData_->ibReflection_, rctx.renderPass == RenderPass::WaterReflection ? 1 : 0);
+		//glUniform1f(renderData_->iTime_, rctx.time);
 		if (rctx.clipPlane.y < 0) {
 			// draw below-water subspace:
 			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
@@ -637,7 +661,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		}
 		// unbind stuff}
 		glBindVertexArray(0);
-		glUseProgram(0);
+		renderData_->shaderProgram_.end();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
