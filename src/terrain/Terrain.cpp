@@ -189,7 +189,7 @@ private:
 	Terrain* pTerrain_;
 };
 
-Terrain::Terrain(std::shared_ptr<UPackCommon> unifCommon)
+Terrain::Terrain(std::shared_ptr<UniformPack> unifCommon)
 	: physicsBodyMeta_(this)
 {
 	LOGPREFIX("Terrain");
@@ -211,7 +211,7 @@ Terrain::Terrain(std::shared_ptr<UPackCommon> unifCommon)
 	});
 	RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
 
-	pWater_ = new Water();
+	pWater_ = new Water(unifCommon);
 
 	triangleAABBGenerator_ = new TriangleAABBGenerator(this);
 }

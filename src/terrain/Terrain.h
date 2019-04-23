@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 
-class UPackCommon;
+class UniformPack;
 class Viewport;
 struct Triangle;
 class Water;
@@ -26,12 +26,12 @@ class btRigidBody;
 
 class Terrain : public Entity {
 public:
-	Terrain(std::shared_ptr<UPackCommon> unifCommon);
-	virtual ~Terrain();
-
 	static Progress loadShaders(unsigned step);
 	static Progress loadTextures(unsigned step);
 	static void unloadAllResources();
+
+	Terrain(std::shared_ptr<UniformPack> unifCommon);
+	virtual ~Terrain();
 
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
 	unsigned getEntityType() const override { return EntityTypes::TERRAIN; }

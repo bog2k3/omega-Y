@@ -2,6 +2,7 @@
 
 #include "../GUI/SessionSetupHostMenu.h"
 #include "../render/CustomRenderContext.h"
+#include "../render/programs/UPackCommon.h"
 
 #include "../terrain/Terrain.h"
 

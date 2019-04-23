@@ -1,7 +1,10 @@
 #ifndef WATER_H
 #define WATER_H
 
+#include "../progress.h"
+
 #include <vector>
+#include <memory>
 
 struct WaterParams {
 	float innerRadius = 50.f;	// radius of 'detailed' water mesh -> should cover the playable area
@@ -14,10 +17,15 @@ struct WaterParams {
 class RenderContext;
 struct RenderData;
 struct Triangle;
+class UniformPack;
 
 class Water {
 public:
-	Water();
+	static Progress loadShaders(unsigned step);
+	static Progress loadTextures(unsigned step);
+	static void unloadAllResources();
+
+	Water(std::shared_ptr<UniformPack> unifCommon);
 	virtual ~Water();
 
 	void generate(WaterParams params);

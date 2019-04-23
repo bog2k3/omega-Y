@@ -2,6 +2,7 @@
 
 #include "../GUI/LoadingScreen.h"
 #include "../terrain/Terrain.h"
+#include "../terrain/Water.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
@@ -15,27 +16,11 @@ enum TaskNames {
 	WaterTextures,
 };
 
-static Progress loadTerrainShaders(unsigned step) {
-	return Terrain::loadShaders(step);
-}
-
-static Progress loadTerrainTextures(unsigned step) {
-	return Terrain::loadTextures(step);
-}
-
-static Progress loadWaterShaders(unsigned step) {
-	return {step+1, 20};
-}
-
-static Progress loadWaterTextures(unsigned step) {
-	return {step+1, 20};
-}
-
 static std::map<int, Progress (*)(unsigned)> tasksMap {
-	{ TerrainShaders, loadTerrainShaders },
-	{ TerrainTextures, loadTerrainTextures },
-	{ WaterShaders, loadWaterShaders },
-	{ WaterTextures, loadWaterTextures },
+	{ TerrainShaders, Terrain::loadShaders },
+	{ TerrainTextures, Terrain::loadTextures },
+	{ WaterShaders, Water::loadShaders },
+	{ WaterTextures, Water::loadTextures },
 };
 
 LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
