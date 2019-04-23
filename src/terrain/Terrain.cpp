@@ -159,7 +159,7 @@ Progress Terrain::loadTextures(unsigned step) {
 }
 
 void Terrain::unloadAllResources() {
-	RenderData::shaderProgram_.~ShaderProgram();
+	RenderData::shaderProgram_.reset();
 	for (unsigned i=0; i<sizeof(RenderData::textures_)/sizeof(RenderData::textures_[0]); i++)
 		RenderData::textures_[i].~TextureInfo();
 }
