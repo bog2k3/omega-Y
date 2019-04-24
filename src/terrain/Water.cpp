@@ -3,9 +3,10 @@
 #include "triangulation.h"
 #include "PerlinNoise.h"
 #include "../render/CustomRenderContext.h"
+#include "../render/programs/ShaderWater.h"
+#include "../render/ShaderProgramManager.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
-#include <boglfw/renderOpenGL/ShaderProgram.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>
@@ -24,13 +25,7 @@ struct Water::RenderData {
 	unsigned VBO_;
 	unsigned IBO_;
 
-	static ShaderProgram shaderProgram_;
-	// int iAspectRatio_;
-	static int iTexNormal;
-	static int iTexFoam;
-	static int iTexReflection_2D_;
-	static int iTexRefraction_Cube_;
-	static int iTexRefraction_;
+	ShaderWater* shaderProgram_;
 
 	static unsigned textureNormal_;
 	static unsigned textureFoam;
@@ -40,37 +35,8 @@ struct Water::RenderData {
 	unsigned textureRefraction_;
 };
 
-ShaderProgram Water::RenderData::shaderProgram_;
-int Water::RenderData::iTexNormal = -1;
-int Water::RenderData::iTexReflection_2D_ = -1;
-int Water::RenderData::iTexRefraction_Cube_ = -1;
-int Water::RenderData::iTexRefraction_ = -1;
-int Water::RenderData::iTexFoam = -1;
 unsigned Water::RenderData::textureNormal_ = 0;
 unsigned Water::RenderData::textureFoam = 0;
-
-struct Water::WaterVertex {
-	glm::vec3 pos;
-	float fog;
-};
-
-Progress Water::loadShaders(unsigned step) {
-	RenderData::shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(WaterVertex), offsetof(WaterVertex, pos));
-	RenderData::shaderProgram_.defineVertexAttrib("fog", GL_FLOAT, 1, sizeof(WaterVertex), offsetof(WaterVertex, fog));
-
-	RenderData::shaderProgram_.onProgramReloaded.add([](auto const& prog) {
-		RenderData::iTexNormal = RenderData::shaderProgram_.getUniformLocation("textureWaterNormal");
-		RenderData::iTexFoam = RenderData::shaderProgram_.getUniformLocation("textureFoam");
-		RenderData::iTexReflection_2D_ = RenderData::shaderProgram_.getUniformLocation("textureReflection2D");
-		RenderData::iTexRefraction_ = RenderData::shaderProgram_.getUniformLocation("textureRefraction");
-		RenderData::iTexRefraction_Cube_ = RenderData::shaderProgram_.getUniformLocation("textureRefractionCube");
-	});
-	if (!RenderData::shaderProgram_.load("data/shaders/water.vert", "data/shaders/water.frag")) {
-		ERROR("Failed to load water shaders!");
-	}
-
-	return {1, 1};
-}
 
 Progress Water::loadTextures(unsigned step) {
 	switch (step) {
@@ -95,13 +61,12 @@ Progress Water::loadTextures(unsigned step) {
 }
 
 void Water::unloadAllResources() {
-	RenderData::shaderProgram_.reset();
 	glDeleteTextures(1, &RenderData::textureNormal_), RenderData::textureNormal_ = 0;
 	glDeleteTextures(1, &RenderData::textureFoam), RenderData::textureFoam = 0;
 }
 
 template<>
-float nth_elem(Water::WaterVertex const& v, unsigned n) {
+float nth_elem(WaterVertex const& v, unsigned n) {
 	return	n==0 ? v.pos.x :
 			n==1 ? v.pos.z :
 			0.f;
@@ -110,6 +75,7 @@ float nth_elem(Water::WaterVertex const& v, unsigned n) {
 Water::Water()
 {
 	renderData_ = new RenderData;
+	renderData_->shaderProgram_ = &ShaderProgramManager::requestProgram<ShaderWater>();
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
@@ -119,12 +85,10 @@ Water::Water()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBindVertexArray(0);
 
-	//RenderData::shaderProgram_.useUniformPack(unifCommon);
-
-	RenderData::shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
-		RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
+	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
+		renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
 	});
-	RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
+	renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
 }
 
 Water::~Water()
@@ -244,36 +208,37 @@ void Water::updateRenderBuffers() {
 }
 
 void Water::draw(RenderContext const& ctx) {
-	if (!renderData_->shaderProgram_.isValid()) {
+	if (!renderData_->shaderProgram_->isValid()) {
 		return;
 	}
 	// configure backface culling
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
-	// set-up shader, vertex buffer and uniforms
-	renderData_->shaderProgram_.begin();
 	// set-up textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
-	glUniform1i(renderData_->iTexNormal, 0);
+	renderData_->shaderProgram_->uniforms().setWaterNormalTexSampler(0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_2D_);
-	glUniform1i(renderData_->iTexReflection_2D_, 1);
+	renderData_->shaderProgram_->uniforms().setReflectionTexSampler(1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);
-	glUniform1i(renderData_->iTexRefraction_, 2);
+	renderData_->shaderProgram_->uniforms().setRefractionTexSampler(2);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->textureRefraction_Cube_);
-	glUniform1i(renderData_->iTexRefraction_Cube_, 3);
+	renderData_->shaderProgram_->uniforms().setRefractionCubeTexSampler(3);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureFoam);
-	glUniform1i(renderData_->iTexFoam, 4);
+	renderData_->shaderProgram_->uniforms().setFoamTexSampler(4);
+
+	// set-up shader and vertex buffer
+	renderData_->shaderProgram_->begin();
 	glBindVertexArray(renderData_->VAO_);
 	// do the drawing
 	glDrawElements(GL_TRIANGLES, triangles_.size() * 3, GL_UNSIGNED_INT, nullptr);
 	// unbind stuff
 	glBindVertexArray(0);
-	renderData_->shaderProgram_.end();
+	renderData_->shaderProgram_->end();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 

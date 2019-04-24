@@ -1,5 +1,5 @@
 #include "ShaderTerrain.h"
-#include "UniformPackCollection.h"
+#include "SharedUniformPacks.h"
 #include "UPackCommon.h"
 
 #include <boglfw/utils/assert.h>
@@ -8,8 +8,9 @@
 #include <GL/glew.h>
 
 ShaderTerrain::ShaderTerrain() {
-	assertDbg(UniformPackCollection::upCommon && "Uniform pack not initialized!");
-	useUniformPack(UniformPackCollection::upCommon);
+	assertDbg(SharedUniformPacks::upCommon && "Uniform pack not initialized!");
+	useUniformPack(SharedUniformPacks::upCommon);
+	useUniformPack(SharedUniformPacks::upWaterSurface);
 	useUniformPack(upackTerrain_);
 	defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
 	defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));

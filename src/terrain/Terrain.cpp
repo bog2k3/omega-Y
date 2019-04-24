@@ -56,7 +56,6 @@ struct Terrain::RenderData {
 	int trisAboveWater_;
 
 	ShaderTerrain *shaderProgram_;
-	ShaderTerrainPreview *shaderProgramPreview_;
 	bool previewMode_;
 
 	static TextureInfo textures_[TerrainVertex::nTextures];
@@ -576,7 +575,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		if (pWater_) {
 			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
-			renderData_->shaderProgram_->uniforms().setWaterNormalTextureSampler(5);
+			renderData_->shaderProgram_->uniforms().setWaterNormalTexSampler(5);
 		}
 		// set-up shader & vertex buffer
 		renderData_->shaderProgram_->begin();

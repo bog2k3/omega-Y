@@ -15,13 +15,11 @@ struct WaterParams {
 };
 
 class RenderContext;
-struct RenderData;
 struct Triangle;
-class UniformPack;
+struct WaterVertex;
 
 class Water {
 public:
-	static Progress loadShaders(unsigned step);
 	static Progress loadTextures(unsigned step);
 	static void unloadAllResources();
 
@@ -38,8 +36,6 @@ public:
 
 	int getNormalTexture() const;
 
-	struct WaterVertex;
-
 private:
 	struct RenderData;
 
@@ -49,7 +45,6 @@ private:
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
 
-	void loadTextures();
 	void validateParams(WaterParams const& p);
 	void clear();
 	void fixTriangleWinding();

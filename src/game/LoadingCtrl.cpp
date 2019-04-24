@@ -7,15 +7,12 @@
 #include "../render/ShaderProgramManager.h"
 #include "../render/programs/ShaderTerrain.h"
 #include "../render/programs/ShaderTerrainPreview.h"
+#include "../render/programs/ShaderWater.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
 
 #include <map>
-
-class ShaderTerrainPreview;
-class ShaderTerrain;
-//class ShaderWater;
 
 enum TaskNames {
 	InitialShaders,
@@ -32,7 +29,7 @@ Progress loadInitialShaders(unsigned step) {
 
 Progress loadSessionShaders(unsigned step) {
 	ShaderProgramManager::requestProgram<ShaderTerrain>();
-	//ShaderProgramManager::requestProgram<ShaderWater>();
+	ShaderProgramManager::requestProgram<ShaderWater>();
 
 	return {1, 1};
 }
