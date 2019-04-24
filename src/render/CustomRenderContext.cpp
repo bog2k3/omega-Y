@@ -14,6 +14,7 @@ void CustomRenderContext::updateCommonUniforms() {
 	unifCommon->setbRefraction(renderPass == RenderPass::WaterRefraction);
 	unifCommon->setEyePos(viewport().camera().position());
 	unifCommon->setMatProjView(viewport().camera().matProjView());
+	unifCommon->setEnableClipping(enableClipPlane);
 	unifCommon->setSubspace(subspace);
 	unifCommon->setTime(time);
 }

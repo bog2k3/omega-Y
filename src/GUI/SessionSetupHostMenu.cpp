@@ -25,7 +25,7 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 }
 
 void SessionSetupHostMenu::setRTTexture(int texId) {
-	pTerrainPicture_->setPictureTexture(texId, true);
+	pTerrainPicture_->setPictureTexture(texId, false);
 }
 
 glm::vec2 SessionSetupHostMenu::terrainPictureSize() const {

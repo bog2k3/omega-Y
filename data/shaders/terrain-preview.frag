@@ -31,6 +31,8 @@ void main() {
 	vec3 light = underwater ? computeLightingUnderwater(frag.wPos, normalize(frag.normal), eyeDist) : computeLightingAboveWater(normalize(frag.normal));
 
 	vec3 color = light * (vec4(frag.color, 1) * texColor).xyz;
+	float gamma = 2.2;
+	color.rgb = pow(color.rgb, vec3(1.0 / gamma));
 	vec4 final = vec4(color, 1);
 
 	gl_FragColor = final;

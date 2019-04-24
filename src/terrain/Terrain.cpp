@@ -611,13 +611,19 @@ void Terrain::draw(RenderContext const& ctx) {
 			glUniform1i(renderData_->iSampler_ + i, i);
 		glUniform1i(renderData_->iTextureWaterNormal_, 5);
 		glBindVertexArray(renderData_->VAO_);
-		if (rctx.subspace < 0) {
-			// draw below-water subspace:
-			glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
+		if (rctx.enableClipPlane) {
+			if (rctx.subspace < 0) {
+				// draw below-water subspace:
+				glDrawElements(GL_TRIANGLES, renderData_->trisBelowWater_ * 3, GL_UNSIGNED_INT, nullptr);
+			} else {
+				// draw above-water subspace:
+				glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
+			}
 		} else {
-			// draw above-water subspace:
-			glDrawElements(GL_TRIANGLES, renderData_->trisAboveWater_ * 3, GL_UNSIGNED_INT, (void*)(renderData_->trisBelowWater_*3*4));
+			// render all in one call
+			glDrawElements(GL_TRIANGLES, (renderData_->trisBelowWater_ + renderData_->trisAboveWater_) * 3, GL_UNSIGNED_INT, nullptr);
 		}
+
 		// unbind stuff
 		glBindVertexArray(0);
 		renderData_->shaderProgram_.end();

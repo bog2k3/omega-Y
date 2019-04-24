@@ -30,6 +30,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	fbDesc.format = GL_RGB;
 	fbDesc.width = terrainPictureSize.x;
 	fbDesc.height = terrainPictureSize.y;
+	fbDesc.requireDepthBuffer = true;
 	auto renderCtx = new CustomRenderContext();
 	renderCtx->renderPass = RenderPass::Standard;
 	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::unique_ptr<CustomRenderContext>(renderCtx));
@@ -60,7 +61,8 @@ void SessionSetupHostCtrl::updateTerrain() {
 }
 
 void SessionSetupHostCtrl::update(float dt) {
-	CustomRenderContext::fromCtx(terrainRenderer_->getRenderContext()).updateCommonUniforms();
+	CustomRenderContext &rctx = CustomRenderContext::fromCtx(terrainRenderer_->getRenderContext());
+	rctx.updateCommonUniforms();
 	// prepare terrain picture
 	terrainRenderer_->begin();
 	terrainRenderer_->clear();

@@ -20,7 +20,9 @@ uniform mat4 matW;
 void main() {
 	vec3 wPos = (matW * vec4(pos, 1)).xyz;
 	gl_Position = vec4(wPos, 1);
-	gl_ClipDistance[0] = wPos.y * sign(subspace);
+	gl_ClipDistance[0] = bEnableClipping != 0 
+		? wPos.y * sign(subspace) 
+		: 1.0;
 
     vertexOut.normal = (matW * vec4(normal, 0)).xyz;
     vertexOut.color = color.xyz;

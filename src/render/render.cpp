@@ -186,6 +186,7 @@ void unloadRender(RenderData &renderData) {
 	renderData.unloadDependencies();
 	RenderHelpers::unload();
 	Terrain::unloadAllResources();
+	Water::unloadAllResources();
 	gltShutDown();
 }
 

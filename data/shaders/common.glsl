@@ -14,6 +14,7 @@ vec3 waterColor = vec3(0.03, 0.08, 0.1) * lightIntensity;
 vec3 ambientLightAbove = vec3(0.01, 0.02, 0.05) * 2 * lightIntensity;
 
 uniform vec3 eyePos;
+uniform int bEnableClipping; // enable clipping against subspace
 uniform float subspace;	// represents the subspace we're rendering: +1 above water, -1 below water
 uniform int bRefraction;
 uniform int bReflection;
