@@ -13,6 +13,10 @@ public:
 	~SessionSetupHostMenu() override {}
 
 	Event<void()> onBack;
+	Event<void(float x, float y)> onTerrainStartDrag;
+	Event<void()> onTerrainEndDrag;
+	Event<void(float dx, float dy)> onTerrainDrag;
+	Event<void(float dz)> onTerrainZoom;
 
 	void setRTTexture(int texId);
 	glm::vec2 terrainPictureSize() const;

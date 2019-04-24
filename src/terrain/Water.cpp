@@ -107,7 +107,7 @@ float nth_elem(Water::WaterVertex const& v, unsigned n) {
 			0.f;
 }
 
-Water::Water(std::shared_ptr<UniformPack> unifCommon)
+Water::Water()
 {
 	renderData_ = new RenderData;
 	glGenVertexArrays(1, &renderData_->VAO_);
@@ -119,7 +119,7 @@ Water::Water(std::shared_ptr<UniformPack> unifCommon)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBindVertexArray(0);
 
-	RenderData::shaderProgram_.useUniformPack(unifCommon);
+	//RenderData::shaderProgram_.useUniformPack(unifCommon);
 
 	RenderData::shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
 		RenderData::shaderProgram_.setupVAO(renderData_->VAO_);

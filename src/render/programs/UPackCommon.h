@@ -10,7 +10,6 @@
 class UPackCommon : public UniformPack {
 public:
 	UPackCommon();
-	~UPackCommon() = default;
 
 	void setEyePos(glm::vec3 val)		{ setUniform(iEyePos, val); }
 	void setEnableClipping(bool val)	{ setUniform(ibEnableClipping, val ? 1 : 0); }

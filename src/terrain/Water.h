@@ -25,7 +25,7 @@ public:
 	static Progress loadTextures(unsigned step);
 	static void unloadAllResources();
 
-	Water(std::shared_ptr<UniformPack> unifCommon);
+	Water();
 	virtual ~Water();
 
 	void generate(WaterParams params);

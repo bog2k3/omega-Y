@@ -21,7 +21,7 @@ out FragData {
 } vertexOut;
 
 void main() {
-	vec3 wPos = pos; //(matW * vec4(pos, 1)).xyz;
+	vec3 wPos = (matW * vec4(pos, 1)).xyz;
 	gl_Position = matPV * vec4(wPos, 1);
 	gl_ClipDistance[0] = 1;
 

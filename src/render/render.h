@@ -49,7 +49,8 @@ struct RenderData {
 	unsigned windowH = 0;
 	int defaultFrameBuffer = 0;
 
-	std::function<void(RenderContext const& ctx)> drawDebugData;
+	// assign your own function to this to perform debug drawing after postprocessing
+	std::function<void(RenderContext const& ctx)> drawDebugData = nullptr;
 
 	WaterRenderData waterRenderData;
 	PostProcessData postProcessData;

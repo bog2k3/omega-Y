@@ -24,6 +24,10 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 		// ...
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
 	});
+	menu_->onTerrainStartDrag.add(std::bind(&SessionSetupHostCtrl::terrain_startDrag, this, std::placeholders::_1, std::placeholders::_2));
+	menu_->onTerrainEndDrag.add(std::bind(&SessionSetupHostCtrl::terrain_endDrag, this));
+	menu_->onTerrainDrag.add(std::bind(&SessionSetupHostCtrl::terrain_drag, this, std::placeholders::_1, std::placeholders::_2));
+	menu_->onTerrainZoom.add(std::bind(&SessionSetupHostCtrl::terrain_zoom, this, std::placeholders::_1));
 
 	auto terrainPictureSize = menu_->terrainPictureSize();
 	FrameBufferDescriptor fbDesc;
@@ -41,7 +45,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 
 	menu_->setRTTexture(terrainRenderer_->getFBTexture());
 
-	terrain_ = new Terrain(renderCtx->unifCommon);
+	terrain_ = new Terrain(true);
 	terrainConfig_ = new TerrainConfig();
 	terrainConfig_->length = 100;
 	terrainConfig_->width = 100;
@@ -69,4 +73,19 @@ void SessionSetupHostCtrl::update(float dt) {
 	// draw the terrain here ...
 	terrainRenderer_->render(terrain_);
 	terrainRenderer_->end();
+}
+
+void SessionSetupHostCtrl::terrain_startDrag(float x, float y) {
+	terrain_->setWireframeMode(true);
+}
+
+void SessionSetupHostCtrl::terrain_endDrag() {
+	terrain_->setWireframeMode(false);
+}
+void SessionSetupHostCtrl::terrain_drag(float dx, float dy) {
+
+}
+
+void SessionSetupHostCtrl::terrain_zoom(float dz) {
+
 }

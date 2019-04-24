@@ -5,7 +5,10 @@
 #include "PerlinNoise.h"
 #include "Water.h"
 #include "../render/CustomRenderContext.h"
-#include "../render/programs/UPackCommon.h"
+#include "../render/ShaderProgramManager.h"
+#include "../render/programs/ShaderTerrain.h"
+#include "../render/programs/ShaderTerrainPreview.h"
+#include "../render/programs/UPackTerrain.h"
 
 #include "../BSP/BSPDebugDraw.h"
 
@@ -34,21 +37,6 @@
 
 // TODO: optimize texture mapping with atlas and texture array: https://www.khronos.org/opengl/wiki/Array_Texture
 
-struct Terrain::TerrainVertex {
-	static const unsigned nTextures = 5;
-
-	glm::vec3 pos;
-	glm::vec3 normal;
-	glm::vec3 color;
-	glm::vec2 uv[nTextures];	// uvs for each texture layer
-	glm::vec4 texBlendFactor;	// 4 texture blend factors: x is between grass1 & grass2,
-								// 							y between rock1 & rock2
-								//							z between grass/sand and rock (highest priority)
-								//							w between grass and sand
-
-	TerrainVertex() = default;
-};
-
 struct TextureInfo {
 	unsigned texID = 0;		// GL texture ID
 	float wWidth = 1.f;		// width of texture in world units (meters)
@@ -67,42 +55,13 @@ struct Terrain::RenderData {
 	int trisBelowWater_;
 	int trisAboveWater_;
 
-	// this is shared shader data
-	static ShaderProgram shaderProgram_;
-	static int iTextureWaterNormal_;
-	static int imW_;
-	static int iSampler_;
+	ShaderTerrain *shaderProgram_;
+	ShaderTerrainPreview *shaderProgramPreview_;
+	bool previewMode_;
 
 	static TextureInfo textures_[TerrainVertex::nTextures];
 };
-ShaderProgram Terrain::RenderData::shaderProgram_;
-int Terrain::RenderData::iTextureWaterNormal_;
-int Terrain::RenderData::imW_;
-int Terrain::RenderData::iSampler_;
-TextureInfo Terrain::RenderData::textures_[Terrain::TerrainVertex::nTextures];
-
-Progress Terrain::loadShaders(unsigned step) {
-	RenderData::shaderProgram_.defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
-	RenderData::shaderProgram_.defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
-	RenderData::shaderProgram_.defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
-	RenderData::shaderProgram_.defineVertexAttrib("uv1", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]));
-	RenderData::shaderProgram_.defineVertexAttrib("uv2", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]));
-	RenderData::shaderProgram_.defineVertexAttrib("uv3", GL_FLOAT, 2, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]));
-	RenderData::shaderProgram_.defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
-
-	RenderData::shaderProgram_.onProgramReloaded.add([](auto const& prog) {
-		RenderData::imW_ = RenderData::shaderProgram_.getUniformLocation("matW");
-		RenderData::iSampler_ = RenderData::shaderProgram_.getUniformLocation("tex");
-		RenderData::iTextureWaterNormal_ = RenderData::shaderProgram_.getUniformLocation("textureWaterNormal");
-	});
-
-	//Shaders::createProgramGeom("data/shaders/terrain.vert", "data/shaders/watercut.geom", "data/shaders/terrain.frag",
-	if (!RenderData::shaderProgram_.load("data/shaders/terrain-preview.vert", "data/shaders/terrain-preview.frag")) {
-		ERROR("Failed to load terrain shaders!");
-	}
-
-	return {1, 1};
-}
+TextureInfo Terrain::RenderData::textures_[TerrainVertex::nTextures];
 
 Progress Terrain::loadTextures(unsigned step) {
 	switch (step) {
@@ -159,13 +118,12 @@ Progress Terrain::loadTextures(unsigned step) {
 }
 
 void Terrain::unloadAllResources() {
-	RenderData::shaderProgram_.reset();
 	for (unsigned i=0; i<sizeof(RenderData::textures_)/sizeof(RenderData::textures_[0]); i++)
 		RenderData::textures_[i].~TextureInfo();
 }
 
 template<>
-float nth_elem(Terrain::TerrainVertex const& v, unsigned n) {
+float nth_elem(TerrainVertex const& v, unsigned n) {
 	return	n==0 ? v.pos.x :
 			n==1 ? v.pos.z :
 			0.f;
@@ -189,12 +147,17 @@ private:
 	Terrain* pTerrain_;
 };
 
-Terrain::Terrain(std::shared_ptr<UniformPack> unifCommon)
+Terrain::Terrain(bool previewMode)
 	: physicsBodyMeta_(this)
 {
 	LOGPREFIX("Terrain");
 
 	renderData_ = new RenderData();
+	renderData_->previewMode_ = previewMode;
+	if (previewMode)
+		renderData_->shaderProgram_ = &ShaderProgramManager::requestProgram<ShaderTerrainPreview>();
+	else
+		renderData_->shaderProgram_ = &ShaderProgramManager::requestProgram<ShaderTerrain>();
 	glGenVertexArrays(1, &renderData_->VAO_);
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
@@ -204,14 +167,13 @@ Terrain::Terrain(std::shared_ptr<UniformPack> unifCommon)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
 	glBindVertexArray(0);
 
-	RenderData::shaderProgram_.useUniformPack(unifCommon);
-
-	RenderData::shaderProgram_.onProgramReloaded.add([this](auto const& prog) {
-		RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
+	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const& prog) {
+		renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
 	});
-	RenderData::shaderProgram_.setupVAO(renderData_->VAO_);
+	renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
 
-	pWater_ = new Water(unifCommon);
+	if (!previewMode)
+		pWater_ = new Water();
 
 	triangleAABBGenerator_ = new TriangleAABBGenerator(this);
 }
@@ -220,7 +182,8 @@ Terrain::~Terrain()
 {
 	clear();
 	delete renderData_, renderData_ = nullptr;
-	delete pWater_, pWater_ = nullptr;
+	if (pWater_)
+		delete pWater_, pWater_ = nullptr;
 	delete triangleAABBGenerator_, triangleAABBGenerator_ = nullptr;
 }
 
@@ -335,12 +298,13 @@ void Terrain::generate(TerrainConfig const& settings) {
 	pBSP_ = new BSPTree<unsigned>(bspConfig, triangleAABBGenerator_, std::move(triIndices));
 
 	LOGLN("Generating water . . .");
-	pWater_->generate(WaterParams {
-		terrainRadius,					// inner radius
-		seaBedRadius - terrainRadius + 200,// outer extent
-		max(0.05f, 2.f / terrainRadius),// vertex density
-		false							// constrain to circle
-	});
+	if (pWater_)
+		pWater_->generate(WaterParams {
+			terrainRadius,					// inner radius
+			seaBedRadius - terrainRadius + 200,// outer extent
+			max(0.05f, 2.f / terrainRadius),// vertex density
+			false							// constrain to circle
+		});
 	LOGLN("Done generating.");
 }
 
@@ -581,16 +545,20 @@ void Terrain::updatePhysics() {
 }
 
 void Terrain::draw(RenderContext const& ctx) {
-	if (!renderData_->shaderProgram_.isValid()) {
+	if (!renderData_->shaderProgram_->isValid()) {
 		return;
 	}
+
+	if (renderData_->previewMode_)
+		renderData_->shaderProgram_->uniforms().setMatWorld(getTransform().glMatrix());
 
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
 	if (rctx.renderPass == RenderPass::Standard || rctx.renderPass == RenderPass::WaterReflection || rctx.renderPass == RenderPass::WaterRefraction) {
 		if (renderWireframe_) {
-			glLineWidth(2.f);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			if (thickWireframeLines_)
+				glLineWidth(2.f);
 		}
 		// set-up textures
 		glActiveTexture(GL_TEXTURE0);
@@ -603,13 +571,15 @@ void Terrain::draw(RenderContext const& ctx) {
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[3].texID);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[4].texID);
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
-		// set-up shader, vertex buffer and uniforms
-		renderData_->shaderProgram_.begin();
 		for (unsigned i=0; i<TerrainVertex::nTextures; i++)
-			glUniform1i(renderData_->iSampler_ + i, i);
-		glUniform1i(renderData_->iTextureWaterNormal_, 5);
+			renderData_->shaderProgram_->uniforms().setTextureSampler(i, i);
+		if (pWater_) {
+			glActiveTexture(GL_TEXTURE5);
+			glBindTexture(GL_TEXTURE_2D, pWater_->getNormalTexture());
+			renderData_->shaderProgram_->uniforms().setWaterNormalTextureSampler(5);
+		}
+		// set-up shader & vertex buffer
+		renderData_->shaderProgram_->begin();
 		glBindVertexArray(renderData_->VAO_);
 		if (rctx.enableClipPlane) {
 			if (rctx.subspace < 0) {
@@ -626,13 +596,14 @@ void Terrain::draw(RenderContext const& ctx) {
 
 		// unbind stuff
 		glBindVertexArray(0);
-		renderData_->shaderProgram_.end();
+		renderData_->shaderProgram_->end();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		if (renderWireframe_) {	// reset state
-			glLineWidth(1.f);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			if (thickWireframeLines_)
+				glLineWidth(1.f);
 		}
 		// draw vertex normals
 		/*for (unsigned i=0; i<nVertices_; i++) {
@@ -642,7 +613,8 @@ void Terrain::draw(RenderContext const& ctx) {
 		//for (unsigned i=0; i<triangles_.size() / 10; i++)
 		//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
 	} else if (!renderWireframe_ && rctx.renderPass == RenderPass::WaterSurface) {
-		pWater_->draw(ctx);
+		if (pWater_)
+			pWater_->draw(ctx);
 	}
 }
 
@@ -662,17 +634,23 @@ float Terrain::getHeightValue(glm::vec3 const& where) const {
 }
 
 void Terrain::setWaterReflectionTex(unsigned texId) {
-	pWater_->setReflectionTexture(texId);
+	if (pWater_)
+		pWater_->setReflectionTexture(texId);
 }
 
 void Terrain::setWaterRefractionTex(unsigned texId_2D, unsigned texId_Cube) {
-	pWater_->setRefractionTexture(texId_2D, texId_Cube);
+	if (pWater_)
+		pWater_->setRefractionTexture(texId_2D, texId_Cube);
 }
 
 void Terrain::update(float dt) {
-	pWater_->update(dt);
+	if (pWater_)
+		pWater_->update(dt);
 }
 
 int Terrain::getWaterNormalTexture() const {
-	return pWater_->getNormalTexture();
+	if (pWater_)
+		return pWater_->getNormalTexture();
+	else
+		return 0;
 }

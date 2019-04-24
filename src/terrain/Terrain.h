@@ -4,6 +4,7 @@
 #include "../physics/PhysBodyProxy.h"
 #include "../entities/enttypes.h"
 #include "TerrainConfig.h"
+#include "../render/programs/ShaderTerrain.h"
 #include "../progress.h"
 
 #define ENABLE_BSP_DEBUG_DRAW
@@ -14,9 +15,7 @@
 #include <bullet3/LinearMath/btScalar.h>
 
 #include <vector>
-#include <memory>
 
-class UniformPack;
 class Viewport;
 struct Triangle;
 class Water;
@@ -26,11 +25,11 @@ class btRigidBody;
 
 class Terrain : public Entity {
 public:
-	static Progress loadShaders(unsigned step);
 	static Progress loadTextures(unsigned step);
 	static void unloadAllResources();
 
-	Terrain(std::shared_ptr<UniformPack> unifCommon);
+	// specify previewMode=true to enable "preview" (simplified) rendering for rendering in the menu.
+	Terrain(bool previewMode=false);
 	virtual ~Terrain();
 
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
@@ -50,7 +49,7 @@ public:
 
 	void draw(RenderContext const& ctx) override;
 	void update(float dt) override;
-	void setWireframeMode(bool wireframe) { renderWireframe_ = wireframe; }
+	void setWireframeMode(bool wireframe, bool thickLines=false) { renderWireframe_ = wireframe; thickWireframeLines_ = thickLines; }
 
 	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point
 	TerrainConfig const& getConfig() const { return config_; }
@@ -63,8 +62,6 @@ public:
 	void setWaterRefractionTex(unsigned texId_2D, unsigned texId_Cube);
 
 	int getWaterNormalTexture() const;
-
-	struct TerrainVertex;
 
 private:
 	struct RenderData;
@@ -79,6 +76,7 @@ private:
 	TerrainConfig config_;
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
+	bool thickWireframeLines_ = true;
 	Water* pWater_ = nullptr;
 	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;
 	BSPTree<unsigned> *pBSP_ = nullptr;

@@ -4,22 +4,43 @@
 #include "../terrain/Terrain.h"
 #include "../terrain/Water.h"
 
+#include "../render/ShaderProgramManager.h"
+#include "../render/programs/ShaderTerrain.h"
+#include "../render/programs/ShaderTerrainPreview.h"
+
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
 
 #include <map>
 
+class ShaderTerrainPreview;
+class ShaderTerrain;
+//class ShaderWater;
+
 enum TaskNames {
-	TerrainShaders,
+	InitialShaders,
 	TerrainTextures,
-	WaterShaders,
 	WaterTextures,
+	SessionShaders,
 };
 
+Progress loadInitialShaders(unsigned step) {
+	ShaderProgramManager::requestProgram<ShaderTerrainPreview>();
+
+	return {1, 1};
+}
+
+Progress loadSessionShaders(unsigned step) {
+	ShaderProgramManager::requestProgram<ShaderTerrain>();
+	//ShaderProgramManager::requestProgram<ShaderWater>();
+
+	return {1, 1};
+}
+
 static std::map<int, Progress (*)(unsigned)> tasksMap {
-	{ TerrainShaders, Terrain::loadShaders },
+	{ InitialShaders, loadInitialShaders },
+	{ SessionShaders, loadSessionShaders },
 	{ TerrainTextures, Terrain::loadTextures },
-	{ WaterShaders, Water::loadShaders },
 	{ WaterTextures, Water::loadTextures },
 };
 
@@ -28,14 +49,15 @@ LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
 {
 	switch (situation) {
 	case INITIAL:
-		tasks_.push_back(TerrainShaders);
+		tasks_.push_back(InitialShaders);
 		tasks_.push_back(TerrainTextures);
-		tasks_.push_back(WaterShaders);
-		tasks_.push_back(WaterTextures);
 
 		nextState_ = GameState::StateNames::MAIN_MENU;
 	break;
 	case SESSION_START:
+		tasks_.push_back(SessionShaders);
+		tasks_.push_back(WaterTextures);
+
 		nextState_ = GameState::StateNames::GAMEPLAY;
 	break;
 	case SESSION_END:

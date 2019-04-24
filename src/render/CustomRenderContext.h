@@ -22,8 +22,6 @@ namespace physics { class DebugDrawer; }
 
 class CustomRenderContext : public RenderContext {
 public:
-	CustomRenderContext();
-
 	static CustomRenderContext const& fromCtx(RenderContext const& r) {
 		return dynamic_cast<CustomRenderContext const&>(r);
 	}
@@ -32,8 +30,6 @@ public:
 	}
 
 	RenderPass renderPass = RenderPass::None;
-
-	std::shared_ptr<UPackCommon> unifCommon;
 
 	float subspace = 1.f;
 	bool enableClipPlane = false;

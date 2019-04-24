@@ -21,6 +21,10 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	addElement(pBack);
 
 	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
+	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
+	pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
+	pTerrainPicture_->onDrag.forward(onTerrainDrag);
+	pTerrainPicture_->onScroll.forward(onTerrainZoom);
 	addElement(pTerrainPicture_);
 }
 

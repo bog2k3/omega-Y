@@ -26,6 +26,10 @@ private:
 	Terrain* terrain_ = nullptr;
 
 	void updateTerrain();
+	void terrain_startDrag(float x, float y);
+	void terrain_endDrag();
+	void terrain_drag(float dx, float dy);
+	void terrain_zoom(float dz);
 };
 
 #endif // SESSION_SETUP_HOST_CONTROLLER_H

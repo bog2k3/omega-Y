@@ -1,5 +1,6 @@
 #include "render.h"
 #include "CustomMeshRenderer.h"
+#include "programs/UniformPackCollection.h"
 #include "../physics/DebugDrawer.h"
 #include "../terrain/Terrain.h"
 #include "../terrain/Water.h"
@@ -123,6 +124,8 @@ bool initRender(const char* winTitle, RenderData &renderData) {
 		return false;
 	renderData.setupDependencies();
 
+	UniformPackCollection::initialize();
+
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	// configure backface culling
 	glFrontFace(GL_CW);
@@ -184,6 +187,7 @@ void unloadRender(RenderData &renderData) {
 	renderData.waterRenderData.reflectionFramebuffer.destroy();
 	renderData.waterRenderData.refractionFramebuffer.destroy();
 	renderData.unloadDependencies();
+	UniformPackCollection::unload();
 	RenderHelpers::unload();
 	Terrain::unloadAllResources();
 	Water::unloadAllResources();

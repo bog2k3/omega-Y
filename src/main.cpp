@@ -156,7 +156,7 @@ void handleDebugKeys(InputEvent& ev) {
 	case GLFW_KEY_Q:
 		if (pRenderCfg)
 			pRenderCfg->renderWireFrame = !pRenderCfg->renderWireFrame;
-		//pTerrain->setWireframeMode(renderWireFrame);
+		//pTerrain->setWireframeMode(renderWireFrame, true);
 	break;
 	case GLFW_KEY_E:
 		if (pRenderCfg)
