@@ -83,7 +83,16 @@ void SessionSetupHostCtrl::terrain_endDrag() {
 	terrain_->setWireframeMode(false);
 }
 void SessionSetupHostCtrl::terrain_drag(float dx, float dy) {
-
+	// TODO don't transform the terrain because all shading depends on world-Y-values and it gets fucked up.
+	// instead:
+	orbitTheCameraAroundTerrain();
+	float rotateSpeed = 0.01f; // rad / pixels of movement
+	glm::vec3 up {0.f, 1.f, 0.f};
+	glm::quat qX = glm::angleAxis(-dx * rotateSpeed, up);
+	glm::vec3 cameraLocalX = glm::normalize(glm::cross(up, terrainRenderer_->viewport().camera().direction()));
+	glm::quat qY = glm::angleAxis(-dy * rotateSpeed, cameraLocalX);
+	terrain_->getTransform().rotateLocal(qY);
+	terrain_->getTransform().rotateWorld(qX);
 }
 
 void SessionSetupHostCtrl::terrain_zoom(float dz) {
