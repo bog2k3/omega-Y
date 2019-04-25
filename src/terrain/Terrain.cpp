@@ -386,7 +386,7 @@ void Terrain::computeDisplacements() {
 			//float hr = (pVertices_[k].pos.y - config_.minElevation) / (config_.maxElevation - config_.minElevation);
 			//pVertices_[k].color = {1.f - hr, hr, 0};
 		}
-	meltEdges(cols_ * 0.1, rows_ * 0.1);
+	meltEdges(cols_ * 0.2, rows_ * 0.2);
 }
 
 void Terrain::meltEdges(unsigned xRadius, unsigned zRadius) {

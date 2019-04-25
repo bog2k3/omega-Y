@@ -8,10 +8,10 @@
 #include <GL/glew.h>
 
 ShaderTerrain::ShaderTerrain() {
-	assertDbg(SharedUniformPacks::upCommon && "Uniform pack not initialized!");
 	useUniformPack(SharedUniformPacks::upCommon);
 	useUniformPack(SharedUniformPacks::upWaterSurface);
 	useUniformPack(upackTerrain_);
+
 	defineVertexAttrib("pos", GL_FLOAT, 3);
 	defineVertexAttrib("normal", GL_FLOAT, 3);
 	defineVertexAttrib("color", GL_FLOAT, 3);
