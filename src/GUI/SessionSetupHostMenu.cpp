@@ -11,7 +11,7 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 {
 	glm::vec2 mySize = getSize();
 
-	std::shared_ptr<Label> pTitle = std::make_shared<Label>(glm::vec2{mySize.x / 2 - 100, 200}, 50, "Host Game");
+	std::shared_ptr<Label> pTitle = std::make_shared<Label>(glm::vec2{mySize.x / 2 - 125, 85}, 50, "Host Game");
 	addElement(pTitle);
 
 	std::shared_ptr<Button> pBack = std::make_shared<Button>(glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50}, "Back");
@@ -20,7 +20,19 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	});
 	addElement(pBack);
 
-	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
+	std::shared_ptr<Button> pRegenerate = std::make_shared<Button>(glm::vec2{25, 620}, glm::vec2{160, 30}, "New terrain");
+	pRegenerate->onClick.add([this](auto) {
+		onRegenerate.trigger();
+	});
+	addElement(pRegenerate);
+
+	std::shared_ptr<Button> pWireframe = std::make_shared<Button>(glm::vec2{165, 620}, glm::vec2{160, 30}, "Toggle Wireframe");
+	pWireframe->onClick.add([this](auto) {
+		onToggleWireframe.trigger();
+	});
+	addElement(pWireframe);
+
+	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{25, 100}, glm::vec2{700, 500});
 	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
 	pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
 	pTerrainPicture_->onDrag.forward(onTerrainDrag);

@@ -29,6 +29,9 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	menu_->onTerrainDrag.add(std::bind(&SessionSetupHostCtrl::terrain_drag, this, std::placeholders::_1, std::placeholders::_2));
 	menu_->onTerrainZoom.add(std::bind(&SessionSetupHostCtrl::terrain_zoom, this, std::placeholders::_1));
 
+	menu_->onRegenerate.add([this]() { updateTerrain(); });
+	menu_->onToggleWireframe.add([this]() { terrain_->setWireframeMode(true); });
+
 	auto terrainPictureSize = menu_->terrainPictureSize();
 	FrameBufferDescriptor fbDesc;
 	fbDesc.format = GL_RGB;
@@ -40,7 +43,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::unique_ptr<CustomRenderContext>(renderCtx));
 	terrainRenderer_->viewport().camera().setFOV(PI/5.f);
 	terrainRenderer_->viewport().camera().setZPlanes(0.15f, 500.f);
-	terrainRenderer_->viewport().camera().moveTo({100, 70, 140});
+	terrainRenderer_->viewport().camera().moveTo({100, 50, 140});
 	terrainRenderer_->viewport().camera().lookAt({0, 0, 0});
 
 	menu_->setRTTexture(terrainRenderer_->getFBTexture());

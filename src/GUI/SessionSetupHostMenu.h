@@ -13,6 +13,9 @@ public:
 	~SessionSetupHostMenu() override {}
 
 	Event<void()> onBack;
+	Event<void()> onRegenerate;
+	Event<void()> onToggleWireframe;
+
 	Event<void(float x, float y)> onTerrainStartDrag;
 	Event<void()> onTerrainEndDrag;
 	Event<void(float dx, float dy)> onTerrainDrag;
