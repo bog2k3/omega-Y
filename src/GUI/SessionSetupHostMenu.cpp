@@ -3,6 +3,7 @@
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
 #include <boglfw/GUI/controls/Picture.h>
+#include <boglfw/GUI/controls/Slider.h>
 
 static const float margin = 0.02f; // of screen size
 
@@ -15,22 +16,22 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	addElement(pTitle);
 
 	std::shared_ptr<Button> pBack = std::make_shared<Button>(glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50}, "Back");
-	pBack->onClick.add([this](auto) {
-		onBack.trigger();
-	});
+	pBack->onClick.forward(onBack);
 	addElement(pBack);
 
 	std::shared_ptr<Button> pRegenerate = std::make_shared<Button>(glm::vec2{25, 620}, glm::vec2{160, 30}, "New terrain");
-	pRegenerate->onClick.add([this](auto) {
-		onRegenerate.trigger();
-	});
+	pRegenerate->onClick.forward(onRegenerate);
 	addElement(pRegenerate);
 
 	std::shared_ptr<Button> pWireframe = std::make_shared<Button>(glm::vec2{205, 620}, glm::vec2{160, 30}, "Toggle Wireframe");
-	pWireframe->onClick.add([this](auto) {
-		onToggleWireframe.trigger();
-	});
+	pWireframe->onClick.forward(onToggleWireframe);
 	addElement(pWireframe);
+
+	std::shared_ptr<Slider> pSlider = std::make_shared<Slider>(glm::vec2{850, 100}, glm::vec2{300, 60});
+	pSlider->setLabel("Slider");
+	//pSlider->setRange();
+	//pSlider->setDisplayStyle();
+	addElement(pSlider);
 
 	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{25, 100}, glm::vec2{700, 500});
 	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);

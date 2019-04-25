@@ -12,10 +12,9 @@ public:
 	virtual ~VerticalMenu() override {}
 
 protected:
-	using buttonHandler = decltype(Button::onClick)::handler_type;
 	struct buttonDescriptor {
 		std::string name;
-		buttonHandler onClick;
+		Button::buttonHandler onClick;
 		bool customColor = false;
 		glm::vec4 color = GuiTheme::getButtonColor();
 	};

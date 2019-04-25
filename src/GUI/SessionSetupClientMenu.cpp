@@ -15,9 +15,7 @@ SessionSetupClientMenu::SessionSetupClientMenu(glm::vec2 viewportSize)
 	addElement(pTitle);
 
 	std::shared_ptr<Button> pBack = std::make_shared<Button>(glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50}, "Back");
-	pBack->onClick.add([this](auto) {
-		onBack.trigger();
-	});
+	pBack->onClick.forward(onBack);
 	addElement(pBack);
 
 	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{100, 100}, glm::vec2{400, 300});
