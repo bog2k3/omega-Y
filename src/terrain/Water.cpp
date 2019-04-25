@@ -72,6 +72,20 @@ float nth_elem(WaterVertex const& v, unsigned n) {
 			0.f;
 }
 
+void Water::setupVAO() {
+	glBindVertexArray(renderData_->VAO_);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+
+	std::map<std::string, ShaderProgram::VertexAttribSource> mapVertexSources {
+		{ "pos", { renderData_->VBO_, sizeof(WaterVertex), offsetof(WaterVertex, pos) } },
+		{ "fog", { renderData_->VBO_, sizeof(WaterVertex), offsetof(WaterVertex, fog) } }
+	};
+
+	renderData_->shaderProgram_->setupVertexStreams(mapVertexSources);
+
+	glBindVertexArray(0);
+}
+
 Water::Water()
 {
 	renderData_ = new RenderData;
@@ -80,15 +94,10 @@ Water::Water()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	glBindVertexArray(renderData_->VAO_);
-		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBindVertexArray(0);
-
 	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
-		renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
+		setupVAO();
 	});
-	renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
+	setupVAO();
 }
 
 Water::~Water()

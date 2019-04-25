@@ -48,6 +48,19 @@ struct TextureInfo {
 	}
 };
 
+struct TerrainVertex {
+	static const unsigned nTextures = 5;
+
+	glm::vec3 pos;
+	glm::vec3 normal;
+	glm::vec3 color;
+	glm::vec2 uv[nTextures];	// uvs for each texture layer
+	glm::vec4 texBlendFactor;	// 4 texture blend factors: x is between grass1 & grass2,
+								// 							y between rock1 & rock2
+								//							z between grass/sand and rock (highest priority)
+								//							w between grass and sand
+};
+
 struct Terrain::RenderData {
 	unsigned VAO_;
 	unsigned VBO_;
@@ -146,6 +159,24 @@ private:
 	Terrain* pTerrain_;
 };
 
+void Terrain::setupVAO() {
+	glBindVertexArray(renderData_->VAO_);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
+
+	std::map<std::string, ShaderProgram::VertexAttribSource> mapVertexSources {
+		{ "pos", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, pos) } },
+		{ "normal", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, normal) } },
+		{ "color", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, color) } },
+		{ "uv1", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]) } },
+		{ "uv2", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]) } },
+		{ "uv3", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]) } },
+		{ "texBlendFactor", { renderData_->VBO_, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor) } }
+	};
+	renderData_->shaderProgram_->setupVertexStreams(mapVertexSources);
+
+	glBindVertexArray(0);
+}
+
 Terrain::Terrain(bool previewMode)
 	: physicsBodyMeta_(this)
 {
@@ -161,15 +192,10 @@ Terrain::Terrain(bool previewMode)
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	glBindVertexArray(renderData_->VAO_);
-		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO_);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO_);
-	glBindVertexArray(0);
-
-	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const& prog) {
-		renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
+	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
+		setupVAO();
 	});
-	renderData_->shaderProgram_->setupVAO(renderData_->VAO_);
+	setupVAO();
 
 	if (!previewMode)
 		pWater_ = new Water();

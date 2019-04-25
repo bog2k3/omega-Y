@@ -12,8 +12,8 @@ ShaderWater::ShaderWater() {
 	useUniformPack(SharedUniformPacks::upCommon);
 	useUniformPack(SharedUniformPacks::upWaterSurface);
 	useUniformPack(upackWater_);
-	defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(WaterVertex), offsetof(WaterVertex, pos));
-	defineVertexAttrib("fog", GL_FLOAT, 1, sizeof(WaterVertex), offsetof(WaterVertex, fog));
+	defineVertexAttrib("pos", GL_FLOAT, 3);
+	defineVertexAttrib("fog", GL_FLOAT, 1);
 }
 
 void ShaderWater::load() {
@@ -24,4 +24,3 @@ void ShaderWater::load() {
 		ERROR("Failed to load water shader!");
 	}
 }
-

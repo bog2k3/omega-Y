@@ -44,17 +44,17 @@ vec3 refractPos(vec3 wPos, vec3 eyePos) {
 	return final;
 }
 
-vec3 computeLightingUnderwater(vec3 wPos, vec3 normal, float eyeDist) {
-	// compute caustics:
+float computeCaustics(vec3 wPos) {
 	float eyeDistForCaustic = 1.0; // eyeDist
 	float causticIntensity = clamp(pow(dot(-lightDir, computeWaterNormal(wPos.xz * causticTextureTile, time * causticTextureTile, eyeDistForCaustic, 0.5, false)) * 2, 5), 0, 1);
 	float causticSharpness = 15.0 / pow(1 - wPos.y, 0.9);
 	causticIntensity = pow(1 - abs(causticIntensity - 0.3), causticSharpness);
 	causticIntensity *= lightIntensity / 2;
-	//causticIntensity = wPos.y < 0 ? causticIntensity : 0;
+	
+	return causticIntensity;
+}
 
-	vec3 light = lightColor * (lightIntensity + causticIntensity);
-
+vec3 computeLightingUnderwaterImpl(vec3 wPos, vec3 normal, float eyeDist, vec3 totalLightAtSurface) {
 	// for underwater terrain, we need to simulate light absorbtion through water
 	float eyeHeight = eyePos.y * (bReflection > 0 ? -1 : +1);
 
@@ -63,7 +63,7 @@ vec3 computeLightingUnderwater(vec3 wPos, vec3 normal, float eyeDist) {
 	vec3 absorbFactor = 1.0 / pow(vec3(2.0), vec3(lightWaterDistance) / lightHalveDist);
 	//absorbFactor = wPos.y < 0 ? absorbFactor : vec3(1.0);
 
-	light *= absorbFactor;
+	vec3 light = totalLightAtSurface * absorbFactor;
 
 	vec3 ambientLightBelow = waterColor / pow(max(1, 1 - wPos.y), 1.5);
 
@@ -74,6 +74,17 @@ vec3 computeLightingUnderwater(vec3 wPos, vec3 normal, float eyeDist) {
 
 	vec3 totalLight = light + ambientLight;
 	return totalLight;
+}
+
+vec3 computeLightingUnderwaterSimple(vec3 wPos, vec3 normal) {
+	vec3 lightAtSurface = lightColor * lightIntensity;
+	return computeLightingUnderwaterImpl(wPos, normal, 0, lightAtSurface);
+}
+
+vec3 computeLightingUnderwater(vec3 wPos, vec3 normal, float eyeDist) {
+	float causticIntensity = computeCaustics(wPos);
+	vec3 lightAtSurface = lightColor * (lightIntensity + causticIntensity);
+	return computeLightingUnderwaterImpl(wPos, normal, eyeDist, lightAtSurface);
 }
 
 vec3 computeWaterFog(vec3 wPos, vec3 color, float eyeDist) {

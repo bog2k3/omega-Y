@@ -45,6 +45,7 @@ private:
 	unsigned nVertices_ = 0;
 	std::vector<Triangle> triangles_;
 
+	void setupVAO();
 	void validateParams(WaterParams const& p);
 	void clear();
 	void fixTriangleWinding();

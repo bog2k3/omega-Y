@@ -12,13 +12,13 @@ ShaderTerrain::ShaderTerrain() {
 	useUniformPack(SharedUniformPacks::upCommon);
 	useUniformPack(SharedUniformPacks::upWaterSurface);
 	useUniformPack(upackTerrain_);
-	defineVertexAttrib("pos", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, pos));
-	defineVertexAttrib("normal", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, normal));
-	defineVertexAttrib("color", GL_FLOAT, 3, sizeof(TerrainVertex), offsetof(TerrainVertex, color));
-	defineVertexAttrib("uv1", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[0]));
-	defineVertexAttrib("uv2", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[2]));
-	defineVertexAttrib("uv3", GL_FLOAT, 2, sizeof(TerrainVertex), offsetof(TerrainVertex, uv[4]));
-	defineVertexAttrib("texBlendFactor", GL_FLOAT, 4, sizeof(TerrainVertex), offsetof(TerrainVertex, texBlendFactor));
+	defineVertexAttrib("pos", GL_FLOAT, 3);
+	defineVertexAttrib("normal", GL_FLOAT, 3);
+	defineVertexAttrib("color", GL_FLOAT, 3);
+	defineVertexAttrib("uv1", GL_FLOAT, 4);
+	defineVertexAttrib("uv2", GL_FLOAT, 4);
+	defineVertexAttrib("uv3", GL_FLOAT, 2);
+	defineVertexAttrib("texBlendFactor", GL_FLOAT, 4);
 }
 
 void ShaderTerrain::load() {

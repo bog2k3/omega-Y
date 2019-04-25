@@ -22,6 +22,7 @@ class Water;
 class TriangleAABBGenerator;
 class btHeightfieldTerrainShape;
 class btRigidBody;
+struct TerrainVertex;
 
 class Terrain : public Entity {
 public:
@@ -84,6 +85,7 @@ private:
 	PhysBodyProxy physicsBodyMeta_;
 	float *heightFieldValues_ = nullptr;
 
+	void setupVAO();
 	void fixTriangleWinding();
 	void computeDisplacements();
 	void meltEdges(unsigned xRadius, unsigned zRadius);

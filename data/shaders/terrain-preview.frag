@@ -28,7 +28,7 @@ void main() {
 
 	// compute lighting
 	bool underwater = frag.wPos.y < 0;
-	vec3 light = underwater ? computeLightingUnderwater(frag.wPos, normalize(frag.normal), eyeDist) : computeLightingAboveWater(normalize(frag.normal));
+	vec3 light = underwater ? computeLightingUnderwaterSimple(frag.wPos, normalize(frag.normal)) : computeLightingAboveWater(normalize(frag.normal));
 
 	vec3 color = light * (vec4(frag.color, 1) * texColor).xyz;
 	float gamma = 2.2;
