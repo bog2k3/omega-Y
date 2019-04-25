@@ -552,6 +552,7 @@ int main(int argc, char* argv[]) {
 
 		float initialTime = glfwGetTime();
 		float t = initialTime;
+		float frameTime = 0;
 		gltBegin();
 		while (!signalQuit && GLFWInput::checkInput()) {
 			if (captureFrame)
@@ -560,21 +561,21 @@ int main(int argc, char* argv[]) {
 			{
 				PERF_MARKER("frame");
 				float newTime = glfwGetTime();
-				float realDT = newTime - t;
-				frameRate = 1.0 / realDT;
+				frameTime = 0.5 * (frameTime + newTime - t); // smooth out
+				frameRate = 1.0 / frameTime;
 				t = newTime;
 				realTime = newTime - initialTime;
 
 				// time step for simulation
 				float maxFrameDT = 0.1f;	// cap the dt to avoid unwanted artifacts when framerate drops too much
-				float simDT = min(maxFrameDT, updatePaused ? 0 : realDT);
+				float simDT = min(maxFrameDT, updatePaused ? 0 : frameTime);
 				if (slowMo) {
 					simDT *= 0.1f;	// 10x slow-down factor
 				}
 
 				simulationTime += simDT;
 
-				continuousUpdateList.update(realDT);
+				continuousUpdateList.update(frameTime);
 				if (simDT > 0) {
 					PERF_MARKER("frame-update");
 					updateList.update(simDT);

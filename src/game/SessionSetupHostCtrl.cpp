@@ -95,5 +95,10 @@ void SessionSetupHostCtrl::terrain_drag(float dx, float dy) {
 }
 
 void SessionSetupHostCtrl::terrain_zoom(float dz) {
-
+	const float zoomStep = 1.1f;
+	float zoomFactor = dz < 0 ? zoomStep : 1.f / zoomStep;
+	const float minFOV = PI / 20;
+	const float maxFOV = PI / 4;
+	float newFOV = clamp(terrainRenderer_->viewport().camera().FOV() * zoomFactor, minFOV, maxFOV);
+	terrainRenderer_->viewport().camera().setFOV(newFOV);
 }
