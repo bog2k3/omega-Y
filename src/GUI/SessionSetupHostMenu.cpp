@@ -26,7 +26,7 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	});
 	addElement(pRegenerate);
 
-	std::shared_ptr<Button> pWireframe = std::make_shared<Button>(glm::vec2{165, 620}, glm::vec2{160, 30}, "Toggle Wireframe");
+	std::shared_ptr<Button> pWireframe = std::make_shared<Button>(glm::vec2{205, 620}, glm::vec2{160, 30}, "Toggle Wireframe");
 	pWireframe->onClick.add([this](auto) {
 		onToggleWireframe.trigger();
 	});
