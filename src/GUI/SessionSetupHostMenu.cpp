@@ -27,7 +27,7 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	pWireframe->onClick.forward(onToggleWireframe);
 	addElement(pWireframe);
 
-	std::shared_ptr<Slider> pSlider = std::make_shared<Slider>(glm::vec2{850, 100}, glm::vec2{300, 60});
+	std::shared_ptr<Slider> pSlider = std::make_shared<Slider>(glm::vec2{850, 100}, 300);
 	pSlider->setLabel("Slider");
 	//pSlider->setRange();
 	//pSlider->setDisplayStyle();
