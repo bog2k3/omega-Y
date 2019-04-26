@@ -15,9 +15,14 @@
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
+	terrainConfig_ = new TerrainConfig();
+	terrainConfig_->vertexDensity = 0.5;
+
 	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize());
+	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainConfig_);
 	guiSystem->addElement(menu_);
+
+	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::updateTerrain, this));
 
 	menu_->onBack.add([this]() {
 		// delete session
@@ -43,16 +48,12 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	terrainRenderer_ = new OffscreenRenderer(fbDesc, std::unique_ptr<CustomRenderContext>(renderCtx));
 	terrainRenderer_->viewport().camera().setFOV(PI/5.f);
 	terrainRenderer_->viewport().camera().setZPlanes(0.15f, 500.f);
-	terrainRenderer_->viewport().camera().moveTo({100, 50, 140});
+	terrainRenderer_->viewport().camera().moveTo({140, 50, 180});
 	terrainRenderer_->viewport().camera().lookAt({0, 0, 0});
 
 	menu_->setRTTexture(terrainRenderer_->getFBTexture());
 
 	terrain_ = new Terrain(true);
-	terrainConfig_ = new TerrainConfig();
-	terrainConfig_->length = 100;
-	terrainConfig_->width = 100;
-	terrainConfig_->vertexDensity = 1.0;
 	updateTerrain();
 }
 

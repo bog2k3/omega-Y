@@ -15,6 +15,7 @@ protected:
 	struct buttonDescriptor {
 		std::string name;
 		Button::buttonHandler onClick;
+		decltype(Button::onClick) *forwardClick;
 		bool customColor = false;
 		glm::vec4 color = GuiTheme::getButtonColor();
 	};

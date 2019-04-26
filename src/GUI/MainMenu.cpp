@@ -7,23 +7,20 @@ MainMenu::MainMenu(glm::vec2 size)
 
 	buttons.push_back({
 		"Host Game",
-		[this](Button* b) {
-			onHostMulti.trigger();
-		}
+		nullptr,
+		&onHostMulti
 	});
 
 	buttons.push_back({
 		"Join Game",
-		[this](Button* b) {
-			onJoinMulti.trigger();
-		}
+		nullptr,
+		&onJoinMulti
 	});
 
 	buttons.push_back({
 		"Exit",
-		[this](Button* b) {
-			onExit.trigger();
-		}
+		nullptr,
+		&onExit
 	});
 
 

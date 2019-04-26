@@ -34,7 +34,10 @@ void VerticalMenu::setButtons(std::vector<buttonDescriptor> buttons) {
 
 	for (auto &b : buttons) {
 		auto pB = std::make_shared<Button>(glm::vec2{buttonX, buttonY}, buttonSize, b.name);
-		pB->onClick.add(b.onClick);
+		if (b.onClick)
+			pB->onClick.add(b.onClick);
+		if (b.forwardClick)
+			pB->onClick.forward(*b.forwardClick);
 		addElement(pB);
 		if (b.customColor) {
 			//pB->setColor(b.color);

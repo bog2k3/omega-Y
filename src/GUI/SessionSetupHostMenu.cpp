@@ -5,10 +5,14 @@
 #include <boglfw/GUI/controls/Picture.h>
 #include <boglfw/GUI/controls/Slider.h>
 
+#include <sstream>
+#include <iomanip>
+
 static const float margin = 0.02f; // of screen size
 
-SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
+SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig* pData)
 	: GuiContainerElement(viewportSize * margin, viewportSize * (1 - 2*margin))
+	, pData_(pData)
 {
 	glm::vec2 mySize = getSize();
 
@@ -27,13 +31,29 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize)
 	pWireframe->onClick.forward(onToggleWireframe);
 	addElement(pWireframe);
 
-	std::shared_ptr<Slider> pSlider = std::make_shared<Slider>(glm::vec2{850, 100}, 300);
-	pSlider->setLabel("Slider");
-	//pSlider->setRange();
-	//pSlider->setDisplayStyle();
-	addElement(pSlider);
+	std::shared_ptr<Label> pMinElevLabel = std::make_shared<Label>(glm::vec2{1120, 130}, 18, "");
+	addElement(pMinElevLabel);
 
-	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{25, 100}, glm::vec2{700, 500});
+	std::shared_ptr<Slider> pMinElevSlider = std::make_shared<Slider>(glm::vec2{850, 100}, 250);
+	pMinElevSlider->setLabel("Min Elevation");
+	pMinElevSlider->setRange(-20, -1, 0.5f);
+	pMinElevSlider->setDisplayStyle(5, 1, 0);
+	pMinElevSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onMinElevationChanged, this, pMinElevLabel, std::placeholders::_1));
+	pMinElevSlider->setValue(pData_->minElevation);
+	addElement(pMinElevSlider);
+
+	std::shared_ptr<Label> pMaxElevLabel = std::make_shared<Label>(glm::vec2{1120, 180}, 18, "");
+	addElement(pMaxElevLabel);
+
+	std::shared_ptr<Slider> pMaxElevSlider = std::make_shared<Slider>(glm::vec2{850, 150}, 250);
+	pMaxElevSlider->setLabel("Max Elevation");
+	pMaxElevSlider->setRange(10, 100, 0.5f);
+	pMaxElevSlider->setDisplayStyle(5, 1, 0);
+	pMaxElevSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onMaxElevationChanged, this, pMaxElevLabel, std::placeholders::_1));
+	pMaxElevSlider->setValue(pData_->maxElevation);
+	addElement(pMaxElevSlider);
+
+	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{25, 100}, glm::vec2{650, 500});
 	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
 	pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
 	pTerrainPicture_->onDrag.forward(onTerrainDrag);
@@ -47,4 +67,22 @@ void SessionSetupHostMenu::setRTTexture(int texId) {
 
 glm::vec2 SessionSetupHostMenu::terrainPictureSize() const {
 	return pTerrainPicture_->getSize();
+}
+
+void SessionSetupHostMenu::onMinElevationChanged(std::shared_ptr<Label> label, float value) {
+	pData_->minElevation = value;
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(1) << value;
+	label->setText(ss.str());
+
+	onParametersChanged.trigger();
+}
+
+void SessionSetupHostMenu::onMaxElevationChanged(std::shared_ptr<Label> label, float value) {
+	pData_->maxElevation = value;
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(1) << value;
+	label->setText(ss.str());
+
+	onParametersChanged.trigger();
 }
