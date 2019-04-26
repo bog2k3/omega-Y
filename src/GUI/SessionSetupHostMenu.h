@@ -9,6 +9,8 @@
 
 class Picture;
 class Label;
+class TextField;
+class Slider;
 
 class SessionSetupHostMenu : public GuiContainerElement {
 public:
@@ -16,8 +18,6 @@ public:
 	~SessionSetupHostMenu() override {}
 
 	Event<void()> onBack;
-	Event<void()> onRegenerate;
-	Event<void()> onToggleWireframe;
 
 	Event<void(float x, float y)> onTerrainStartDrag;
 	Event<void()> onTerrainEndDrag;
@@ -33,6 +33,10 @@ private:
 	std::shared_ptr<Picture> pTerrainPicture_;
 	TerrainConfig* pData_;
 
-	void onMinElevationChanged(std::shared_ptr<Label> label, float value);
-	void onMaxElevationChanged(std::shared_ptr<Label> label, float value);
+	void onSeedChanged(std::shared_ptr<TextField> pSeedField);
+	void onRandSeed(std::shared_ptr<TextField> pSeedField);
+	void onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> label);
+	void onRandomizeAll(std::shared_ptr<TextField> pSeedField,
+		std::shared_ptr<Slider> pMinElevSlider, std::shared_ptr<Slider> pMaxElevSlider,
+		std::shared_ptr<Slider> pBigRoughnessSlider, std::shared_ptr<Slider> pSmallRoughnessSlider);
 };

@@ -241,6 +241,9 @@ void Terrain::generate(TerrainConfig const& settings) {
 	clear();
 	config_ = settings;
 
+	uint32_t nextSeed = new_RID();
+	randSeed(config_.seed);
+
 	rows_ = (unsigned)ceil(config_.length * config_.vertexDensity) + 1;
 	cols_ = (unsigned)ceil(config_.width * config_.vertexDensity) + 1;
 
@@ -297,6 +300,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 	int trRes = triangulate(pVertices_, nVertices_, triangles_);
 	if (trRes < 0) {
 		ERROR("Failed to triangulate terrain mesh!");
+		randSeed(nextSeed);
 		return;
 	}
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
@@ -331,6 +335,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 			false							// constrain to circle
 		});
 	LOGLN("Done generating.");
+	randSeed(nextSeed);
 }
 
 void Terrain::finishGenerate() {

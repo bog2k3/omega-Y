@@ -1,12 +1,17 @@
 #ifndef TERRAIN_CONFIG_H
 #define TERRAIN_CONFIG_H
 
+#include <cstdint>
+
 struct TerrainConfig {
+	// random seed
+	uint32_t seed = 0;
+
 	// size settings
 	float width = 200.f;	// X axis
 	float length = 200.f;	// Z axis
 	float minElevation = -10.f;	// minimum Y axis value
-	float maxElevation = 35.f;	// maximum Y axis value
+	float maxElevation = 45.f;	// maximum Y axis value
 
 	// structure settings
 	float vertexDensity = 2.f;	// vertices per meter (actual density may be slightly higher due to rounding,

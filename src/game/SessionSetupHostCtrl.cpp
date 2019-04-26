@@ -12,12 +12,14 @@
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/OffscreenRenderer.h>
 #include <boglfw/utils/Timer.h>
+#include <boglfw/utils/rand.h>
 
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
 	terrainConfig_ = new TerrainConfig();
 	terrainConfig_->vertexDensity = 0.5;
+	terrainConfig_->seed = new_RID();
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
 	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainConfig_);
@@ -34,9 +36,6 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	menu_->onTerrainEndDrag.add(std::bind(&SessionSetupHostCtrl::terrain_endDrag, this));
 	menu_->onTerrainDrag.add(std::bind(&SessionSetupHostCtrl::terrain_drag, this, std::placeholders::_1, std::placeholders::_2));
 	menu_->onTerrainZoom.add(std::bind(&SessionSetupHostCtrl::terrain_zoom, this, std::placeholders::_1));
-
-	menu_->onRegenerate.add([this]() { updateTerrain(); });
-	menu_->onToggleWireframe.add([this]() { terrain_->setWireframeMode(true); });
 
 	auto terrainPictureSize = menu_->terrainPictureSize();
 	FrameBufferDescriptor fbDesc;
