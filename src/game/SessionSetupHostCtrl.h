@@ -9,6 +9,7 @@ class SessionSetupHostMenu;
 class OffscreenRenderer;
 class Terrain;
 class TerrainConfig;
+class Timer;
 
 class SessionSetupHostCtrl : public StateController
 {
@@ -21,10 +22,12 @@ public:
 private:
 	std::shared_ptr<SessionSetupHostMenu> menu_;
 
-	OffscreenRenderer *terrainRenderer_ = nullptr;
-	TerrainConfig* terrainConfig_ = nullptr;
-	Terrain* terrain_ = nullptr;
+	OffscreenRenderer *terrainRenderer_;
+	TerrainConfig* terrainConfig_;
+	Terrain* terrain_;
+	Timer* terrainTimer_;
 
+	void terrainConfigChanged();
 	void updateTerrain();
 	void terrain_startDrag(float x, float y);
 	void terrain_endDrag();

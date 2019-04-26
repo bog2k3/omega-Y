@@ -11,6 +11,7 @@
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/Camera.h>
 #include <boglfw/renderOpenGL/OffscreenRenderer.h>
+#include <boglfw/utils/Timer.h>
 
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
@@ -22,7 +23,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainConfig_);
 	guiSystem->addElement(menu_);
 
-	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::updateTerrain, this));
+	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));
 
 	menu_->onBack.add([this]() {
 		// delete session
@@ -55,12 +56,20 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 
 	terrain_ = new Terrain(true);
 	updateTerrain();
+
+	terrainTimer_ = new Timer(0.5f);
+	terrainTimer_->onTimeout.add(std::bind(&SessionSetupHostCtrl::updateTerrain, this));
 }
 
 SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 	delete terrain_;
 	delete terrainConfig_;
+	delete terrainTimer_;
+}
+
+void SessionSetupHostCtrl::terrainConfigChanged() {
+	terrainTimer_->restart();
 }
 
 void SessionSetupHostCtrl::updateTerrain() {
@@ -69,6 +78,8 @@ void SessionSetupHostCtrl::updateTerrain() {
 }
 
 void SessionSetupHostCtrl::update(float dt) {
+	terrainTimer_->update(dt);
+
 	CustomRenderContext &rctx = CustomRenderContext::fromCtx(terrainRenderer_->getRenderContext());
 	rctx.updateCommonUniforms();
 	// prepare terrain picture
