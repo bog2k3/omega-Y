@@ -13,6 +13,7 @@
 #include "game/GameState.h"
 #include "game/StateController.h"
 #include "game/Session.h"
+#include "game/SessionConfig.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -489,6 +490,15 @@ void updateStateCtrl(float dt) {
 		pCrtState->controller().update(dt);
 }
 
+std::shared_ptr<Session> initSession(SessionConfig cfg) {
+	auto session = std::make_shared<Session>(cfg.type);
+	return session;
+}
+
+void destroySession() {
+	// ...
+}
+
 int main(int argc, char* argv[]) {
 	perf::setCrtThreadName("main");
 
@@ -538,6 +548,8 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
+		GameState::initSessionCallback = initSession;
+		GameState::destroySessionCallback = destroySession;
 		changeGameState(GameState::StateNames::INITIAL_LOADING);
 
 		LOGLN("Done, we're now live.");

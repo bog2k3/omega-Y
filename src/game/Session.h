@@ -36,10 +36,10 @@ public:
 
 	//void update(float dt);
 
-	GameConfig gameCfg_;
+	GameConfig gameCfg;
 	//bool enableWaterRender_ = false;
-	Terrain* pTerrain_ = nullptr;
-	Water* pWater_ = nullptr;
+	Terrain* pTerrain = nullptr;
+	Water* pWater = nullptr;
 
 private:
 	SessionType type_;

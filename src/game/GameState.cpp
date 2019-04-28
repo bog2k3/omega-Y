@@ -5,6 +5,11 @@
 #include "SessionSetupHostCtrl.h"
 #include "SessionSetupClientCtrl.h"
 #include "GameCtrl.h"
+#include "SessionConfig.h"
+
+std::shared_ptr<Session> (*GameState::initSessionCallback)(SessionConfig cfg) = nullptr;
+void (*GameState::destroySessionCallback)() = nullptr;
+std::shared_ptr<Session> GameState::sessionPtr;
 
 GameState* GameState::createInitialLoadingState() {
 	GameState* s = new GameState(StateNames::INITIAL_LOADING);
@@ -53,6 +58,12 @@ GameState* GameState::createGameplayState() {
 	return s;
 }
 
+GameState* GameState::createSessionLoadingState() {
+	GameState* s = new GameState(StateNames::SESSION_LOADING);
+	s->pController_ = new LoadingCtrl(*s, LoadingCtrl::SESSION_START);
+	return s;
+}
+
 GameState::GameState(StateNames name)
 	: name_(name) {
 }
@@ -74,10 +85,23 @@ GameState* GameState::createState(StateNames name) {
 		return createSessionSetupHostState();
 	case StateNames::SESSION_SETUP_CLIENT:
 		return createSessionSetupClientState();
+	case StateNames::SESSION_LOADING:
+		return createSessionLoadingState();
 	case StateNames::GAMEPLAY:
 		return createGameplayState();
 	default:
 		assertDbg(false && "invalid state name");
 		break;
 	}
+}
+
+void GameState::initSession(SessionConfig cfg) {
+	assertDbg(initSessionCallback && "No initSessionCallback provided!");
+	sessionPtr = initSessionCallback(cfg);
+}
+
+void GameState::destroySession() {
+	assertDbg(destroySessionCallback && "No destroySessionCallback provided!");
+	sessionPtr.reset();
+	destroySessionCallback();
 }

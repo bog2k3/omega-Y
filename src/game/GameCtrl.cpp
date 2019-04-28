@@ -11,7 +11,7 @@ GameCtrl::GameCtrl(GameState &s)
 	auto guiSystem = World::getGlobal<GuiSystem>();
 	menu_ = std::make_shared<InGameMenu>(guiSystem->getViewportSize());
 	guiSystem->addElement(menu_);
-
+	menu_->hide();
 }
 
 GameCtrl::~GameCtrl() {

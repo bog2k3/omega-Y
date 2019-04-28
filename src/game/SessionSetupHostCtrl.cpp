@@ -1,5 +1,8 @@
 #include "SessionSetupHostCtrl.h"
 
+#include "Session.h";
+#include "SessionConfig.h"
+
 #include "../GUI/SessionSetupHostMenu.h"
 #include "../render/CustomRenderContext.h"
 #include "../render/programs/UPackCommon.h"
@@ -17,20 +20,25 @@
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
-	terrainConfig_ = new TerrainConfig();
-	terrainConfig_->vertexDensity = 0.5;
-	terrainConfig_->seed = new_RID();
+	SessionConfig scfg;
+	scfg.type = Session::SESSION_HOST;
+	state_.initSession(scfg);
+
+	state_.session()->gameCfg.terrainConfig.vertexDensity = 0.5;
+	state_.session()->gameCfg.terrainConfig.seed = new_RID();
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainConfig_);
+	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), &state_.session()->gameCfg.terrainConfig);
 	guiSystem->addElement(menu_);
 
 	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));
 
 	menu_->onBack.add([this]() {
-		// delete session
-		// ...
+		state_.destroySession();
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
+	});
+	menu_->onStart.add([this]() {
+		onNewStateRequest.trigger(GameState::StateNames::SESSION_LOADING);
 	});
 	menu_->onTerrainStartDrag.add(std::bind(&SessionSetupHostCtrl::terrain_startDrag, this, std::placeholders::_1, std::placeholders::_2));
 	menu_->onTerrainEndDrag.add(std::bind(&SessionSetupHostCtrl::terrain_endDrag, this));
@@ -63,7 +71,6 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 	delete terrain_;
-	delete terrainConfig_;
 	delete terrainTimer_;
 }
 
@@ -72,7 +79,7 @@ void SessionSetupHostCtrl::terrainConfigChanged() {
 }
 
 void SessionSetupHostCtrl::updateTerrain() {
-	terrain_->generate(*terrainConfig_);
+	terrain_->generate(state_.session()->gameCfg.terrainConfig);
 	terrain_->finishGenerate();
 }
 

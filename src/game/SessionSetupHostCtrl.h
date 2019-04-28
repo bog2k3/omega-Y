@@ -23,7 +23,6 @@ private:
 	std::shared_ptr<SessionSetupHostMenu> menu_;
 
 	OffscreenRenderer *terrainRenderer_;
-	TerrainConfig* terrainConfig_;
 	Terrain* terrain_;
 	Timer* terrainTimer_;
 

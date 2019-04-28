@@ -25,6 +25,10 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig
 	pBack->onClick.forward(onBack);
 	addElement(pBack);
 
+	std::shared_ptr<Button> pStart = std::make_shared<Button>(glm::vec2{mySize.x - 210, mySize.y - 60}, glm::vec2{200, 50}, "Start");
+	pStart->onClick.forward(onStart);
+	addElement(pStart);
+
 	std::shared_ptr<Label> pSeedLabel = std::make_shared<Label>(glm::vec2{700, 140}, 18, "Seed");
 	addElement(pSeedLabel);
 
