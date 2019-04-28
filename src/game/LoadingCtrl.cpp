@@ -38,27 +38,21 @@ Progress loadSessionShaders(unsigned step) {
 	return {1, 1};
 }
 
-Progress setupTerrain(unsigned step) {
-	switch (step) {
-	case 0:
-		GameState::session()->pTerrain = new Terrain(false);
-	break;
-	case 1:
-		GameState::session()->pTerrain->generate(GameState::session()->gameCfg.terrainConfig);
-	break;
-	case 2:
-		GameState::session()->pTerrain->finishGenerate();
-	break;
-	}
-	return {step+1, 3};
+Progress sessionInit(unsigned step) {
+	return GameState::session()->load(step);
 }
 
-static std::map<int, Progress (*)(unsigned)> tasksMap {
+Progress sessionUnload(unsigned step) {
+	return GameState::session()->unload(step);
+}
+
+static std::map<int, progressiveFunction> tasksMap {
 	{ InitialShaders, loadInitialShaders },
 	{ SessionShaders, loadSessionShaders },
 	{ TerrainTextures, Terrain::loadTextures },
 	{ WaterTextures, Water::loadTextures },
-	{ TerrainSetup, setupTerrain },
+	{ SessionInit, sessionInit },
+	{ SessionUnload, sessionUnload },
 };
 
 LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
@@ -74,11 +68,13 @@ LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
 	case SESSION_START:
 		tasks_.push_back(SessionShaders);
 		tasks_.push_back(WaterTextures);
-		tasks_.push_back(TerrainSetup);
+		tasks_.push_back(SessionInit);
 
 		nextState_ = GameState::StateNames::GAMEPLAY;
 	break;
 	case SESSION_END:
+		tasks_.push_back(SessionUnload);
+
 		nextState_ = GameState::StateNames::MAIN_MENU;
 	break;
 	}

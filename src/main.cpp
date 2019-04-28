@@ -2,9 +2,6 @@
 #include "physics/PhysBodyProxy.h"
 #include "physics/DebugDrawer.h"
 
-#include "entities/FreeCamera.h"
-#include "entities/PlayerEntity.h"
-
 #include "PlayerInputHandler.h"
 #include "ImgDebugDraw.h"
 
@@ -377,8 +374,7 @@ void initWorld(RenderData &renderData) {
 }
 
 void initSky() {
-	pSkyBox = new SkyBox();
-	pSkyBox->load("data/textures/sky/1");
+	
 }*/
 
 bool iamhost = false;
@@ -490,13 +486,24 @@ void updateStateCtrl(float dt) {
 		pCrtState->controller().update(dt);
 }
 
+void onSessionStarted() {
+	playerInputHandler.setTargetObject(pSession->freeCam());
+}
+
+void onSessionEnded() {
+}
+
 std::shared_ptr<Session> initSession(SessionConfig cfg) {
 	auto session = std::make_shared<Session>(cfg.type);
+	pSession = session.get();
+	session->onStart.add(onSessionStarted);
+	session->onEnd.add(onSessionEnded);
 	return session;
 }
 
 void destroySession() {
 	// ...
+	pSession = nullptr;
 }
 
 int main(int argc, char* argv[]) {

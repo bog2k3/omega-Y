@@ -2,8 +2,11 @@
 #define SESSION_H
 
 #include "GameConfig.h"
+#include "../progress.h"
+
 //#include <boglfw/renderOpenGL/drawable.h>
 //#include <boglfw/utils/updatable.h>
+#include <boglfw/utils/Event.h>
 
 
 #include <vector>
@@ -11,6 +14,7 @@
 
 class Terrain;
 class Water;
+class Player;
 class FreeCamera;
 class PlayerEntity;
 class CameraController;
@@ -22,27 +26,36 @@ public:
 		SESSION_CLIENT,
 	};
 
-	Session(SessionType type);
+	Session(SessionType type, GameConfig config);
 	~Session();
 
 	SessionType type() const { return type_; }
+	GameConfig const& gameConfig() { return gameCfg_; }
+
+	std::shared_ptr<Terrain> terrain() const { return terrain_.lock(); }
+	std::shared_ptr<Water> water() const { return water_.lock(); }
+	std::shared_ptr<FreeCamera> freeCam() const { return freeCam_.lock(); }
+	std::shared_ptr<PlayerEntity> player() const { return player_.lock(); }
+	std::shared_ptr<CameraController> cameraCtrl() const { return cameraCtrl_.lock(); }
 
 	//std::vector<drawable> & drawList3D() { return drawList3D_; }
 	//std::vector<drawable> & drawList2D() { return drawList2D_; }
 
-	std::weak_ptr<FreeCamera> freeCam() const { return freeCam_; }
-	std::weak_ptr<PlayerEntity> player() const { return player_; }
-	std::weak_ptr<CameraController> cameraCtrl() const { return cameraCtrl_; }
-
 	//void update(float dt);
 
-	GameConfig gameCfg;
-	//bool enableWaterRender_ = false;
-	Terrain* pTerrain = nullptr;
-	Water* pWater = nullptr;
+	Progress load(unsigned step);
+	Progress unload(unsigned step);
+
+	Event<void()> onStart;
+	Event<void()> onEnd;
 
 private:
 	SessionType type_;
+	GameConfig gameCfg_;
+	std::weak_ptr<Terrain> terrain_;
+	std::weak_ptr<Water> water_;
+	std::weak_ptr<Player> player_;
+
 	//std::vector<drawable> drawList3D_;
 	//std::vector<drawable> drawList2D_;
 
