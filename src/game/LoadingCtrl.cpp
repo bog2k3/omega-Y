@@ -22,7 +22,8 @@ enum TaskNames {
 	TerrainTextures,
 	WaterTextures,
 	SessionShaders,
-	TerrainSetup,
+	SessionInit,
+	SessionUnload,
 };
 
 Progress loadInitialShaders(unsigned step) {

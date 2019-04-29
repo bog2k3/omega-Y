@@ -1,14 +1,16 @@
 #include "Session.h"
 
-#include "entities/FreeCamera.h"
-#include "entities/PlayerEntity.h"
+#include "../entities/FreeCamera.h"
+#include "../entities/PlayerEntity.h"
+#include "../terrain/Terrain.h"
+#include "../sky/SkyBox.h"
 
 #include <boglfw/World.h>
 #include <boglfw/entities/CameraController.h>
 #include <boglfw/utils/assert.h>
 
-Session::Session(SessionType type)
-	: type_(type) {
+Session::Session(SessionType type, GameConfig config)
+	: type_(type), gameCfg_(config) {
 }
 
 Session::~Session() {
@@ -38,17 +40,21 @@ Progress Session::load(unsigned step) {
 		player_ = sPlayer;
 		World::getInstance().takeOwnershipOf(sPlayer);
 
-		pSkyBox = new SkyBox();
-		// pSkyBox->load("data/textures/sky/1");
+		auto sSkyBox = std::make_shared<SkyBox>();
+		skyBox_ = sSkyBox;
+		World::getInstance().takeOwnershipOf(sSkyBox);
 	break;
 	case 1:
-		GameState::session()->pTerrain->generate(GameState::session()->gameCfg.terrainConfig);
+		skyBox_->load(gameCfg_.skyBoxPath);
 	break;
 	case 2:
-		GameState::session()->pTerrain->finishGenerate();
+		terrain_->generate(GameState::session()->gameCfg.terrainConfig);
+	break:
+	case 3:
+		terrain_->finishGenerate();
 	break;
 	}
-	return {step+1, 3};
+	return {step+1, 4};
 }
 
 Progress Session::unload(unsigned step) {
