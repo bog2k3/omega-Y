@@ -12,6 +12,9 @@
 #include "game/Session.h"
 #include "game/SessionConfig.h"
 
+#include "entities/FreeCamera.h"
+#include "entities/PlayerEntity.h"
+
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/GLText.h>
@@ -493,11 +496,13 @@ void onSessionStarted() {
 void onSessionEnded() {
 }
 
-std::shared_ptr<Session> initSession(SessionConfig cfg) {
-	auto session = std::make_shared<Session>(cfg.type);
-	pSession = session.get();
+std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg) {
+	auto session = std::make_shared<Session>(cfg.type, cfg.gameConfig);
 	session->onStart.add(onSessionStarted);
 	session->onEnd.add(onSessionEnded);
+	// TODO:
+	send pRenderData->viewport to session to use camera for cameraController
+	pSession = session.get();
 	return session;
 }
 
@@ -555,7 +560,7 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		GameState::initSessionCallback = initSession;
+		GameState::initSessionCallback = std::bind(&initSession, &renderData, std::placeholders::_1);
 		GameState::destroySessionCallback = destroySession;
 		changeGameState(GameState::StateNames::INITIAL_LOADING);
 
