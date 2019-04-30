@@ -1,5 +1,8 @@
 #include "SkyBox.h"
 #include "../render/CustomRenderContext.h"
+#include "../render/ShaderProgramManager.h"
+#include "../render/programs/ShaderSkybox.h"
+#include "../render/programs/UPackSkybox.h"
 
 #include <boglfw/renderOpenGL/shader.h>
 #include <boglfw/renderOpenGL/TextureLoader.h>
@@ -17,16 +20,26 @@ struct SkyBox::SkyBoxRenderData {
 	unsigned VAO;
 	unsigned VBO;
 	unsigned IBO;
-	unsigned shaderProgram;
-	unsigned iPos;
-	unsigned iMatVP;
-	unsigned iTexSampler;
+	ShaderSkybox* shaderProgram;
+	int reloadHandler;
 	unsigned texture;
 };
 
 struct SkyBoxVertex {
 	glm::vec3 pos;
 };
+
+void SkyBox::setupVAO() {
+	glBindVertexArray(renderData_->VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
+
+	std::map<std::string, ShaderProgram::VertexAttribSource> mapVertexSources {
+		{ "pos", { renderData_->VBO, sizeof(SkyBoxVertex), offsetof(SkyBoxVertex, pos) } },
+	};
+	renderData_->shaderProgram->setupVertexStreams(mapVertexSources);
+
+	glBindVertexArray(0);
+}
 
 SkyBox::SkyBox() {
 	LOGPREFIX("SkyBox");
@@ -35,23 +48,11 @@ SkyBox::SkyBox() {
 	glGenBuffers(1, &renderData_->VBO);
 	glGenBuffers(1, &renderData_->IBO);
 
-	Shaders::createProgram("data/shaders/skybox.vert", "data/shaders/skybox.frag", [this](unsigned id) {
-		renderData_->shaderProgram = id;
-		if (!renderData_->shaderProgram) {
-			ERROR("Could not load skybox shaders!");
-			throw;
-		}
-		renderData_->iPos = glGetAttribLocation(renderData_->shaderProgram, "pos");
-		renderData_->iMatVP = glGetUniformLocation(renderData_->shaderProgram, "mVP");
-		renderData_->iTexSampler = glGetUniformLocation(renderData_->shaderProgram, "textureSky");
-
-		glBindVertexArray(renderData_->VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
-		glEnableVertexAttribArray(renderData_->iPos);
-		glVertexAttribPointer(renderData_->iPos, 3, GL_FLOAT, GL_FALSE, sizeof(SkyBoxVertex), (void*)offsetof(SkyBoxVertex, pos));
-		glBindVertexArray(0);
+	renderData_->shaderProgram = &ShaderProgramManager::requestProgram<ShaderSkybox>();
+	renderData_->reloadHandler = renderData_->shaderProgram->onProgramReloaded.add([this](auto const&) {
+		setupVAO();
 	});
+	setupVAO();
 
 	// generate vertex data:
 	SkyBoxVertex verts[] {
@@ -99,7 +100,11 @@ SkyBox::SkyBox() {
 }
 
 SkyBox::~SkyBox() {
+	renderData_->shaderProgram->onProgramReloaded.remove(renderData_->reloadHandler);
 	clear();
+	glDeleteBuffers(1, &renderData_->VBO);
+	glDeleteBuffers(1, &renderData_->IBO);
+	glDeleteVertexArrays(1, &renderData_->VAO);
 	delete renderData_, renderData_ = nullptr;
 }
 
@@ -144,28 +149,22 @@ void SkyBox::clear() {
 }
 
 void SkyBox::draw(RenderContext const& ctx) {
-	glUseProgram(renderData_->shaderProgram);
 	glBindVertexArray(renderData_->VAO);
 	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(renderData_->iTexSampler, 0);
-
-	glm::mat4 mV = ctx.viewport().camera().matView();
-	mV[3][0] = mV[3][1] = mV[3][2] = 0.f;	// reset translation to center the skybox on the camera
-	glm::mat4 mPV = ctx.viewport().camera().matProj() * mV;
-
-	glUniformMatrix4fv(renderData_->iMatVP, 1, GL_FALSE, glm::value_ptr(mPV));
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);
+	renderData_->shaderProgram->uniforms().setSkyboxSampler(0);
+	renderData_->shaderProgram->begin();
 
 	int oldDepthMask;
 	glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
 	glDepthMask(GL_FALSE);	// disable depth buffer writing
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
 	glDepthMask(oldDepthMask);	// enable depth buffer writing
 
+	renderData_->shaderProgram->end();
 	glBindVertexArray(0);
-	glUseProgram(0);
 }
 
 void SkyBox::update(float dt) {

@@ -11,6 +11,7 @@
 #include "../render/programs/ShaderTerrain.h"
 #include "../render/programs/ShaderTerrainPreview.h"
 #include "../render/programs/ShaderWater.h"
+#include "../render/programs/ShaderSkybox.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
@@ -35,6 +36,7 @@ Progress loadInitialShaders(unsigned step) {
 Progress loadSessionShaders(unsigned step) {
 	ShaderProgramManager::requestProgram<ShaderTerrain>();
 	ShaderProgramManager::requestProgram<ShaderWater>();
+	ShaderProgramManager::requestProgram<ShaderSkybox>();
 
 	return {1, 1};
 }

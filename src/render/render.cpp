@@ -219,7 +219,7 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 	} break;
 	case RenderPass::Standard: {
 		renderData.renderCtx.subspace = renderData.renderCtx.cameraUnderwater  ? -1.f : +1.f;
-		renderData.renderCtx.enableClipPlane = true;
+		renderData.renderCtx.enableClipPlane = renderData.renderCtx.enableWaterRender;
 		if (renderData.renderCtx.cameraUnderwater) {
 			renderData.viewport.setBkColor(renderData.waterRenderData.waterColor * waterDepthFactor);
 			renderData.viewport.clear();
@@ -349,6 +349,7 @@ void render(RenderData &renderData) {
 		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::Standard);
 	} else {
+		renderData.viewport.clear();
 		// no water, just render everything in one pass:
 		setupRenderPass(renderData, RenderPass::Standard);
 		renderData.viewport.render(&World::getInstance(), renderData.renderCtx);

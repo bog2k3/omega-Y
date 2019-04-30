@@ -1,6 +1,6 @@
 #include "SessionSetupHostCtrl.h"
 
-#include "Session.h";
+#include "Session.h"
 #include "SessionConfig.h"
 
 #include "../GUI/SessionSetupHostMenu.h"
@@ -20,15 +20,12 @@
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
-	SessionConfig scfg;
-	scfg.type = Session::SESSION_HOST;
-	state_.initSession(scfg);
-
-	state_.session()->gameCfg.terrainConfig.vertexDensity = 0.5;
-	state_.session()->gameCfg.terrainConfig.seed = new_RID();
+	terrainCfg_ = new TerrainConfig();
+	terrainCfg_->vertexDensity = 0.5;
+	terrainCfg_->seed = new_RID();
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), &state_.session()->gameCfg.terrainConfig);
+	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainCfg_);
 	guiSystem->addElement(menu_);
 
 	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));
@@ -38,6 +35,14 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
 	});
 	menu_->onStart.add([this]() {
+		SessionConfig sessionCfg;
+		sessionCfg.type = Session::SESSION_HOST;
+		sessionCfg.gameConfig.terrainConfig.seed = terrainCfg_->seed;
+		sessionCfg.gameConfig.terrainConfig.maxElevation = terrainCfg_->maxElevation;
+		sessionCfg.gameConfig.terrainConfig.minElevation = terrainCfg_->minElevation;
+		sessionCfg.gameConfig.terrainConfig.smallRoughness = terrainCfg_->smallRoughness;
+		sessionCfg.gameConfig.terrainConfig.bigRoughness = terrainCfg_->bigRoughness;
+		state_.initSession(sessionCfg);
 		onNewStateRequest.trigger(GameState::StateNames::SESSION_LOADING);
 	});
 	menu_->onTerrainStartDrag.add(std::bind(&SessionSetupHostCtrl::terrain_startDrag, this, std::placeholders::_1, std::placeholders::_2));
@@ -71,6 +76,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 	delete terrain_;
+	delete terrainCfg_;
 	delete terrainTimer_;
 }
 
@@ -79,7 +85,7 @@ void SessionSetupHostCtrl::terrainConfigChanged() {
 }
 
 void SessionSetupHostCtrl::updateTerrain() {
-	terrain_->generate(state_.session()->gameCfg.terrainConfig);
+	terrain_->generate(*terrainCfg_);
 	terrain_->finishGenerate();
 }
 

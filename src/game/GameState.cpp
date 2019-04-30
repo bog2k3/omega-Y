@@ -7,8 +7,8 @@
 #include "GameCtrl.h"
 #include "SessionConfig.h"
 
-std::shared_ptr<Session> (*GameState::initSessionCallback)(SessionConfig cfg) = nullptr;
-void (*GameState::destroySessionCallback)() = nullptr;
+GameState::initSessionFunction GameState::initSessionCallback;
+GameState::destroySessionFunction GameState::destroySessionCallback;
 std::shared_ptr<Session> GameState::sessionPtr;
 
 GameState* GameState::createInitialLoadingState() {

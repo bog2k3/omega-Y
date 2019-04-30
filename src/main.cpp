@@ -6,6 +6,7 @@
 #include "ImgDebugDraw.h"
 
 #include "render/render.h"
+#include "render/CustomMeshRenderer.h"
 
 #include "game/GameState.h"
 #include "game/StateController.h"
@@ -14,6 +15,8 @@
 
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
+#include "terrain/Terrain.h"
+#include "sky/SkyBox.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -116,8 +119,8 @@ void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
 	case GLFW_KEY_TAB: {
 		if (!pSession)
 			break;
-		auto sCamCtrl = pSession->cameraCtrl().lock();
-		if (sCamCtrl->getAttachedEntity().lock() == pSession->player().lock()) {
+		auto sCamCtrl = pSession->cameraCtrl();
+		if (sCamCtrl->getAttachedEntity().lock() == pSession->player()) {
 			sCamCtrl->attachToEntity(pSession->freeCam(), glm::vec3{0.f});
 			playerInputHandler.setTargetObject(pSession->freeCam());
 		} else {
@@ -377,7 +380,7 @@ void initWorld(RenderData &renderData) {
 }
 
 void initSky() {
-	
+
 }*/
 
 bool iamhost = false;
@@ -489,19 +492,25 @@ void updateStateCtrl(float dt) {
 		pCrtState->controller().update(dt);
 }
 
-void onSessionStarted() {
+void onSessionStarted(RenderData *pRenderData) {
 	playerInputHandler.setTargetObject(pSession->freeCam());
+	pSession->cameraCtrl()->setTargetCamera(&pRenderData->viewport.camera());
+	pSession->terrain()->setWaterReflectionTex(pRenderData->waterRenderData.reflectionFramebuffer.fbTextureId());
+	pSession->terrain()->setWaterRefractionTex(pRenderData->waterRenderData.refractionFramebuffer.fbTextureId(), pSession->skyBox()->getCubeMapTexture());
+	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(pSession->terrain()->getWaterNormalTexture());
+	pRenderData->pSkyBox = pSession->skyBox().get();
 }
 
-void onSessionEnded() {
+void onSessionEnded(RenderData *pRenderData) {
+	playerInputHandler.setTargetObject({});
+	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(0);
+	pRenderData->pSkyBox = nullptr;
 }
 
 std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg) {
 	auto session = std::make_shared<Session>(cfg.type, cfg.gameConfig);
-	session->onStart.add(onSessionStarted);
-	session->onEnd.add(onSessionEnded);
-	// TODO:
-	send pRenderData->viewport to session to use camera for cameraController
+	session->onStart.add(std::bind(onSessionStarted, pRenderData));
+	session->onEnd.add(std::bind(onSessionEnded, pRenderData));
 	pSession = session.get();
 	return session;
 }
@@ -560,7 +569,7 @@ int main(int argc, char* argv[]) {
 		sigViewer.addSignal("FPS", &frameRate,
 				glm::vec3(1.f, 0.05f, 0.05f), 0.2f, 50, 0, 0, 0);
 
-		GameState::initSessionCallback = std::bind(&initSession, &renderData, std::placeholders::_1);
+		GameState::initSessionCallback = std::bind(initSession, &renderData, std::placeholders::_1);
 		GameState::destroySessionCallback = destroySession;
 		changeGameState(GameState::StateNames::INITIAL_LOADING);
 

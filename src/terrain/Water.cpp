@@ -26,6 +26,7 @@ struct Water::RenderData {
 	unsigned IBO_;
 
 	ShaderWater* shaderProgram_;
+	int reloadHandler;
 
 	static unsigned textureNormal_;
 	static unsigned textureFoam;
@@ -94,7 +95,7 @@ Water::Water()
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
+	renderData_->reloadHandler = renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
 		setupVAO();
 	});
 	setupVAO();
@@ -102,8 +103,10 @@ Water::Water()
 
 Water::~Water()
 {
-	if (renderData_)
+	if (renderData_) {
+		renderData_->shaderProgram_->onProgramReloaded.remove(renderData_->reloadHandler);
 		delete renderData_, renderData_ = nullptr;
+	}
 }
 
 void Water::setReflectionTexture(unsigned texId) {

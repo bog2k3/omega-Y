@@ -14,6 +14,8 @@
 
 #include <glm/fwd.hpp>
 
+class SkyBox;
+
 struct PostProcessData {
 	unsigned VAO = 0;
 	unsigned VBO = 0;
@@ -56,6 +58,8 @@ struct RenderData {
 	PostProcessData postProcessData;
 
 	DefaultShaderPreprocessor shaderPreprocessor;
+
+	SkyBox *pSkyBox = nullptr;
 
 	RenderData(unsigned winW, unsigned winH)
 		: viewport(0, 0, winW, winH)

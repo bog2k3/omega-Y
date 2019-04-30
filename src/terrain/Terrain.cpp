@@ -69,6 +69,7 @@ struct Terrain::RenderData {
 	int trisAboveWater_;
 
 	ShaderTerrain *shaderProgram_;
+	int reloadHandler;
 	bool previewMode_;
 
 	static TextureInfo textures_[TerrainVertex::nTextures];
@@ -192,7 +193,7 @@ Terrain::Terrain(bool previewMode)
 	glGenBuffers(1, &renderData_->VBO_);
 	glGenBuffers(1, &renderData_->IBO_);
 
-	renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
+	renderData_->reloadHandler = renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
 		setupVAO();
 	});
 	setupVAO();
@@ -205,6 +206,7 @@ Terrain::Terrain(bool previewMode)
 
 Terrain::~Terrain()
 {
+	renderData_->shaderProgram_->onProgramReloaded.remove(renderData_->reloadHandler);
 	clear();
 	delete renderData_, renderData_ = nullptr;
 	if (pWater_)

@@ -8,6 +8,7 @@
 
 class ShaderProgramManager {
 public:
+#warning "change this to return a shared_ptr instead"
 	template<class C>
 	static C& requestProgram() {
 		static_assert(std::is_base_of<ShaderProgram, C>::value && "Only classes derived from ShaderProgram can be requested");

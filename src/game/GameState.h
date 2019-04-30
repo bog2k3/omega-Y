@@ -4,6 +4,7 @@
 #include <boglfw/utils/assert.h>
 
 #include <memory>
+#include <functional>
 
 class StateController;
 class Session;
@@ -24,14 +25,17 @@ public:
 
 	~GameState();
 
+	using initSessionFunction = std::function<std::shared_ptr<Session>(SessionConfig cfg)>;
+	using destroySessionFunction = std::function<void()>;
+
 	StateNames name() const { return name_; }
 	StateController& controller() const { return *pController_; }
 	static std::shared_ptr<Session> session() { assertDbg(sessionPtr && "session must be initialized first"); return sessionPtr; }
 
 	static GameState* createState(StateNames name);
 
-	static std::shared_ptr<Session> (*initSessionCallback)(SessionConfig cfg);
-	static void (*destroySessionCallback)();
+	static initSessionFunction initSessionCallback;
+	static destroySessionFunction destroySessionCallback;
 
 	void initSession(SessionConfig cfg);
 	void destroySession();

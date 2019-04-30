@@ -6,7 +6,8 @@ namespace EntityTypes {
 		FREE_CAMERA				= 101,	// we start at 101 to avoid collision with EntityTypes::EType from boglfw
 		PLAYER					= 102,
 		TERRAIN					= 103,
-		PROJECTILE				= 104,	// all projectiles have this entity type
+		SKYBOX					= 104,
+		PROJECTILE				= 105,	// all projectiles have this entity type
 	};
 } // namespace
 

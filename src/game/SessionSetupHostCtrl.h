@@ -24,6 +24,7 @@ private:
 
 	OffscreenRenderer *terrainRenderer_;
 	Terrain* terrain_;
+	TerrainConfig* terrainCfg_;
 	Timer* terrainTimer_;
 
 	void terrainConfigChanged();
