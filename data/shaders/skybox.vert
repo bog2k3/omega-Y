@@ -8,8 +8,7 @@ out vec3 fUV;
  
 void main(){
 	vec4 projected = matPV * vec4(pos, 0);
-	projected.z = 1.0;
-	projected.w = 1;
+	projected.z = projected.w; // move the vertex back to the far clipping plane
     gl_Position = projected;
     fUV = pos;
 }

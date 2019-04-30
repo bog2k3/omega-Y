@@ -498,12 +498,14 @@ void onSessionStarted(RenderData *pRenderData) {
 	pSession->terrain()->setWaterReflectionTex(pRenderData->waterRenderData.reflectionFramebuffer.fbTextureId());
 	pSession->terrain()->setWaterRefractionTex(pRenderData->waterRenderData.refractionFramebuffer.fbTextureId(), pSession->skyBox()->getCubeMapTexture());
 	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(pSession->terrain()->getWaterNormalTexture());
+	pRenderData->renderCtx.enableWaterRender = true;
 	pRenderData->pSkyBox = pSession->skyBox().get();
 }
 
 void onSessionEnded(RenderData *pRenderData) {
 	playerInputHandler.setTargetObject({});
 	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(0);
+	pRenderData->renderCtx.enableWaterRender = false;
 	pRenderData->pSkyBox = nullptr;
 }
 
