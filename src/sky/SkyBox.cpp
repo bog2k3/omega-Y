@@ -120,6 +120,7 @@ void SkyBox::load(std::string const& path) {
 		path + "/front.png",	//Z+
 		path + "/back.png",		//Z-
 	};
+#warning "TODO optimize by loading only 5 textures and mapping them on the cube - no need for a cube-map"
 	renderData_->texture = TextureLoader::loadCubeFromPNG(filenames, true);
 	if (!renderData_->texture) {
 		ERROR("Failed to load skybox textures from " << path);

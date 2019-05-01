@@ -120,7 +120,7 @@ void deletePostProcessData(PostProcessData &postProcessData) {
 bool initRender(const char* winTitle, RenderData &renderData) {
 	LOGPREFIX("RENDER");
 	// set up window
-	if (!gltInitGLFW(renderData.windowW, renderData.windowH, winTitle, 0, false))
+	if (!gltInitGLFW(renderData.windowW, renderData.windowH, winTitle, 0, false, true))
 		return false;
 	renderData.setupDependencies();
 
