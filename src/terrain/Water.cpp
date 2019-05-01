@@ -31,7 +31,7 @@ struct Water::RenderData {
 	static unsigned textureNormal_;
 	static unsigned textureFoam;
 
-	unsigned textureReflection_2D_;
+	unsigned textureReflection_;
 	unsigned textureRefraction_Cube_;
 	unsigned textureRefraction_;
 };
@@ -110,7 +110,7 @@ Water::~Water()
 }
 
 void Water::setReflectionTexture(unsigned texId) {
-	renderData_->textureReflection_2D_ = texId;
+	renderData_->textureReflection_ = texId;
 }
 
 void Water::setRefractionTexture(unsigned texId_2D, unsigned texId_Cube) {
@@ -231,7 +231,7 @@ void Water::draw(RenderContext const& ctx) {
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureNormal_);
 	renderData_->shaderProgram_->uniforms().setWaterNormalTexSampler(0);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_2D_);
+	glBindTexture(GL_TEXTURE_2D, renderData_->textureReflection_);
 	renderData_->shaderProgram_->uniforms().setReflectionTexSampler(1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderData_->textureRefraction_);

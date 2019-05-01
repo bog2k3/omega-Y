@@ -16,7 +16,7 @@
 
 #include <GL/glew.h>
 
-#define DISABLE_SKYBOX
+//#define DISABLE_SKYBOX
 
 struct SkyBox::SkyBoxRenderData {
 	unsigned VAO;
@@ -83,11 +83,6 @@ SkyBox::SkyBox() {
 		{{-1.f, +1.f, -1.f}},	// top left
 		{{+1.f, +1.f, -1.f}},	// top right
 		{{+1.f, +1.f, +1.f}},	// bottom right
-		// bottom face
-		{{-1.f, -1.f, -1.f}},	// bottom left
-		{{-1.f, -1.f, +1.f}},	// top left
-		{{+1.f, -1.f, +1.f}},	// top right
-		{{+1.f, -1.f, -1.f}},	// bottom right
 	};
 	glBindBuffer(GL_ARRAY_BUFFER, renderData_->VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), (void*)verts, GL_STATIC_DRAW);
@@ -95,7 +90,7 @@ SkyBox::SkyBox() {
 
 	// generate index data
 	uint16_t inds[] {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12,
-					13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
+					13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19};
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData_->IBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(inds), (void*)inds, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -110,7 +105,7 @@ SkyBox::~SkyBox() {
 	delete renderData_, renderData_ = nullptr;
 }
 
-// loads a static skybox from a path that contains ./front.png, ./left.png, ./right.png, ./back.png, ./top.png, ./bottom.png
+// loads a static skybox from a path that contains ./front.png, ./left.png, ./right.png, ./back.png, ./top.png
 void SkyBox::load(std::string const& path) {
 #ifdef DISABLE_SKYBOX
 	return;
@@ -121,7 +116,7 @@ void SkyBox::load(std::string const& path) {
 		path + "/right.png",	//X+
 		path + "/left.png",		//X-
 		path + "/top.png",		//Y+
-		path + "/bottom.png",	//Y-
+		"",						//Y- not required
 		path + "/front.png",	//Z+
 		path + "/back.png",		//Z-
 	};
@@ -167,7 +162,7 @@ void SkyBox::draw(RenderContext const& ctx) {
 	glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
 	glDepthMask(GL_FALSE);	// disable depth buffer writing
 
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, 30, GL_UNSIGNED_SHORT, 0);
 
 	glDepthMask(oldDepthMask);	// enable depth buffer writing
 

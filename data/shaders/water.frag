@@ -9,8 +9,7 @@ in float fFog;
 in vec3 fScreenUV;
 
 uniform float screenAspectRatio;
-uniform mat4 mPV;
-uniform sampler2D textureReflection2D;
+uniform sampler2D textureReflection;
 uniform sampler2D textureRefraction;
 uniform samplerCube textureRefractionCube;
 uniform sampler2D textureFoam;
@@ -65,7 +64,7 @@ vec4 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 	float transmitSampleOutsideFactor = targetDepth > 50 ? 0 : 1;
 
 	vec3 w_perturbation = (normal-waterSmoothNormal) * displacement * 40;
-	vec2 s_perturbation = (mPV * vec4(w_perturbation, 0)).xy;
+	vec2 s_perturbation = (matPV * vec4(w_perturbation, 0)).xy;
 	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1) * transmitSampleOutsideFactor;
 	vec2 sampleCoord = screenCoord + s_perturbation;
 	vec3 transmitColor = texture(textureRefraction, sampleCoord).rgb;
@@ -101,10 +100,10 @@ vec4 reflection(vec3 normal, vec2 screenCoord, vec3 eyeDir, float eyeDist) {
 	float ds = 0.02;	// distance scale
 	float dp = 0.5;	// distance power
 	float displacement = d_amp * sin(r_r0) / (1 + pow(eyeDist * ds, dp));
-	vec2 s_perturb = (mPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement;
+	vec2 s_perturb = (matPV * vec4(normal - waterSmoothNormal, 0)).xy * displacement;
 	vec2 reflectCoord = vec2(1 - screenCoord.x, screenCoord.y) + s_perturb;
 
-	vec4 reflectColor = texture(textureReflection2D, reflectCoord);
+	vec4 reflectColor = texture(textureReflection, reflectCoord);
 	return reflectColor;
 }
 
@@ -194,7 +193,7 @@ void main() {
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(reflectColor.rgb, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
-	final.rgb = vec3(1, 0, 0) + final.rgb*0.0001;
+	//final.rgb = vec3(1, 0, 0) + final.rgb*0.0001;
 
 	gl_FragColor = final;
 }
