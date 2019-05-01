@@ -581,9 +581,6 @@ void Terrain::draw(RenderContext const& ctx) {
 		return;
 	}
 
-	if (renderData_->previewMode_)
-		renderData_->shaderProgram_->uniforms().setMatWorld(getTransform().glMatrix());
-
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
 	if (rctx.renderPass == RenderPass::Standard || rctx.renderPass == RenderPass::WaterReflection || rctx.renderPass == RenderPass::WaterRefraction) {

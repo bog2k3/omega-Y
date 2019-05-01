@@ -15,6 +15,7 @@
 #include <glm/fwd.hpp>
 
 class SkyBox;
+class Terrain;
 
 struct PostProcessData {
 	unsigned VAO = 0;
@@ -60,6 +61,7 @@ struct RenderData {
 	DefaultShaderPreprocessor shaderPreprocessor;
 
 	SkyBox *pSkyBox = nullptr;
+	Terrain *pTerrain = nullptr;
 
 	RenderData(unsigned winW, unsigned winH)
 		: viewport(0, 0, winW, winH)

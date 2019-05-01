@@ -35,7 +35,7 @@ void main() {
 	t4 = t4 * t4low * 2.5;
 
 	// blend the textures:
-	vec4 texColor = mixTerrainTextures(t0, t1, t2, t3, t4, frag.texBlendFactor);
+	vec3 texColor = mixTerrainTextures(t0, t1, t2, t3, t4, frag.texBlendFactor).xyz;
 
 	float eyeDist = length(eyePos - frag.wPos);
 
@@ -44,7 +44,7 @@ void main() {
 	// compute lighting
 	vec3 light = underwater ? computeLightingUnderwater(frag.wPos, normalize(frag.normal), eyeDist) : computeLightingAboveWater(normalize(frag.normal));
 
-	vec3 color = light * (frag.color * texColor).xyz;
+	vec3 color = light * frag.color.xyz * texColor;
 
 	// water fog:
 	if (underwater)

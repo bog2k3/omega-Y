@@ -16,6 +16,8 @@
 
 #include <GL/glew.h>
 
+#define DISABLE_SKYBOX
+
 struct SkyBox::SkyBoxRenderData {
 	unsigned VAO;
 	unsigned VBO;
@@ -110,6 +112,9 @@ SkyBox::~SkyBox() {
 
 // loads a static skybox from a path that contains ./front.png, ./left.png, ./right.png, ./back.png, ./top.png, ./bottom.png
 void SkyBox::load(std::string const& path) {
+#ifdef DISABLE_SKYBOX
+	return;
+#endif
 	LOGPREFIX("SkyBox::load");
 	clear();
 	std::string filenames[6] {
@@ -149,6 +154,9 @@ void SkyBox::clear() {
 }
 
 void SkyBox::draw(RenderContext const& ctx) {
+#ifdef DISABLE_SKYBOX
+	return;
+#endif
 	glBindVertexArray(renderData_->VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData_->texture);

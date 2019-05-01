@@ -69,7 +69,7 @@ vec4 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 	s_perturbation *= pow(clamp(targetDepth*0.4, 0, 1), 1) * transmitSampleOutsideFactor;
 	vec2 sampleCoord = screenCoord + s_perturbation;
 	vec3 transmitColor = texture(textureRefraction, sampleCoord).rgb;
-	
+
 	foamColor = transmitColor;
 
 	float fresnelFactor = 1 - fresnel(normal, -T, n_water, n_air);
@@ -80,7 +80,7 @@ vec4 underToAboveTransm(vec3 normal, vec2 screenCoord, float dxyW, vec3 eyeDir, 
 vec4 aboveToUnderTransm(vec3 normal, vec3 eyeDir, float eyeDist, out vec3 foamColor) {
 	vec3 T = refract(-eyeDir, -normal, n_water);
 	vec4 refractTarget = texture(textureRefractionCube, T);
-	
+
 	foamColor = vec3(1.0);
 
 	float fresnelFactor = 1 - fresnel(normal, -T, n_air, n_water);
@@ -194,7 +194,7 @@ void main() {
 	//final = vec4(f, f, f, 1.0) + 0.00001 * final;
 	//final = vec4(reflectColor.rgb, 1.0) + 0.00001 * final;
 	//final.a = 0.00001;
-	//final.rgb = reflectColor;
+	final.rgb = vec3(1, 0, 0) + final.rgb*0.0001;
 
 	gl_FragColor = final;
 }

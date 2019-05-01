@@ -500,6 +500,7 @@ void onSessionStarted(RenderData *pRenderData) {
 	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(pSession->terrain()->getWaterNormalTexture());
 	pRenderData->renderCtx.enableWaterRender = true;
 	pRenderData->pSkyBox = pSession->skyBox().get();
+	pRenderData->pTerrain = pSession->terrain().get();
 }
 
 void onSessionEnded(RenderData *pRenderData) {
@@ -507,6 +508,7 @@ void onSessionEnded(RenderData *pRenderData) {
 	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(0);
 	pRenderData->renderCtx.enableWaterRender = false;
 	pRenderData->pSkyBox = nullptr;
+	pRenderData->pTerrain = nullptr;
 }
 
 std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg) {
@@ -577,9 +579,8 @@ int main(int argc, char* argv[]) {
 
 		LOGLN("Done, we're now live.");
 
-		if (!initNetwork(argc, argv)) {
+		if (!initNetwork(argc, argv))
 			break;
-		}
 
 		// initial update:
 		updateList.update(0);

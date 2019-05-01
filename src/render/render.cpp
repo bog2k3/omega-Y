@@ -245,7 +245,6 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 void resetRenderPass(RenderData &renderData, RenderPass pass) {
 	renderData.renderCtx.renderPass = RenderPass::None;
 	renderData.renderCtx.enableClipPlane = false;
-	renderData.renderCtx.cameraUnderwater = false;
 
 	switch(pass) {
 		case RenderPass::Standard:
@@ -262,6 +261,7 @@ void resetRenderPass(RenderData &renderData, RenderPass pass) {
 		break;
 		case RenderPass::WaterRefraction:
 			renderData.waterRenderData.refractionFramebuffer.unbind();
+			renderData.viewport.setArea(0, 0, renderData.windowW, renderData.windowH);
 			renderData.viewport.setBkColor(glm::vec3(0.f));
 		break;
 		case RenderPass::WaterSurface:
@@ -309,6 +309,8 @@ void render(RenderData &renderData) {
 	//auto &drawList2D = session.drawList2D();
 
 	if (renderData.renderCtx.enableWaterRender) {
+		renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
+
 		std::vector<drawable> underDraw;// = drawlist3D;
 		std::vector<Entity*> underEntities;
 		// append all drawable entities from world:
@@ -326,34 +328,31 @@ void render(RenderData &renderData) {
 		for (auto e : aboveEntities)
 			aboveDraw.push_back(e);
 
-		renderData.renderCtx.cameraUnderwater = renderData.viewport.camera().position().y < 0;
-
 		checkGLError("render() setup");
 
 		// 1st pass - reflection
 		setupRenderPass(renderData, RenderPass::WaterReflection);
 		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::WaterReflection);
-
 		checkGLError("render() pass #1");
 
 		// 2nd pass - refraction
 		setupRenderPass(renderData, RenderPass::WaterRefraction);
 		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? aboveDraw : underDraw, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::WaterRefraction);
-
 		checkGLError("render() pass #2");
 
 		// 3rd pass - standard rendering of scene
 		setupRenderPass(renderData, RenderPass::Standard);
 		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::Standard);
+		checkGLError("render() pass #3");
 	} else {
+		renderData.renderCtx.cameraUnderwater = false;
 		renderData.viewport.clear();
 		// no water, just render everything in one pass:
 		setupRenderPass(renderData, RenderPass::Standard);
 		renderData.viewport.render(&World::getInstance(), renderData.renderCtx);
-		//renderData.viewport.render(drawlist3D, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::Standard);
 	}
 
@@ -361,8 +360,9 @@ void render(RenderData &renderData) {
 
 	// 4th pass - water surface
 	if (renderData.renderCtx.enableWaterRender) {
+		assertDbg(renderData.pTerrain && "terrain pointer not set!");
 		setupRenderPass(renderData, RenderPass::WaterSurface);
-		//session.pWater_->draw(renderData.renderCtx);
+		renderData.viewport.render(renderData.pTerrain, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::WaterSurface);
 
 		checkGLError("render() pass #4");

@@ -14,7 +14,7 @@ ShaderTerrain::ShaderTerrain() {
 
 	defineVertexAttrib("pos", GL_FLOAT, 3);
 	defineVertexAttrib("normal", GL_FLOAT, 3);
-	defineVertexAttrib("color", GL_FLOAT, 3);
+	defineVertexAttrib("color", GL_FLOAT, 4);
 	defineVertexAttrib("uv1", GL_FLOAT, 4);
 	defineVertexAttrib("uv2", GL_FLOAT, 4);
 	defineVertexAttrib("uv3", GL_FLOAT, 2);

@@ -33,7 +33,7 @@ public:
 	GameConfig const& gameConfig() { return gameCfg_; }
 
 	std::shared_ptr<Terrain> terrain() const { return terrain_; }
-	std::shared_ptr<Water> water() const { return water_; }
+	//std::shared_ptr<Water> water() const { return water_; }
 	std::shared_ptr<SkyBox> skyBox() const { return skyBox_; }
 	std::shared_ptr<PlayerEntity> player() const { return player_; }
 	std::shared_ptr<FreeCamera> freeCam() const { return freeCam_; }
@@ -57,7 +57,7 @@ private:
 	SessionType type_;
 	GameConfig gameCfg_;
 	std::shared_ptr<Terrain> terrain_;
-	std::shared_ptr<Water> water_;
+	//std::shared_ptr<Water> water_;
 	std::shared_ptr<SkyBox> skyBox_;
 	std::shared_ptr<PlayerEntity> player_;
 	std::shared_ptr<FreeCamera> freeCam_;
