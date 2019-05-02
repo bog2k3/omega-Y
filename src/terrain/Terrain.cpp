@@ -242,6 +242,8 @@ void Terrain::generate(TerrainConfig const& settings) {
 	validateSettings(settings);
 	clear();
 	config_ = settings;
+	if (renderData_->previewMode_)
+		config_.vertexDensity *= 0.25;
 
 	uint32_t nextSeed = new_RID();
 	randSeed(config_.seed);
@@ -361,13 +363,13 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements() {
 	HeightmapParams hparam;
-	hparam.width = max(4.f, config_.width / 8);
-	hparam.length = max(4.f, config_.length / 8);
+	hparam.width = 16;//max(512.f, config_.width);
+	hparam.length = 16;//max(512.f, config_.length);
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
-	PerlinNoise smallNoise(config_.width, config_.length);
-	PerlinNoise bigNoise(max(4.f, config_.width / 50), max(4.f, config_.length / 50));
+	PerlinNoise smallNoise(128, 128); //(config_.width, config_.length);
+	PerlinNoise bigNoise(16, 16); //(max(4.f, config_.width / 50), max(4.f, config_.length / 50));
 
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt

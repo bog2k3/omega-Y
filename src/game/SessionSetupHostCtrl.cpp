@@ -21,7 +21,6 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
 	terrainCfg_ = new TerrainConfig();
-	terrainCfg_->vertexDensity = 0.5;
 	terrainCfg_->seed = new_RID();
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
@@ -37,11 +36,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	menu_->onStart.add([this]() {
 		SessionConfig sessionCfg;
 		sessionCfg.type = Session::SESSION_HOST;
-		sessionCfg.gameConfig.terrainConfig.seed = terrainCfg_->seed;
-		sessionCfg.gameConfig.terrainConfig.maxElevation = terrainCfg_->maxElevation;
-		sessionCfg.gameConfig.terrainConfig.minElevation = terrainCfg_->minElevation;
-		sessionCfg.gameConfig.terrainConfig.smallRoughness = terrainCfg_->smallRoughness;
-		sessionCfg.gameConfig.terrainConfig.bigRoughness = terrainCfg_->bigRoughness;
+		sessionCfg.gameConfig.terrainConfig = *terrainCfg_;
 		state_.initSession(sessionCfg);
 		onNewStateRequest.trigger(GameState::StateNames::SESSION_LOADING);
 	});
