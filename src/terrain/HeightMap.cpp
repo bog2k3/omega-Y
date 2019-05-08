@@ -124,7 +124,7 @@ void HeightMap::generate(float amplitude) {
 		amplitude * jitterReductionFactor
 	});
 	unsigned index = 0;
-	// compute diamon displacement iteratively:
+	// compute diamond displacement iteratively:
 	while (index < vSteps.size()) {
 		unsigned r1 = vSteps[index].r1;
 		unsigned r2 = vSteps[index].r2;
@@ -157,14 +157,9 @@ void HeightMap::generate(float amplitude) {
 	// renormalize the values to fill the entire height range
 	// also taper down the heights toward the edges
 	float scale = amplitude / (vmax - vmin);
-	float edgeThresh = 0.5; // factor by which edge values will be reduced
 	for (unsigned i=0; i<width_*length_; i++) {
 		int row = i / width_;
 		int col = i % width_;
-		float row_edgeFactor = 2 * abs(row - (int)length_/2) / (float)length_;
-		float col_edgeFactor = 2 * abs(col - (int)width_/2) / (float)width_;
-		float edgeFactor = row_edgeFactor + col_edgeFactor;
-		float edgeScaleFactor = lerp(1.f, edgeThresh, edgeFactor);
-		elements_[i].value = (elements_[i].value - vmin) * scale * edgeScaleFactor;
+		elements_[i].value = (elements_[i].value - vmin) * scale;
 	}
 }

@@ -70,7 +70,6 @@ struct Terrain::RenderData {
 
 	ShaderTerrain *shaderProgram_;
 	int reloadHandler;
-	bool previewMode_;
 
 	static TextureInfo textures_[TerrainVertex::nTextures];
 };
@@ -180,12 +179,12 @@ void Terrain::setupVAO() {
 
 Terrain::Terrain(bool previewMode)
 	: physicsBodyMeta_(this)
+	, previewMode_(previewMode)
 {
 	LOGPREFIX("Terrain");
 
 	renderData_ = new RenderData();
-	renderData_->previewMode_ = previewMode;
-	if (previewMode)
+	if (previewMode_)
 		renderData_->shaderProgram_ = &ShaderProgramManager::requestProgram<ShaderTerrainPreview>();
 	else
 		renderData_->shaderProgram_ = &ShaderProgramManager::requestProgram<ShaderTerrain>();
@@ -198,7 +197,7 @@ Terrain::Terrain(bool previewMode)
 	});
 	setupVAO();
 
-	if (!previewMode)
+	if (!previewMode_)
 		pWater_ = new Water();
 
 	triangleAABBGenerator_ = new TriangleAABBGenerator(this);
@@ -242,8 +241,8 @@ void Terrain::generate(TerrainConfig const& settings) {
 	validateSettings(settings);
 	clear();
 	config_ = settings;
-	if (renderData_->previewMode_)
-		config_.vertexDensity *= 0.25;
+	//if (previewMode_)
+	//	config_.vertexDensity *= 0.25;
 
 	uint32_t nextSeed = new_RID();
 	randSeed(config_.seed);
@@ -287,7 +286,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 		float x = seaBedRadius * cosf(i*skirtVertSector);
 		float z = seaBedRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows_*cols_+i]) TerrainVertex {
-			{ x, config_.minElevation, z },								// position
+			{ x, config_.minElevation, z },									// position
 			{ 0.f, 1.f, 0.f },												// normal
 			{ 1.f, 1.f, 1.f },												// color
 			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
@@ -310,7 +309,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 	fixTriangleWinding();	// after triangulation some triangles are ccw, we need to fix them
 
 	LOGLN("Computing displacements . . .");
-	computeDisplacements();
+	computeDisplacements(config_.seed);
 	LOGLN("Computing normals . . .");
 	computeNormals();
 	LOGLN("Computing texture weights . . .");
@@ -346,7 +345,8 @@ void Terrain::finishGenerate() {
 	LOGPREFIX("Terrain");
 	LOGLN("Updating render and physics objects . . .");
 	updateRenderBuffers();
-	updatePhysics();
+	if (!previewMode_)
+		updatePhysics();
 }
 
 void Terrain::fixTriangleWinding() {
@@ -361,15 +361,18 @@ void Terrain::fixTriangleWinding() {
 	}
 }
 
-void Terrain::computeDisplacements() {
+void Terrain::computeDisplacements(uint32_t seed) {
+	// reset seed so we always compute the same displacement regardless of how many vertices we have
+	randSeed(seed);
+
 	HeightmapParams hparam;
-	hparam.width = 16;//max(512.f, config_.width);
-	hparam.length = 16;//max(512.f, config_.length);
+	hparam.width = config_.width;
+	hparam.length = config_.length;
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);
-	PerlinNoise smallNoise(128, 128); //(config_.width, config_.length);
-	PerlinNoise bigNoise(16, 16); //(max(4.f, config_.width / 50), max(4.f, config_.length / 50));
+	PerlinNoise smallNoise(config_.width * 2, config_.length * 2);
+	PerlinNoise bigNoise(max(4.f, config_.width / 40), max(4.f, config_.length / 40));
 
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
@@ -406,6 +409,15 @@ void Terrain::meltEdges(unsigned xRadius, unsigned zRadius) {
 	auto slopeFn = [](float x) {
 		return 0.5f + 0.5f * sinf(x * PI - PI/2);
 	};
+	for (unsigned i=0; i<rows_; i++)
+		for (unsigned j=0; j<cols_; j++) {
+			float row_edgeFactor = clamp(1.5f - 3 * abs((int)i - (int)rows_/2) / (float)rows_, 0.f, 1.f);
+			float col_edgeFactor = clamp(1.5f - 3 * abs((int)j - (int)cols_/2) / (float)cols_, 0.f, 1.f);
+			float edgeFactor = sqrt(row_edgeFactor * col_edgeFactor);
+			float edgeScaleFactor = slopeFn(clamp(edgeFactor, 0.f, 1.f));
+			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, edgeScaleFactor);
+		}
+	return;
 	// top edge:
 	for (unsigned i=0; i<zRadius; i++) {
 		float f = (float)i / zRadius;

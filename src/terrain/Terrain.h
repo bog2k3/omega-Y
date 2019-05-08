@@ -30,7 +30,7 @@ public:
 	static void unloadAllResources();
 
 	// specify previewMode=true to enable "preview" (simplified) rendering for rendering in the menu.
-	Terrain(bool previewMode=false);
+	explicit Terrain(bool previewMode=false);
 	virtual ~Terrain();
 
 	FunctionalityFlags getFunctionalityFlags() const override { return FunctionalityFlags::DRAWABLE; }
@@ -78,6 +78,7 @@ private:
 	RenderData *renderData_ = nullptr;
 	bool renderWireframe_ = false;
 	bool thickWireframeLines_ = true;
+	bool previewMode_ = false;
 	Water* pWater_ = nullptr;
 	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;
 	BSPTree<unsigned> *pBSP_ = nullptr;
@@ -87,7 +88,7 @@ private:
 
 	void setupVAO();
 	void fixTriangleWinding();
-	void computeDisplacements();
+	void computeDisplacements(uint32_t seed);
 	void meltEdges(unsigned xRadius, unsigned zRadius);
 	void computeNormals();
 	void computeTextureWeights();

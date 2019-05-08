@@ -22,6 +22,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 {
 	terrainCfg_ = new TerrainConfig();
 	terrainCfg_->seed = new_RID();
+	terrainCfg_->vertexDensity = 0.5;
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
 	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainCfg_);

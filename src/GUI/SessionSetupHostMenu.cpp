@@ -106,6 +106,22 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig
 		pSeedField, pMinElevSlider, pMaxElevSlider, pBigRoughnessSlider, pSmallRoughnessSlider));
 	addElement(pRandomize);
 
+#ifdef DEBUG
+	std::shared_ptr<Label> pDensityDisplay = std::make_shared<Label>(
+		glm::vec2{1120, slidersStartY + slidersSpacing * 5 + 30}, 18, "");
+	addElement(pDensityDisplay);
+
+	std::shared_ptr<Slider> pVertexDensitySlider = std::make_shared<Slider>(
+		glm::vec2{850, slidersStartY + slidersSpacing * 5}, 250);
+	pVertexDensitySlider->setLabel("Vertex density");
+	pVertexDensitySlider->setRange(0.5, 2.0, 0.1f);
+	pVertexDensitySlider->setDisplayStyle(16, 4, 1);
+	pVertexDensitySlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
+		&pData_->vertexDensity, std::placeholders::_1, pDensityDisplay));
+	pVertexDensitySlider->setValue(pData_->vertexDensity);
+	addElement(pVertexDensitySlider);
+#endif
+
 	pTerrainPicture_ = std::make_shared<Picture>(glm::vec2{25, 100}, glm::vec2{650, 500});
 	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
 	pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
