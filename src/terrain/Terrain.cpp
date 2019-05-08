@@ -366,8 +366,8 @@ void Terrain::computeDisplacements(uint32_t seed) {
 	randSeed(seed);
 
 	HeightmapParams hparam;
-	hparam.width = config_.width;
-	hparam.length = config_.length;
+	hparam.width = config_.width / 4;
+	hparam.length = config_.length / 4;
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	HeightMap height(hparam);

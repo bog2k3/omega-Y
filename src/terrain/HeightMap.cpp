@@ -76,28 +76,28 @@ void HeightMap::computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, 
 	// now square step:
 	// top midpoint:
 	if (c2 > c1+1)
-		elements_[r1 * width_ + midC] += 0.33f * (
+		elements_[r1 * width_ + midC] += 0.3333f * (
 			elements_[r1 * width_ + c1].get() +
 			elements_[r1 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// bottom midpoint:
 	if (c2 > c1+1)
-		elements_[r2 * width_ + midC] += 0.33f * (
+		elements_[r2 * width_ + midC] += 0.3333f * (
 			elements_[r2 * width_ + c1].get() +
 			elements_[r2 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// left midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c1] += 0.33f * (
+		elements_[midR * width_ + c1] += 0.3333f * (
 			elements_[r1 * width_ + c1].get() +
 			elements_[r2 * width_ + c1].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// right midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c2] += 0.33f * (
+		elements_[midR * width_ + c2] += 0.3333f * (
 			elements_[r1 * width_ + c2].get() +
 			elements_[r2 * width_ + c2].get() +
 			centerValue
@@ -155,7 +155,6 @@ void HeightMap::generate(float amplitude) {
 			vmax = elements_[i].value;
 	}
 	// renormalize the values to fill the entire height range
-	// also taper down the heights toward the edges
 	float scale = amplitude / (vmax - vmin);
 	for (unsigned i=0; i<width_*length_; i++) {
 		int row = i / width_;
