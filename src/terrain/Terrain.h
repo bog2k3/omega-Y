@@ -90,6 +90,7 @@ private:
 	void fixTriangleWinding();
 	void computeDisplacements(uint32_t seed);
 	void meltEdges(unsigned xRadius, unsigned zRadius);
+	void normalizeHeights();
 	void computeNormals();
 	void computeTextureWeights();
 	void updateRenderBuffers();

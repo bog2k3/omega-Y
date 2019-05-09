@@ -17,9 +17,6 @@ Session::~Session() {
 }
 
 Progress Session::load(unsigned step) {
-	/*
-	initSky();
-	initTerrain(*pRenderData);*/
 	switch (step) {
 	case 0: {
 		terrain_ = std::make_shared<Terrain>(false);
@@ -27,7 +24,7 @@ Progress Session::load(unsigned step) {
 
 		freeCam_ = std::make_shared<FreeCamera>(glm::vec3{2.f, 1.f, 2.f}, glm::vec3{-1.f, -0.5f, -1.f});
 		freeCam_->getTransform().moveTo({140, 50, 180});
-		freeCam_->getTransform().lookAt({0, 0, 0});
+		//freeCam_->getTransform().lookAt({0, 0, 0});
 		World::getInstance().takeOwnershipOf(freeCam_);
 
 		// camera controller (this one moves the render camera to the position of the target entity)

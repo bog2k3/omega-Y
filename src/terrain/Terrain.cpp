@@ -286,7 +286,7 @@ void Terrain::generate(TerrainConfig const& settings) {
 		float x = seaBedRadius * cosf(i*skirtVertSector);
 		float z = seaBedRadius * sinf(i*skirtVertSector);
 		new(&pVertices_[rows_*cols_+i]) TerrainVertex {
-			{ x, config_.minElevation, z },									// position
+			{ x, -30, z },													// position
 			{ 0.f, 1.f, 0.f },												// normal
 			{ 1.f, 1.f, 1.f },												// color
 			{ {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 0.f} },	// uvs
@@ -362,17 +362,17 @@ void Terrain::fixTriangleWinding() {
 }
 
 void Terrain::computeDisplacements(uint32_t seed) {
-	// reset seed so we always compute the same displacement regardless of how many vertices we have
-	randSeed(seed);
-
 	HeightmapParams hparam;
-	hparam.width = config_.width / 4;
-	hparam.length = config_.length / 4;
+	hparam.width = config_.width / 8;
+	hparam.length = config_.length / 8;
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
+	// reset seed so we always compute the same displacement regardless of how many vertices we have
+	randSeed(seed);
 	HeightMap height(hparam);
-	PerlinNoise smallNoise(config_.width * 2, config_.length * 2);
-	PerlinNoise bigNoise(max(4.f, config_.width / 40), max(4.f, config_.length / 40));
+	// reset seed so we always compute the same displacement regardless of how many vertices we have
+	randSeed(seed);
+	PerlinNoise roughNoise(max(4.f, config_.width), max(4.f, config_.length));
 
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
 	for (unsigned i=1; i<rows_-1; i++) // we leave the edge vertices at zero to avoid artifacts with the skirt
@@ -381,16 +381,22 @@ void Terrain::computeDisplacements(uint32_t seed) {
 			float u = (pVertices_[k].pos.x - bottomLeft.x) / config_.width;
 			float v = (pVertices_[k].pos.z - bottomLeft.z) / config_.length;
 
-			float perlinAmp = (config_.maxElevation - config_.minElevation) * 0.1f;
-			float hiFreq = //smallNoise.get(u/8, v/8, 1.f) * perlinAmp * 0.5
-							+ smallNoise.get(u/4, v/4, 1.f) * perlinAmp * 0.3
-							+ smallNoise.get(u/2, v/2, 1.f) * perlinAmp * 0.15
-							+ smallNoise.get(u/1, v/1, 1.f) * perlinAmp * 0.05;
-			float lowFreq = height.value(u, v);
-			float lowFreqSmooth = bigNoise.getNorm(u, v, 1.f) * (config_.maxElevation - config_.minElevation) + config_.minElevation;
-			lowFreq = lerp(lowFreqSmooth, lowFreq, config_.bigRoughness);
+			float roughness = (
+				+ roughNoise.getNorm(u/32, v/32, 1.f) * 1.f
+				+ roughNoise.getNorm(u/16, v/16, 1.f) * 0.5f
+				+ roughNoise.getNorm(u/8, v/8, 1.f) * 0.25f
+				+ roughNoise.getNorm(u/4, v/4, 1.f) * 0.125f
+				+ roughNoise.getNorm(u/2, v/2, 1.f) * 0.0625f
+				+ roughNoise.getNorm(u, v, 1.f) * 0.03125f
+				+ roughNoise.getNorm(u*2, v*2, 1.f) * 0.015625f
+				+ roughNoise.getNorm(u*4, v*4, 1.f) * 0.0078125f
+				+ roughNoise.getNorm(u*8, v*8, 1.f) * 0.00390625f
+				) * 20 - 10;
 
-			pVertices_[k].pos.y = lowFreq + hiFreq * config_.smallRoughness;
+			float heightVal = height.value(u, v);
+			heightVal += roughness * config_.roughness;
+
+			pVertices_[k].pos.y = heightVal;
 
 			// TODO : use vertex colors with perlin noise for more variety
 
@@ -399,6 +405,7 @@ void Terrain::computeDisplacements(uint32_t seed) {
 			//pVertices_[k].color = {1.f - hr, hr, 0};
 		}
 	meltEdges(cols_ * 0.2, rows_ * 0.2);
+	normalizeHeights();
 }
 
 void Terrain::meltEdges(unsigned xRadius, unsigned zRadius) {
@@ -445,6 +452,25 @@ void Terrain::meltEdges(unsigned xRadius, unsigned zRadius) {
 		f = slopeFn(f);
 		for (unsigned i=0; i<rows_; i++)
 			pVertices_[i*cols_+j].pos.y = lerp(config_.minElevation, pVertices_[i*cols_+j].pos.y, f);
+	}
+}
+
+void Terrain::normalizeHeights() {
+	// adjust the heights to bring them to fill the entire [minElevation, maxElevation] range
+	// 1: compute min/max:
+	float vmin = 1e20f, vmax = -1e20f;
+	for (unsigned i=0; i<rows_*cols_; i++) {
+		if (pVertices_[i].pos.y < vmin)
+			vmin = pVertices_[i].pos.y;
+		if (pVertices_[i].pos.y > vmax)
+			vmax = pVertices_[i].pos.y;
+	}
+	// 2: rescale the values to fill the entire height range
+	float scale = (config_.maxElevation - config_.minElevation) / (vmax - vmin);
+	for (unsigned i=0; i<rows_*cols_; i++) {
+		int row = i / cols_;
+		int col = i % cols_;
+		pVertices_[i].pos.y = config_.minElevation + (pVertices_[i].pos.y - vmin) * scale;
 	}
 }
 

@@ -11,10 +11,10 @@ struct TerrainConfig {
 	float width = 200.f;	// X axis
 	float length = 200.f;	// Z axis
 	float minElevation = -10.f;	// minimum Y axis value
-	float maxElevation = 45.f;	// maximum Y axis value
+	float maxElevation = 25.f;	// maximum Y axis value
 
 	// structure settings
-	float vertexDensity = 2.f;	// vertices per meter (actual density may be slightly higher due to rounding,
+	float vertexDensity = 1.f;	// vertices per meter (actual density may be slightly higher due to rounding,
 								// but is guaranteed to always be at least the specified value)
 
 	// generation parameters
@@ -23,8 +23,7 @@ struct TerrainConfig {
 										// to the initial distance between vertices;
 										// this has the effect of producing an irregular (less matrix-like) mesh
 
-	float bigRoughness = 0.9f;			// between [0.0 and 1.0] -> controls roughness of big features (hills/cliffs etc)
-	float smallRoughness = 0.5f;		// roughness of small features (small local variations in terrain)
+	float roughness = 0.5f;		// between [0.0 and 1.0]
 };
 
 #endif // TERRAIN_CONFIG_H

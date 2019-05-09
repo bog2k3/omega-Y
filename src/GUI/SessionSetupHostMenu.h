@@ -39,5 +39,5 @@ private:
 	void onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> label);
 	void onRandomizeAll(std::shared_ptr<TextField> pSeedField,
 		std::shared_ptr<Slider> pMinElevSlider, std::shared_ptr<Slider> pMaxElevSlider,
-		std::shared_ptr<Slider> pBigRoughnessSlider, std::shared_ptr<Slider> pSmallRoughnessSlider);
+		std::shared_ptr<Slider> pRoughnessSlider);
 };

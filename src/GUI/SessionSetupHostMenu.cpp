@@ -65,45 +65,31 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig
 	std::shared_ptr<Slider> pMaxElevSlider = std::make_shared<Slider>(
 		glm::vec2{850, slidersStartY + slidersSpacing * 1}, 250);
 	pMaxElevSlider->setLabel("Max Elevation");
-	pMaxElevSlider->setRange(10, 100, 0.5f);
-	pMaxElevSlider->setDisplayStyle(5, 1, 0);
+	pMaxElevSlider->setRange(10, 50, 0.5f);
+	pMaxElevSlider->setDisplayStyle(5, 2, 0);
 	pMaxElevSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
 		&pData_->maxElevation, std::placeholders::_1, pMaxElevDisplay));
 	pMaxElevSlider->setValue(pData_->maxElevation);
 	addElement(pMaxElevSlider);
 
-	std::shared_ptr<Label> pBigRoughnessDisplay = std::make_shared<Label>(
+	std::shared_ptr<Label> pRoughnessDisplay = std::make_shared<Label>(
 		glm::vec2{1120, slidersStartY + slidersSpacing * 2 + 30}, 18, "");
-	addElement(pBigRoughnessDisplay);
+	addElement(pRoughnessDisplay);
 
-	std::shared_ptr<Slider> pBigRoughnessSlider = std::make_shared<Slider>(
+	std::shared_ptr<Slider> pRoughnessSlider = std::make_shared<Slider>(
 		glm::vec2{850, slidersStartY + slidersSpacing * 2}, 250);
-	pBigRoughnessSlider->setLabel("Big roughness");
-	pBigRoughnessSlider->setRange(0.5, 1.5, 0.1f);
-	pBigRoughnessSlider->setDisplayStyle(11, 2, 1);
-	pBigRoughnessSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->bigRoughness, std::placeholders::_1, pBigRoughnessDisplay));
-	pBigRoughnessSlider->setValue(pData_->bigRoughness);
-	addElement(pBigRoughnessSlider);
-
-	std::shared_ptr<Label> pSmallRoughnessDisplay = std::make_shared<Label>(
-		glm::vec2{1120, slidersStartY + slidersSpacing * 3 + 30}, 18, "");
-	addElement(pSmallRoughnessDisplay);
-
-	std::shared_ptr<Slider> pSmallRoughnessSlider = std::make_shared<Slider>(
-		glm::vec2{850, slidersStartY + slidersSpacing * 3}, 250);
-	pSmallRoughnessSlider->setLabel("Small roughness");
-	pSmallRoughnessSlider->setRange(0, 1.0, 0.1f);
-	pSmallRoughnessSlider->setDisplayStyle(11, 2, 1);
-	pSmallRoughnessSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->smallRoughness, std::placeholders::_1, pSmallRoughnessDisplay));
-	pSmallRoughnessSlider->setValue(pData_->smallRoughness);
-	addElement(pSmallRoughnessSlider);
+	pRoughnessSlider->setLabel("Roughness");
+	pRoughnessSlider->setRange(0.f, 1.f, 0.1f);
+	pRoughnessSlider->setDisplayStyle(0.1, 2, 1);
+	pRoughnessSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
+		&pData_->roughness, std::placeholders::_1, pRoughnessDisplay));
+	pRoughnessSlider->setValue(pData_->roughness);
+	addElement(pRoughnessSlider);
 
 	std::shared_ptr<Button> pRandomize = std::make_shared<Button>(
-		glm::vec2{700, slidersStartY + slidersSpacing * 4.5f}, glm::vec2{450, 30}, "Randomize all");
+		glm::vec2{700, slidersStartY + slidersSpacing * 3.5f}, glm::vec2{450, 30}, "Randomize all");
 	pRandomize->onClick.add(std::bind(&SessionSetupHostMenu::onRandomizeAll, this,
-		pSeedField, pMinElevSlider, pMaxElevSlider, pBigRoughnessSlider, pSmallRoughnessSlider));
+		pSeedField, pMinElevSlider, pMaxElevSlider, pRoughnessSlider));
 	addElement(pRandomize);
 
 #ifdef DEBUG
@@ -115,7 +101,7 @@ SessionSetupHostMenu::SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig
 		glm::vec2{850, slidersStartY + slidersSpacing * 5}, 250);
 	pVertexDensitySlider->setLabel("Vertex density");
 	pVertexDensitySlider->setRange(0.5, 2.0, 0.1f);
-	pVertexDensitySlider->setDisplayStyle(16, 4, 1);
+	pVertexDensitySlider->setDisplayStyle(0.1, 4, 1);
 	pVertexDensitySlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
 		&pData_->vertexDensity, std::placeholders::_1, pDensityDisplay));
 	pVertexDensitySlider->setValue(pData_->vertexDensity);
@@ -160,7 +146,7 @@ void SessionSetupHostMenu::onRandSeed(std::shared_ptr<TextField> pSeedField) {
 
 void SessionSetupHostMenu::onRandomizeAll(std::shared_ptr<TextField> pSeedField,
 	std::shared_ptr<Slider> pMinElevSlider, std::shared_ptr<Slider> pMaxElevSlider,
-	std::shared_ptr<Slider> pBigRoughnessSlider, std::shared_ptr<Slider> pSmallRoughnessSlider)
+	std::shared_ptr<Slider> pRoughnessSlider)
 {
 	onRandSeed(pSeedField);
 
@@ -170,9 +156,6 @@ void SessionSetupHostMenu::onRandomizeAll(std::shared_ptr<TextField> pSeedField,
 	auto maxElRange = pMaxElevSlider->getRange();
 	pMaxElevSlider->setValue(maxElRange.first + (maxElRange.second - maxElRange.first) * randf());
 
-	auto bigRoughRange = pBigRoughnessSlider->getRange();
-	pBigRoughnessSlider->setValue(bigRoughRange.first + (bigRoughRange.second - bigRoughRange.first) * randf());
-
-	auto smallRoughRange = pSmallRoughnessSlider->getRange();
-	pSmallRoughnessSlider->setValue(smallRoughRange.first + (smallRoughRange.second - smallRoughRange.first) * randf());
+	auto roughRange = pRoughnessSlider->getRange();
+	pRoughnessSlider->setValue(roughRange.first + (roughRange.second - roughRange.first) * randf());
 }
