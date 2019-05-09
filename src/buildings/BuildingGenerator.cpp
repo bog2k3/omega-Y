@@ -1,5 +1,6 @@
 #include "BuildingGenerator.h"
 #include "../terrain/Terrain.h"
+#include "../imgUtil/blur.h"
 #include "../ImgDebugDraw.h"
 
 #include <boglfw/utils/rand.h>
@@ -7,7 +8,7 @@
 #include <boglfw/World.h>
 
 // blurs a height field over a given radius
-void blurHeightField(const float* in, int rows, int cols, float radius, float* out) {
+/*void blurHeightField(const float* in, int rows, int cols, float radius, float* out) {
 	int irad = round(radius);
 	float rsq = sqr(radius);
 	for (int i=0; i<rows; i++) {
@@ -30,7 +31,7 @@ void blurHeightField(const float* in, int rows, int cols, float radius, float* o
 			out[i*cols + j] = val / denom;
 		}
 	}
-}
+}*/
 
 void downsampleHeightField(const float* in, glm::ivec2 const& inSize, glm::ivec2 const& outSize, float* out) {
 	glm::vec2 rcSize = { inSize.x / (float)outSize.x, inSize.y / (float)outSize.y }; // rectangle size for sampling from input
@@ -88,7 +89,7 @@ void BuildingGenerator::generate(BuildingsSettings const& settings, Terrain &ter
 	float blurRadius = 1.f / sqrt(samplePointDensity) * 0.25f;	// [m] one quarter of the distance between sample points
 	blurRadius *= gridSize.x / terrain.getConfig().width;
 	float* fHeightsBlured = (float*)malloc(sizeof(float) * gridSize.x * gridSize.y);
-	blurHeightField(fHeights, gridSize.y, gridSize.x, blurRadius, fHeightsBlured);
+	imgUtil::blur(fHeights, gridSize.y, gridSize.x, blurRadius, fHeightsBlured);
 	free(fHeights), fHeights = nullptr;
 
 	// find suitable locations for castles

@@ -241,8 +241,6 @@ void Terrain::generate(TerrainConfig const& settings) {
 	validateSettings(settings);
 	clear();
 	config_ = settings;
-	//if (previewMode_)
-	//	config_.vertexDensity *= 0.25;
 
 	uint32_t nextSeed = new_RID();
 	randSeed(config_.seed);
@@ -363,13 +361,14 @@ void Terrain::fixTriangleWinding() {
 
 void Terrain::computeDisplacements(uint32_t seed) {
 	HeightmapParams hparam;
-	hparam.width = config_.width / 8;
-	hparam.length = config_.length / 8;
+	hparam.width = config_.width / 2;
+	hparam.length = config_.length / 2;
 	hparam.minHeight = config_.minElevation;
 	hparam.maxHeight = config_.maxElevation;
 	// reset seed so we always compute the same displacement regardless of how many vertices we have
 	randSeed(seed);
 	HeightMap height(hparam);
+	height.blur(2);
 	// reset seed so we always compute the same displacement regardless of how many vertices we have
 	randSeed(seed);
 	PerlinNoise roughNoise(max(4.f, config_.width), max(4.f, config_.length));

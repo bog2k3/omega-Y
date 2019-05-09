@@ -167,3 +167,7 @@ void HeightMap::generate(float amplitude) {
 		elements_[i].value = (elements_[i].value - vmin) * scale;
 	}
 }
+
+void Heightmap::blur(float radius) {
+	TODO: use imgUtil::blur and then renormalize
+}

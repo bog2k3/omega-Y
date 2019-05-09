@@ -13,6 +13,9 @@ public:
 	HeightMap(HeightmapParams const& params);
 	virtual ~HeightMap();
 
+	// blurs the heightmap over a given radius
+	void blur(float radius);
+
 	// return the interpolated height value at position with normalized coordinates (u, v) <- [0.0, 1.0]
 	float value(float u, float v) const;
 
