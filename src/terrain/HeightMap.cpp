@@ -105,11 +105,18 @@ void HeightMap::computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, 
 }
 
 void HeightMap::generate(float amplitude) {
-	// set the corners:
-	elements_[0] += amplitude* (0.5f + 0.5f*randf());
-	elements_[width_-1] += amplitude* (0.5f + 0.5f*randf());
-	elements_[(length_-1)*width_] += amplitude* (0.5f + 0.5f*randf());
-	elements_[width_ * length_ - 1] += amplitude* (0.5f + 0.5f*randf());
+	// seed the corners:
+	elements_[0] += amplitude * randf();
+	elements_[width_-1] += amplitude * randf();
+	elements_[(length_-1)*width_] += amplitude * randf();
+	elements_[width_ * length_ - 1] += amplitude * randf();
+	// seed the center...
+	elements_[(length_-1)/2*width_ + (width_-1)/2] += amplitude * randf();
+	// ...and the 4 mid-diagonals as well
+	elements_[(length_-1)/4*width_ + (width_-1)/4] += amplitude * randf();
+	elements_[(length_-1)/4*width_ + (width_-1)*3/4] += amplitude * randf();
+	elements_[(length_-1)*3/4*width_ + (width_-1)/4] += amplitude * randf();
+	elements_[(length_-1)*3/4*width_ + (width_-1)*3/4] += amplitude * randf();
 
 	struct rcData {
 		unsigned r1, r2, c1, c2;
@@ -157,8 +164,6 @@ void HeightMap::generate(float amplitude) {
 	// renormalize the values to fill the entire height range
 	float scale = amplitude / (vmax - vmin);
 	for (unsigned i=0; i<width_*length_; i++) {
-		int row = i / width_;
-		int col = i % width_;
 		elements_[i].value = (elements_[i].value - vmin) * scale;
 	}
 }
