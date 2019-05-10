@@ -15,6 +15,9 @@ public:
 
 private:
 	std::shared_ptr<InGameMenu> menu_;
+
+	void toggleMenu();
+	void quit();
 };
 
 #endif // GAME_CONTROLLER_H

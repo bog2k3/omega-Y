@@ -470,6 +470,8 @@ std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg)
 }
 
 void destroySession() {
+	if (pSession->isStarted())
+		pSession->stop();
 	LOGLN("Session close requested.");
 	LOGLN("Closing all network connections . . .");
 	stopNetwork();

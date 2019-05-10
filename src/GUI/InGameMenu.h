@@ -11,5 +11,6 @@ public:
 	~InGameMenu() override {}
 
 	Event<void()> onBack;
+	Event<void()> onQuit;
 private:
 };

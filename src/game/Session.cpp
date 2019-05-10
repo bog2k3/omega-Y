@@ -14,9 +14,11 @@ Session::Session(SessionType type, GameConfig config)
 }
 
 Session::~Session() {
+	assertDbg(!started_);
 }
 
 Progress Session::load(unsigned step) {
+	assertDbg(!started_);
 	switch (step) {
 	case 0: {
 		terrain_ = std::make_shared<Terrain>(false);
@@ -52,13 +54,18 @@ Progress Session::load(unsigned step) {
 }
 
 Progress Session::unload(unsigned step) {
+	assertDbg(!started_);
 	return {1, 1};
 }
 
 void Session::start() {
+	assertDbg(!started_);
 	onStart.trigger();
+	started_ = true;
 }
 
 void Session::stop() {
+	assertDbg(started_);
 	onEnd.trigger();
+	started_ = false;
 }

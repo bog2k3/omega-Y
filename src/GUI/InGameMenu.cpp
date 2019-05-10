@@ -6,9 +6,16 @@ InGameMenu::InGameMenu(glm::vec2 size)
 	std::vector<buttonDescriptor> buttons;
 
 	buttons.push_back({
-		"Back",
+		"Resume",
 		[this](...) {
 			onBack.trigger();
+		}
+	});
+
+	buttons.push_back({
+		"Quit",
+		[this](...) {
+			onQuit.trigger();
 		}
 	});
 

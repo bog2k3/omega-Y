@@ -49,6 +49,7 @@ public:
 
 	void start();
 	void stop();
+	bool isStarted() const { return started_; }
 
 	Event<void()> onStart;
 	Event<void()> onEnd;
@@ -56,6 +57,7 @@ public:
 private:
 	SessionType type_;
 	GameConfig gameCfg_;
+	bool started_ = false;
 	std::shared_ptr<Terrain> terrain_;
 	//std::shared_ptr<Water> water_;
 	std::shared_ptr<SkyBox> skyBox_;
