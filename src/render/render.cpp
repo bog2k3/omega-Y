@@ -333,8 +333,11 @@ void render(RenderData &renderData) {
 		// append all drawable entities from world:
 		// TODO - use a BSP or something to only get entities under water level
 		World::getInstance().getEntities(underEntities, nullptr, 0, Entity::FunctionalityFlags::DRAWABLE);
-		for (auto e : underEntities)
+		for (auto e : underEntities) {
+			if (e == (Entity*)renderData.pSkyBox)
+				continue;
 			underDraw.push_back(e);
+		}
 
 		std::vector<drawable> aboveDraw {};
 		//aboveDraw.insert(aboveDraw.end(), drawlist3D.begin(), drawlist3D.end());

@@ -14,6 +14,14 @@ GameCtrl::GameCtrl(GameState &s)
 	guiSystem->addElement(menu_);
 	menu_->hide();
 
+	signalHandlers_[StateSignals::ESCAPE] = [this, guiSystem]() {
+		if (menu_->isVisible())
+			menu_->hide();
+		else
+			menu_->show();
+		guiSystem->showMousePointer(menu_->isVisible());
+	};
+
 	GameState::session()->start();
 }
 

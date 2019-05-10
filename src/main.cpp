@@ -80,8 +80,10 @@ bool signalQuit = false;
 RenderConfig *pRenderCfg = nullptr;
 
 PlayerInputHandler playerInputHandler;
+bool isMouseCaptured = false;
+bool requestSuppressMouseMotion = true;
 
-Session *pSession = nullptr;
+std::shared_ptr<Session> pSession;
 GameState *pCrtState = nullptr;
 
 //Terrain* pTerrain = nullptr;
@@ -103,17 +105,19 @@ template<> void update(btDiscreteDynamicsWorld* wld, float dt) {
 	wld->stepSimulation(dt, max_substeps, fixedTimeStep);
 }
 
-bool toggleMouseCapture();
+void setMouseCapture(bool capture);
 void handleDebugKeys(InputEvent& ev);
 
-void handleSystemKeys(InputEvent& ev, bool &mouseCaptureDisabled) {
+void handleSystemKeys(InputEvent& ev) {
 	bool consumed = true;
 	switch (ev.key) {
 	case GLFW_KEY_ESCAPE:
-		signalQuit = true;
+		if (!pCrtState)
+			break;
+		pCrtState->controller().signal(StateSignals::ESCAPE);
 	break;
 	case GLFW_KEY_F1:
-		mouseCaptureDisabled = !toggleMouseCapture();
+		setMouseCapture(!isMouseCaptured);
 	break;
 	case GLFW_KEY_F10:
 		captureFrame = true;
@@ -192,19 +196,15 @@ void handlePlayerInputs(InputEvent& ev) {
 
 void onInputEventHandler(InputEvent& ev) {
 	// suppress first mouse move event because the values are broken
-	static bool firstMoveSuppressed = false;
-	if (!firstMoveSuppressed && ev.type == InputEvent::EV_MOUSE_MOVED) {
+	if (requestSuppressMouseMotion && ev.type == InputEvent::EV_MOUSE_MOVED) {
 		ev.consume();
-		firstMoveSuppressed = true;
+		requestSuppressMouseMotion = false;
 		return;
 	}
 	// propagate input events in order of priority:
 	if (!ev.isConsumed()) {
-		bool mouseUncaptured = false;
 		if (ev.type == InputEvent::EV_KEY_DOWN)
-			handleSystemKeys(ev, mouseUncaptured);
-		if (mouseUncaptured)
-			firstMoveSuppressed = false; // enable suppressing first move event again after uncapturing mouse to avoid jumps
+			handleSystemKeys(ev);
 	}
 	if (!ev.isConsumed())
 		handleGUIInputs(ev);
@@ -212,14 +212,15 @@ void onInputEventHandler(InputEvent& ev) {
 		handlePlayerInputs(ev);
 }
 
-bool toggleMouseCapture() {
-	static bool isCaptured = false;
-	if (isCaptured)
-		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	else
+void setMouseCapture(bool capture) {
+	if (capture)
 		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	isCaptured = !isCaptured;
-	return isCaptured;
+	else
+		glfwSetInputMode(gltGetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	if (isMouseCaptured && !capture) {
+		requestSuppressMouseMotion = true; // enable suppressing first move event again after uncapturing mouse to avoid jumps
+	}
+	isMouseCaptured = capture;
 }
 
 /*void physTestInit() {
@@ -353,33 +354,10 @@ void initWorld(RenderData &renderData) {
 	World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
 	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.viewport, {0.f, 0.f}, {renderData.windowW, renderData.windowH}));
+	World::getGlobal<GuiSystem>()->onMousePointerDisplayRequest.add([](bool show) {
+		setMouseCapture(!show);
+	});
 }
-
-/*void initTerrain(RenderData &renderData) {
-	terrainConfig.vertexDensity = 1.f;	// vertices per meter
-	terrainConfig.width = 200;
-	terrainConfig.length = 200;
-	terrainConfig.minElevation = -10;
-	terrainConfig.maxElevation = 35.f;
-	terrainConfig.relativeRandomJitter = 0.8f;
-
-	terrainConfig.bigRoughness = 0.9f;
-	terrainConfig.smallRoughness = 0.5f;
-	pTerrain = new Terrain();
-	pTerrain->generate(terrainConfig);
-	pTerrain->finishGenerate();
-
-	pTerrain->setWaterReflectionTex(renderData.waterRenderData.reflectionTex, pSkyBox->getCubeMapTexture());
-	pTerrain->setWaterRefractionTex(renderData.waterRenderData.refractionTex);
-
-	//BuildingGenerator::generate(BuildingsSettings{}, *pTerrain);
-
-	renderData.renderCtx.meshRenderer->setWaterNormalTexture(pTerrain->getWaterNormalTexture());
-}
-
-void initSky() {
-
-}*/
 
 bool iamhost = false;
 net::listener netlistener;
@@ -440,36 +418,6 @@ void stopNetwork() {
 		net::closeConnection(con);
 }
 
-//void initSession(Session::SessionType type) {
-	// origin gizmo
-	/*glm::mat4 gizmoTr = glm::translate(glm::mat4{1}, glm::vec3{0.f, 0.01f, 0.f});
-	World::getInstance().takeOwnershipOf(std::make_shared<Gizmo>(gizmoTr, 1.f));
-
-	// free camera
-	auto sFreeCam = std::make_shared<FreeCamera>(glm::vec3{2.f, 1.f, 2.f}, glm::vec3{-1.f, -0.5f, -1.f});
-	freeCam = sFreeCam;
-	World::getInstance().takeOwnershipOf(sFreeCam);
-
-	// camera controller (this one moves the render camera to the position of the target entity)
-	auto sCamCtrl = std::make_shared<CameraController>(&pRenderData->viewport.camera());
-	cameraCtrl = sCamCtrl;
-	World::getInstance().takeOwnershipOf(sCamCtrl);
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});*/
-
-	// player
-	/*auto sPlayer = std::make_shared<PlayerEntity>(glm::vec3{0.f, terrainConfig.maxElevation + 10, 0.f}, 0.f);
-	player = sPlayer;
-	World::getInstance().takeOwnershipOf(sPlayer);
-
-	sCamCtrl->attachToEntity(freeCam, {0.f, 0.f, 0.f});
-	playerInputHandler.setTargetObject(freeCam);
-
-	initSky();
-	initTerrain(*pRenderData);
-
-	physTestInit();*/
-//}
-
 void changeGameState(GameState::StateNames stateName) {
 	if (pCrtState)
 		delete pCrtState, pCrtState = nullptr;
@@ -499,6 +447,8 @@ void onSessionStarted(RenderData *pRenderData) {
 	pRenderData->renderCtx.enableWaterRender = true;
 	pRenderData->pSkyBox = pSession->skyBox().get();
 	pRenderData->pTerrain = pSession->terrain().get();
+
+	setMouseCapture(true);
 }
 
 void onSessionEnded(RenderData *pRenderData) {
@@ -507,19 +457,26 @@ void onSessionEnded(RenderData *pRenderData) {
 	pRenderData->renderCtx.enableWaterRender = false;
 	pRenderData->pSkyBox = nullptr;
 	pRenderData->pTerrain = nullptr;
+
+	setMouseCapture(false);
 }
 
 std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg) {
-	auto session = std::make_shared<Session>(cfg.type, cfg.gameConfig);
-	session->onStart.add(std::bind(onSessionStarted, pRenderData));
-	session->onEnd.add(std::bind(onSessionEnded, pRenderData));
-	pSession = session.get();
-	return session;
+	LOGLN("Creating new " << (cfg.type == Session::SESSION_HOST ? "HOST" : "CLIENT") << " session.");
+	pSession = std::make_shared<Session>(cfg.type, cfg.gameConfig);
+	pSession->onStart.add(std::bind(onSessionStarted, pRenderData));
+	pSession->onEnd.add(std::bind(onSessionEnded, pRenderData));
+	return pSession;
 }
 
 void destroySession() {
-	// ...
-	pSession = nullptr;
+	LOGLN("Session close requested.");
+	LOGLN("Closing all network connections . . .");
+	stopNetwork();
+	LOGLN("Deleting all entities . . .");
+	World::getInstance().reset();
+	pSession.reset();
+	LOGLN("Done.");
 }
 
 int main(int argc, char* argv[]) {
@@ -533,6 +490,8 @@ int main(int argc, char* argv[]) {
 
 	do {
 		PERF_MARKER_FUNC;
+
+		LOGLN("Initializing subsystems...");
 
 		// initialize stuff:
 		if (!initRender("Omega-Y", renderData)) {
@@ -576,9 +535,6 @@ int main(int argc, char* argv[]) {
 		changeGameState(GameState::StateNames::INITIAL_LOADING);
 
 		LOGLN("Done, we're now live.");
-
-		if (!initNetwork(argc, argv))
-			break;
 
 		// initial update:
 		updateList.update(0);
@@ -637,12 +593,6 @@ int main(int argc, char* argv[]) {
 	} while (0);
 
 	LOGLN("Exiting . . .");
-
-	LOGLN("Closing all network connections . . .");
-	stopNetwork();
-	LOGLN("Deleting all entities . . .");
-	World::getInstance().reset();
-	LOGLN("Destroying physics . . .");
 	destroyPhysics();
 	if (auto ptr = World::getGlobal<ImgDebugDraw>()) {
 		delete ptr;
