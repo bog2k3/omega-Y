@@ -38,7 +38,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 		SessionConfig sessionCfg;
 		sessionCfg.type = Session::SESSION_HOST;
 		sessionCfg.gameConfig.terrainConfig = *terrainCfg_;
-		sessionCfg.gameConfig.terrainConfig.vertexDensity = 2.f;
+		sessionCfg.gameConfig.terrainConfig.vertexDensity = 1.f;
 		state_.initSession(sessionCfg);
 		onNewStateRequest.trigger(GameState::StateNames::SESSION_LOADING);
 	});

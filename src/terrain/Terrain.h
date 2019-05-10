@@ -50,7 +50,6 @@ public:
 
 	void draw(RenderContext const& ctx) override;
 	void update(float dt) override;
-	void setWireframeMode(bool wireframe, bool thickLines=false) { renderWireframe_ = wireframe; thickWireframeLines_ = thickLines; }
 
 	float getHeightValue(glm::vec3 const& where) const; // only x and z coords are used from the input point
 	TerrainConfig const& getConfig() const { return config_; }
@@ -76,8 +75,6 @@ private:
 	std::vector<Triangle> triangles_;
 	TerrainConfig config_;
 	RenderData *renderData_ = nullptr;
-	bool renderWireframe_ = false;
-	bool thickWireframeLines_ = true;
 	bool previewMode_ = false;
 	Water* pWater_ = nullptr;
 	TriangleAABBGenerator* triangleAABBGenerator_ = nullptr;

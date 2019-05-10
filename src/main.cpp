@@ -12,6 +12,8 @@
 #include "game/StateController.h"
 #include "game/Session.h"
 #include "game/SessionConfig.h"
+#include "game/GameConfig.h"
+#include "terrain/TerrainConfig.h"
 
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
@@ -149,18 +151,14 @@ void handleDebugKeys(InputEvent& ev) {
 		updatePaused ^= true;
 	break;
 	case GLFW_KEY_R: {
-		//pTerrain->generate(terrainConfig);
-		//pTerrain->finishGenerate();
-
+		if (!pSession)
+			break;
 		// reset player
-		//auto sPlayer = player.lock();
-		//if (sPlayer)
-		//	sPlayer->moveTo({0.f, terrainConfig.maxElevation + 10, 0.f});
+		pSession->player()->moveTo({0.f, pSession->gameConfig().terrainConfig.maxElevation + 10, 0.f});
 	} break;
 	case GLFW_KEY_Q:
 		if (pRenderCfg)
 			pRenderCfg->renderWireFrame = !pRenderCfg->renderWireFrame;
-		//pTerrain->setWireframeMode(renderWireFrame, true);
 	break;
 	case GLFW_KEY_E:
 		if (pRenderCfg)
@@ -266,7 +264,7 @@ void drawDebugTexts() {
 		"TAB : toggle playerCam / freeCam",
 		"F1 : capture / release mouse",
 #ifdef DEBUG
-		"R : regenerate terrain",
+		"R : reset player",
 		"Q : toggle wireframe",
 		"E : toggle debug drawing of physics",
 		"F2 : toggle slow motion",

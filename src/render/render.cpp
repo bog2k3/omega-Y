@@ -11,6 +11,8 @@
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
 
+#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+
 #include <GLFW/glfw3.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -196,6 +198,13 @@ void unloadRender(RenderData &renderData) {
 
 void setupRenderPass(RenderData &renderData, RenderPass pass) {
 	renderData.renderCtx.renderPass = pass;
+	renderData.renderCtx.enableWireframe = renderData.config.renderWireFrame;
+	if (renderData.config.renderWireFrame) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(2.f);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	LOGPREFIX("RENDER");
 	float waterDepthFactor = pow(1.f / (max(0.f, -renderData.viewport.camera().position().y) + 1), 0.5f);
@@ -229,6 +238,10 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 	break;
 	case RenderPass::UI:
 		glDisable(GL_DEPTH_TEST);
+		if (renderData.config.renderWireFrame) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glLineWidth(1.f);
+		}
 	break;
 	case RenderPass::None:
 	break;
@@ -245,6 +258,10 @@ void setupRenderPass(RenderData &renderData, RenderPass pass) {
 void resetRenderPass(RenderData &renderData, RenderPass pass) {
 	renderData.renderCtx.renderPass = RenderPass::None;
 	renderData.renderCtx.enableClipPlane = false;
+	if (renderData.config.renderWireFrame) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glLineWidth(1.f);
+	}
 
 	switch(pass) {
 		case RenderPass::Standard:
@@ -347,12 +364,20 @@ void render(RenderData &renderData) {
 		renderData.viewport.render(renderData.renderCtx.cameraUnderwater ? underDraw : aboveDraw, renderData.renderCtx);
 		resetRenderPass(renderData, RenderPass::Standard);
 		checkGLError("render() pass #3");
+
+		// 4th pass - physics debug draw
+		if (renderData.config.renderPhysicsDebug) {
+			World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
+		}
 	} else {
 		renderData.renderCtx.cameraUnderwater = false;
 		renderData.viewport.clear();
 		// no water, just render everything in one pass:
 		setupRenderPass(renderData, RenderPass::Standard);
 		renderData.viewport.render(&World::getInstance(), renderData.renderCtx);
+		if (renderData.config.renderPhysicsDebug) {
+			World::getGlobal<btDiscreteDynamicsWorld>()->debugDrawWorld();
+		}
 		resetRenderPass(renderData, RenderPass::Standard);
 	}
 

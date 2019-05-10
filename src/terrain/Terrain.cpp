@@ -594,14 +594,16 @@ void Terrain::updatePhysics() {
 	// create array of height values:
 	if (heightFieldValues_)
 		free(heightFieldValues_), heightFieldValues_ = nullptr;
-	heightFieldValues_ = (float*)malloc(sizeof(float) * rows_ * cols_);
+	unsigned hfRows = (unsigned)ceil(config_.length);
+	unsigned hfCols = (unsigned)ceil(config_.width);
+	heightFieldValues_ = (float*)malloc(sizeof(float) * hfRows * hfCols);
 	glm::vec3 bottomLeft {-config_.width * 0.5f, 0.f, -config_.length * 0.5f};
-	float dx = config_.width / (cols_ - 1);
-	float dz = config_.length / (rows_ - 1);
+	float dx = config_.width / (hfCols - 1);
+	float dz = config_.length / (hfRows - 1);
 	const float heightOffset = 0.1f;	// offset physics geometry slightly higher
-	for (unsigned i=0; i<rows_; i++)
-		for (unsigned j=0; j<cols_; j++)
-			heightFieldValues_[i*cols_+j] = getHeightValue(bottomLeft + glm::vec3{j*dx, 0, i*dz}) + heightOffset;
+	for (unsigned i=0; i<hfRows; i++)
+		for (unsigned j=0; j<hfCols; j++)
+			heightFieldValues_[i*hfCols+j] = getHeightValue(bottomLeft + glm::vec3{j*dx, 0, i*dz}) + heightOffset;
 
 	// create ground body
 	physicsBodyMeta_.reset();
@@ -609,7 +611,7 @@ void Terrain::updatePhysics() {
 	bodyCfg.position = glm::vec3{0.f, (config_.maxElevation + config_.minElevation)*0.5f, 0.f};
 	bodyCfg.mass = 0.f;
 	bodyCfg.friction = 0.5f;
-	bodyCfg.shape = std::make_shared<btHeightfieldTerrainShape>(cols_, rows_, heightFieldValues_, 1.f,
+	bodyCfg.shape = std::make_shared<btHeightfieldTerrainShape>(hfCols, hfRows, heightFieldValues_, 1.f,
 							config_.minElevation, config_.maxElevation, 1, PHY_FLOAT, false);
 
 	physicsBodyMeta_.createBody(bodyCfg);
@@ -623,11 +625,6 @@ void Terrain::draw(RenderContext const& ctx) {
 	auto const& rctx = CustomRenderContext::fromCtx(ctx);
 
 	if (rctx.renderPass == RenderPass::Standard || rctx.renderPass == RenderPass::WaterReflection || rctx.renderPass == RenderPass::WaterRefraction) {
-		if (renderWireframe_) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			if (thickWireframeLines_)
-				glLineWidth(2.f);
-		}
 		// set-up textures
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, renderData_->textures_[0].texID);
@@ -668,11 +665,6 @@ void Terrain::draw(RenderContext const& ctx) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		if (renderWireframe_) {	// reset state
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			if (thickWireframeLines_)
-				glLineWidth(1.f);
-		}
 		// draw vertex normals
 		/*for (unsigned i=0; i<nVertices_; i++) {
 			Shape3D::get()->drawLine(pVertices_[i].pos, pVertices_[i].pos+pVertices_[i].normal, {1.f, 0, 1.f});
@@ -680,7 +672,7 @@ void Terrain::draw(RenderContext const& ctx) {
 		//BSPDebugDraw::draw(*pBSP_);
 		//for (unsigned i=0; i<triangles_.size() / 10; i++)
 		//	Shape3D::get()->drawAABB(triangleAABBGenerator_->getAABB(i), glm::vec3{0.f, 1.f, 0.f});
-	} else if (!renderWireframe_ && rctx.renderPass == RenderPass::WaterSurface) {
+	} else if (rctx.renderPass == RenderPass::WaterSurface) {
 		if (pWater_)
 			pWater_->draw(ctx);
 	}

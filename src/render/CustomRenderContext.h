@@ -35,6 +35,7 @@ public:
 	bool enableClipPlane = false;
 	bool cameraUnderwater = false;
 	bool enableWaterRender = false;
+	bool enableWireframe = false;
 	float time = 0;
 
 	CustomMeshRenderer* meshRenderer = nullptr;
