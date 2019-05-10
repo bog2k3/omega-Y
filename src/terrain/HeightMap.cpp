@@ -1,4 +1,5 @@
 #include "HeightMap.h"
+#include "../imgUtil/blur.h"
 
 #include <boglfw/utils/rand.h>
 #include <boglfw/math/math3D.h>
@@ -8,6 +9,18 @@
 #include <vector>
 
 static const float jitterReductionFactor = 0.5f;	// jitter is multiplied by this factor at each iteration
+
+struct HeightMap::element {
+	float value = 0.f;
+	unsigned divider = 0;
+
+	element& operator += (float val) {
+		value += val;
+		divider++;
+		return *this;
+	}
+	float get() const { return value / divider; }
+};
 
 // return the first power-of-two number greater than or equal to x
 unsigned nextPo2(unsigned x) {
@@ -22,21 +35,22 @@ HeightMap::HeightMap(HeightmapParams const& params) {
 	width_ = nextPo2(params.width) + 1;
 	length_ = nextPo2(params.length) + 1;
 	baseY_ = params.minHeight;
-	elements_ = new element[width_ * length_];
+	amplitude_ = params.maxHeight - params.minHeight;
+	values_ = new float[width_ * length_];
 
-	generate(params.maxHeight - params.minHeight);
+	generate();
 }
 
 HeightMap::~HeightMap()
 {
-	if (elements_)
-		delete [] elements_, elements_ = nullptr;
+	if (values_)
+		delete [] values_, values_ = nullptr;
 }
 
 float HeightMap::getSample(int r, int c) const {
 	r = clamp(r, 0, (int)length_ - 1);
 	c = clamp(c, 0, (int)width_ - 1);
-	return elements_[r*width_ + c].value;
+	return values_[r*width_ + c];
 }
 
 float HeightMap::value(float u, float v) const {
@@ -62,61 +76,62 @@ float HeightMap::value(float u, float v) const {
 	return baseY_ + f1 * (1.f - vWeight) + f2 * vWeight;
 }
 
-void HeightMap::computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp) {
+void HeightMap::computeDiamondSquareStep(element* elements, unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp) {
 	unsigned midR = (r1 + r2) / 2;
 	unsigned midC = (c1 + c2) / 2;
 	// center (diamond step)
-	elements_[midR * width_ + midC] += 0.25f * (
-		elements_[r1 * width_ + c1].get() +
-		elements_[r1 * width_ + c2].get() +
-		elements_[r2 * width_ + c1].get() +
-		elements_[r2 * width_ + c2].get()
+	elements[midR * width_ + midC] += 0.25f * (
+		elements[r1 * width_ + c1].get() +
+		elements[r1 * width_ + c2].get() +
+		elements[r2 * width_ + c1].get() +
+		elements[r2 * width_ + c2].get()
 	) + srandf() * jitterAmp;
-	float centerValue = elements_[midR * width_ + midC].get();
+	float centerValue = elements[midR * width_ + midC].get();
 	// now square step:
 	// top midpoint:
 	if (c2 > c1+1)
-		elements_[r1 * width_ + midC] += 0.3333f * (
-			elements_[r1 * width_ + c1].get() +
-			elements_[r1 * width_ + c2].get() +
+		elements[r1 * width_ + midC] += 0.3333f * (
+			elements[r1 * width_ + c1].get() +
+			elements[r1 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// bottom midpoint:
 	if (c2 > c1+1)
-		elements_[r2 * width_ + midC] += 0.3333f * (
-			elements_[r2 * width_ + c1].get() +
-			elements_[r2 * width_ + c2].get() +
+		elements[r2 * width_ + midC] += 0.3333f * (
+			elements[r2 * width_ + c1].get() +
+			elements[r2 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// left midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c1] += 0.3333f * (
-			elements_[r1 * width_ + c1].get() +
-			elements_[r2 * width_ + c1].get() +
+		elements[midR * width_ + c1] += 0.3333f * (
+			elements[r1 * width_ + c1].get() +
+			elements[r2 * width_ + c1].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 	// right midpoint:
 	if (r2 > r1+1)
-		elements_[midR * width_ + c2] += 0.3333f * (
-			elements_[r1 * width_ + c2].get() +
-			elements_[r2 * width_ + c2].get() +
+		elements[midR * width_ + c2] += 0.3333f * (
+			elements[r1 * width_ + c2].get() +
+			elements[r2 * width_ + c2].get() +
 			centerValue
 		) + srandf() * jitterAmp;
 }
 
-void HeightMap::generate(float amplitude) {
+void HeightMap::generate() {
+	element* elements = new element[width_ * length_];
 	// seed the corners:
-	elements_[0] += amplitude * randf();
-	elements_[width_-1] += amplitude * randf();
-	elements_[(length_-1)*width_] += amplitude * randf();
-	elements_[width_ * length_ - 1] += amplitude * randf();
+	elements[0] += amplitude_ * randf();
+	elements[width_-1] += amplitude_ * randf();
+	elements[(length_-1)*width_] += amplitude_ * randf();
+	elements[width_ * length_ - 1] += amplitude_ * randf();
 	// seed the center...
-	elements_[(length_-1)/2*width_ + (width_-1)/2] += amplitude * randf();
-	// ...and the 4 mid-diagonals as well
-	elements_[(length_-1)/4*width_ + (width_-1)/4] += amplitude * randf();
-	elements_[(length_-1)/4*width_ + (width_-1)*3/4] += amplitude * randf();
-	elements_[(length_-1)*3/4*width_ + (width_-1)/4] += amplitude * randf();
-	elements_[(length_-1)*3/4*width_ + (width_-1)*3/4] += amplitude * randf();
+	elements[(length_-1)/2*width_ + (width_-1)/2] += amplitude_ * randf();
+	// ...and the 4 edge mid-points as well
+	elements[(width_-1)/2] += amplitude_ * randf();
+	elements[(length_-1)*width_ + (width_-1)/2] += amplitude_ * randf();
+	elements[(length_-1)/2*width_] += amplitude_ * randf();
+	elements[(length_-1)/2*width_ + (width_-1)] += amplitude_ * randf();
 
 	struct rcData {
 		unsigned r1, r2, c1, c2;
@@ -128,7 +143,7 @@ void HeightMap::generate(float amplitude) {
 	vSteps.push_back(rcData{
 		0, length_ - 1,
 		0, width_ - 1,
-		amplitude * jitterReductionFactor
+		amplitude_ * jitterReductionFactor
 	});
 	unsigned index = 0;
 	// compute diamond displacement iteratively:
@@ -137,7 +152,7 @@ void HeightMap::generate(float amplitude) {
 		unsigned r2 = vSteps[index].r2;
 		unsigned c1 = vSteps[index].c1;
 		unsigned c2 = vSteps[index].c2;
-		computeDiamondSquareStep(r1, r2, c1, c2, vSteps[index].jitterAmp);
+		computeDiamondSquareStep(elements, r1, r2, c1, c2, vSteps[index].jitterAmp);
 		if (c2 > c1+2 || r2 > r1+2) {
 			unsigned midR = (r1 + r2) / 2;
 			unsigned midC = (c1 + c2) / 2;
@@ -152,22 +167,34 @@ void HeightMap::generate(float amplitude) {
 		}
 		index++;
 	}
-	// average out the values and compute min/max:
+	// bake the values:
+	for (unsigned i=0; i<width_*length_; i++) {
+		values_[i] = elements[i].value / elements[i].divider;
+	}
+	delete [] elements, elements = nullptr;
+
+	// renormalize the values to fill the entire height range
+	normalizeValues();
+}
+
+void HeightMap::normalizeValues() {
 	float vmin = 1e20f, vmax = -1e20f;
 	for (unsigned i=0; i<width_*length_; i++) {
-		elements_[i].value /= elements_[i].divider, elements_[i].divider = 1;
-		if (elements_[i].value < vmin)
-			vmin = elements_[i].value;
-		if (elements_[i].value > vmax)
-			vmax = elements_[i].value;
+		if (values_[i] < vmin)
+			vmin = values_[i];
+		if (values_[i] > vmax)
+			vmax = values_[i];
 	}
-	// renormalize the values to fill the entire height range
-	float scale = amplitude / (vmax - vmin);
+	float scale = amplitude_ / (vmax - vmin);
 	for (unsigned i=0; i<width_*length_; i++) {
-		elements_[i].value = (elements_[i].value - vmin) * scale;
+		values_[i] = (values_[i] - vmin) * scale;
 	}
 }
 
-void Heightmap::blur(float radius) {
-	TODO: use imgUtil::blur and then renormalize
+void HeightMap::blur(float radius) {
+	float *newValues = new float[width_*length_];
+	imgUtil::blur(values_, length_, width_, radius, newValues);
+	delete [] values_;
+	values_ = newValues;
+	normalizeValues();
 }

@@ -1,3 +1,5 @@
+#include <boglfw/math/math3D.h>
+
 namespace imgUtil {
 
 template <class pixelType>

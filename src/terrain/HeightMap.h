@@ -23,22 +23,15 @@ private:
 	unsigned width_;
 	unsigned length_;
 	float baseY_;
-	struct element {
-		float value = 0.f;
-		unsigned divider = 0;
+	float amplitude_;
+	float* values_ = nullptr;
 
-		element& operator += (float val) {
-			value += val;
-			divider++;
-			return *this;
-		}
-		float get() const { return value / divider; }
-	};
-	element *elements_ = nullptr;
+	struct element;
 
-	void computeDiamondSquareStep(unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp);
-	void generate(float amplitude);
+	void computeDiamondSquareStep(element* elements, unsigned r1, unsigned r2, unsigned c1, unsigned c2, float jitterAmp);
+	void generate();
 	float getSample(int r, int c) const;
+	void normalizeValues();
 };
 
 #endif // HEIGHTMAP_H

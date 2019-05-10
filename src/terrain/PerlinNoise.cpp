@@ -48,26 +48,26 @@ float contrastFn(float x, float c) {
 
 float PerlinNoise::get(float u, float v, float contrast) {
 	glm::vec2 pf {u * (width_+1), v * (height_+1)};
-	
+
 	unsigned c0 = floor(pf.x);	// left column
 	unsigned r0 = floor(pf.y); 	// top row
 	glm::vec2 p0(c0, r0);		// top left lattice point
 	glm::vec2 p1(c0+1, r0);		// top right lattice point
 	glm::vec2 p2(c0, r0+1);		// bottom left lattice point
 	glm::vec2 p3(c0+1, r0+1);	// bottom right lattice point
-	
+
 	float uF = srpPolynomial(pf.x - c0);	// u interpolation factor
 	float vF = srpPolynomial(pf.y - r0);	// v interpolation factor
-	
+
 	// sample gradient vectors from lattice:
 	glm::vec2 g0 = pGradients_[wrap(p0.y, height_+1) * (width_+1) + wrap(p0.x, width_+1)];
 	glm::vec2 g1 = pGradients_[wrap(p1.y, height_+1) * (width_+1) + wrap(p1.x, width_+1)];
 	glm::vec2 g2 = pGradients_[wrap(p2.y, height_+1) * (width_+1) + wrap(p2.x, width_+1)];
 	glm::vec2 g3 = pGradients_[wrap(p3.y, height_+1) * (width_+1) + wrap(p3.x, width_+1)];
-	
+
 	float samp01 = (1.f - uF) * glm::dot(g0, pf - p0) + uF * glm::dot(g1, pf - p1);
 	float samp23 = (1.f - uF) * glm::dot(g2, pf - p2) + uF * glm::dot(g3, pf - p3);
-	
+
 	float value = (1.f - vF) * samp01 + vF * samp23;
 	return contrastFn(value, contrast);	// adjust contrast
 }
@@ -85,21 +85,21 @@ glm::vec2 PerlinNoise::getGradientVector(float u, float v) {
 	glm::vec2 p1(c0+1, r0);		// top right lattice point
 	glm::vec2 p2(c0, r0+1);		// bottom left lattice point
 	glm::vec2 p3(c0+1, r0+1);	// bottom right lattice point
-	
+
 	float uF = pf.x - c0;	// u interpolation factor
 	float vF = pf.y - r0;	// v interpolation factor
-	
+
 	// sample gradient vectors from lattice:
 	glm::vec2 g0 = pGradients_[wrap(p0.y, height_+1) * (width_+1) + wrap(p0.x, width_+1)];
 	glm::vec2 g1 = pGradients_[wrap(p1.y, height_+1) * (width_+1) + wrap(p1.x, width_+1)];
 	glm::vec2 g2 = pGradients_[wrap(p2.y, height_+1) * (width_+1) + wrap(p2.x, width_+1)];
 	glm::vec2 g3 = pGradients_[wrap(p3.y, height_+1) * (width_+1) + wrap(p3.x, width_+1)];
-	
+
 	glm::vec2 s01 = glm::normalize((1.f - uF) * g0 + uF * g1);
 	glm::vec2 s23 = glm::normalize((1.f - uF) * g2 + uF * g3);
 	//glm::vec2 s01 = (1.f - uF) * g0 + uF * g1;
 	//glm::vec2 s23 = (1.f - uF) * g2 + uF * g3;
-	
+
 	return glm::normalize((1.f - vF) * s01 + vF * s23);
 	//return (1.f - vF) * s01 + vF * s23;
 }
