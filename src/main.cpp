@@ -35,9 +35,6 @@
 #include <boglfw/Infrastructure.h>
 #include <boglfw/utils/Event.h>
 
-#include <boglfw/net/connection.h>
-#include <boglfw/net/listener.h>
-
 #include <boglfw/entities/Gizmo.h>
 #include <boglfw/entities/CameraController.h>
 
@@ -357,65 +354,6 @@ void initWorld(RenderData &renderData) {
 	});
 }
 
-bool iamhost = false;
-net::listener netlistener;
-std::vector<net::connection> netcons;
-
-void newConnection(net::result result, net::connection connection) {
-	if (result.code != net::result::ok) {
-		//ERROR("Connection failed. Error code: " << result.code << "\nMessage: " << result.message);
-		std::cerr << "Connection failed. Error code: " << result.code << "\nMessage: " << result.message << "\n";
-		return;
-	}
-	//LOGLN("Connection established.");
-	std::cout << "Connection established.\n";
-	netcons.push_back(connection);
-}
-
-bool initNetwork(int argc, char** argv) {
-	LOGPREFIX("NETWORK");
-	auto printUsage = []() {
-		LOGLN("Usage:\nOmegaY host portNumber\nOR\nOmegaY join host port");
-	};
-	if (argc < 2) {
-		LOGLN("No arguments specified for networking.");
-		return true;
-	}
-	if (!strcmp(argv[1], "host")) {
-		if (argc < 3) {
-			ERROR("Missing [port] argument for hosting.");
-			printUsage();
-			return false;
-		}
-		// start hosting
-		LOGLN("Hosting on port " << argv[2] << " . . .");
-		iamhost = true;
-		netlistener = net::startListen(atoi(argv[2]), newConnection);
-		return true;
-	} else if (!strcmp(argv[1], "join")) {
-		if (argc < 4) {
-			ERROR("Missing remote address for connecting.");
-			printUsage();
-			return false;
-		}
-		// start joining
-		LOGLN("Connecting to " << argv[2] << ":" << argv[3] << " . . .");
-		iamhost = false;
-		net::connect_async(argv[2], atoi(argv[3]), newConnection);
-		return true;
-	} else {
-		LOGLN("Unknown argument " << argv[1]);
-		return true;
-	}
-}
-
-void stopNetwork() {
-	if (iamhost)
-		net::stopListen(netlistener);
-	for (auto con : netcons)
-		net::closeConnection(con);
-}
-
 void changeGameState(GameState::StateNames stateName) {
 	if (pCrtState)
 		delete pCrtState, pCrtState = nullptr;
@@ -468,11 +406,9 @@ std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg)
 }
 
 void destroySession() {
-	if (pSession->game()->isStarted())
+	if (pSession->game() && pSession->game()->isStarted())
 		pSession->game()->stop();
 	LOGLN("Session close requested.");
-	LOGLN("Closing all network connections . . .");
-	stopNetwork();
 	LOGLN("Deleting all entities . . .");
 	World::getInstance().reset();
 	pSession.reset();

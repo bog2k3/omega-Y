@@ -2,6 +2,9 @@
 #define NET_HOST_H
 
 #include "NetAdapter.h"
+#include "ConnectionWrapper.h"
+
+#include <memory>
 
 /* [NetHost class]
 	* imlements NetAdapter interface
@@ -12,7 +15,14 @@
 
 class NetHost : public NetAdapter {
 public:
-	~NetHost() override {}
+	explicit NetHost(unsigned portNumber);
+	~NetHost() override;
+
+	void addConnection(std::shared_ptr<ConnectionWrapper> con);
+
+private:
+	struct HostData;
+	HostData* data_;
 };
 
 #endif //NET_HOST_H

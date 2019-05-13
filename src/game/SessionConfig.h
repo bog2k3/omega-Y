@@ -10,5 +10,5 @@ enum class SessionType {
 struct SessionConfig {
 	SessionType type;
 	std::string hostAddress;
-	unsigned hostPort;
+	unsigned hostPort = 17342; // just some random number we chose
 };

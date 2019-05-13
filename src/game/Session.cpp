@@ -6,13 +6,18 @@
 Session::Session(SessionConfig cfg)
 	: type_(cfg.type) {
 	if (type_ == SessionType::HOST)
-		pNetHost_ = new NetHost();
+		pNetHost_ = new NetHost(cfg.hostPort);
 	else
-		pNetClient_ = new NetClient();
+		pNetClient_ = new NetClient(cfg.hostAddress, cfg.hostPort);
 }
 
 Session::~Session() {
-	//TODO close network connections
+	//close network connections
+	if (pNetHost_)
+		delete pNetHost_, pNetHost_ = nullptr;
+	if (pNetClient_)
+		delete pNetClient_, pNetClient_ = nullptr;
+	// destroy the game
 	if (game_)
 		destroyGame();
 }

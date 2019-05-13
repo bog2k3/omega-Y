@@ -27,12 +27,7 @@ enum class ConnectionState {
 
 class ConnectionWrapper {
 public:
-	// create a new connection by attempting to connect to the remote host
-	ConnectionWrapper(std::string const& host_url, unsigned port, std::string userName);
-
-	// wrap an existing (already established) connection
-	explicit ConnectionWrapper(net::connection);
-
+	explicit ConnectionWrapper(net::connection con);
 	~ConnectionWrapper();
 
 	ConnectionState state() const { return state_.load(std::memory_order_acquire); }
