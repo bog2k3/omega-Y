@@ -2,6 +2,7 @@
 
 #include "../GUI/InGameMenu.h"
 #include "Session.h"
+#include "Game.h"
 
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
@@ -18,7 +19,7 @@ GameCtrl::GameCtrl(GameState &s)
 
 	signalHandlers_[StateSignals::ESCAPE] = std::bind(&GameCtrl::toggleMenu, this);
 
-	GameState::session()->start();
+	GameState::session()->game()->start();
 }
 
 GameCtrl::~GameCtrl() {

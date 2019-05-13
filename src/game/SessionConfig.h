@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Session.h"
-#include "GameConfig.h"
+#include <string>
+
+enum class SessionType {
+	HOST,
+	CLIENT,
+};
 
 struct SessionConfig {
-	Session::SessionType type;
+	SessionType type;
 	std::string hostAddress;
 	unsigned hostPort;
-
-	GameConfig gameConfig;
 };

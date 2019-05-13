@@ -20,12 +20,15 @@
 SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	: StateController(s)
 {
-	terrainCfg_ = new TerrainConfig();
-	terrainCfg_->seed = new_RID();
-	terrainCfg_->vertexDensity = 0.5;
+	SessionConfig sessionCfg;
+	sessionCfg.type = SessionType::HOST;
+	state_.initSession(sessionCfg);
+
+	state_.session()->gameConfig().terrainConfig.seed = new_RID();
+	state_.session()->gameConfig().terrainConfig.vertexDensity = 0.5;
 
 	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), terrainCfg_);
+	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), &state_.session()->gameConfig().terrainConfig);
 	guiSystem->addElement(menu_);
 
 	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));
@@ -35,11 +38,8 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
 	});
 	menu_->onStart.add([this]() {
-		SessionConfig sessionCfg;
-		sessionCfg.type = Session::SESSION_HOST;
-		sessionCfg.gameConfig.terrainConfig = *terrainCfg_;
-		sessionCfg.gameConfig.terrainConfig.vertexDensity = 1.f;
-		state_.initSession(sessionCfg);
+		state_.session()->gameConfig().terrainConfig.vertexDensity = 1.f;
+		state_.session()->initializeGame();
 		onNewStateRequest.trigger(GameState::StateNames::SESSION_LOADING);
 	});
 	menu_->onTerrainStartDrag.add(std::bind(&SessionSetupHostCtrl::terrain_startDrag, this, std::placeholders::_1, std::placeholders::_2));
@@ -73,7 +73,6 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 SessionSetupHostCtrl::~SessionSetupHostCtrl() {
 	World::getGlobal<GuiSystem>()->removeElement(menu_);
 	delete terrain_;
-	delete terrainCfg_;
 	delete terrainTimer_;
 }
 
@@ -82,7 +81,7 @@ void SessionSetupHostCtrl::terrainConfigChanged() {
 }
 
 void SessionSetupHostCtrl::updateTerrain() {
-	terrain_->generate(*terrainCfg_);
+	terrain_->generate(state_.session()->gameConfig().terrainConfig);
 	terrain_->finishGenerate();
 }
 

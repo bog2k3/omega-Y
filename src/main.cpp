@@ -11,9 +11,7 @@
 #include "game/GameState.h"
 #include "game/StateController.h"
 #include "game/Session.h"
-#include "game/SessionConfig.h"
-#include "game/GameConfig.h"
-#include "terrain/TerrainConfig.h"
+#include "game/Game.h"
 
 #include "entities/FreeCamera.h"
 #include "entities/PlayerEntity.h"
@@ -123,15 +121,15 @@ void handleSystemKeys(InputEvent& ev) {
 		captureFrame = true;
 	break;
 	case GLFW_KEY_TAB: {
-		if (!pSession)
+		if (!pSession || !pSession->game())
 			break;
-		auto sCamCtrl = pSession->cameraCtrl();
-		if (sCamCtrl->getAttachedEntity().lock() == pSession->player()) {
-			sCamCtrl->attachToEntity(pSession->freeCam(), glm::vec3{0.f});
-			playerInputHandler.setTargetObject(pSession->freeCam());
+		auto sCamCtrl = pSession->game()->cameraCtrl();
+		if (sCamCtrl->getAttachedEntity().lock() == pSession->game()->player()) {
+			sCamCtrl->attachToEntity(pSession->game()->freeCam(), glm::vec3{0.f});
+			playerInputHandler.setTargetObject(pSession->game()->freeCam());
 		} else {
-			sCamCtrl->attachToEntity(pSession->player(), glm::vec3{0.f});
-			playerInputHandler.setTargetObject(pSession->player());
+			sCamCtrl->attachToEntity(pSession->game()->player(), glm::vec3{0.f});
+			playerInputHandler.setTargetObject(pSession->game()->player());
 		}
 	} break;
 	default:
@@ -155,10 +153,10 @@ void handleDebugKeys(InputEvent& ev) {
 		updatePaused ^= true;
 	break;
 	case GLFW_KEY_R: {
-		if (!pSession)
+		if (!pSession || !pSession->game())
 			break;
 		// reset player
-		pSession->player()->moveTo({0.f, pSession->gameConfig().terrainConfig.maxElevation + 10, 0.f});
+		pSession->game()->player()->moveTo({0.f, pSession->gameConfig().terrainConfig.maxElevation + 10, 0.f});
 	} break;
 	case GLFW_KEY_Q:
 		if (pRenderCfg)
@@ -438,20 +436,20 @@ void updateStateCtrl(float dt) {
 		pCrtState->controller().update(dt);
 }
 
-void onSessionStarted(RenderData *pRenderData) {
-	playerInputHandler.setTargetObject(pSession->freeCam());
-	pSession->cameraCtrl()->setTargetCamera(&pRenderData->viewport.camera());
-	pSession->terrain()->setWaterReflectionTex(pRenderData->waterRenderData.reflectionFramebuffer.fbTextureId());
-	pSession->terrain()->setWaterRefractionTex(pRenderData->waterRenderData.refractionFramebuffer.fbTextureId(), pSession->skyBox()->getCubeMapTexture());
-	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(pSession->terrain()->getWaterNormalTexture());
+void onGameStarted(RenderData *pRenderData) {
+	playerInputHandler.setTargetObject(pSession->game()->freeCam());
+	pSession->game()->cameraCtrl()->setTargetCamera(&pRenderData->viewport.camera());
+	pSession->game()->terrain()->setWaterReflectionTex(pRenderData->waterRenderData.reflectionFramebuffer.fbTextureId());
+	pSession->game()->terrain()->setWaterRefractionTex(pRenderData->waterRenderData.refractionFramebuffer.fbTextureId(), pSession->game()->skyBox()->getCubeMapTexture());
+	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(pSession->game()->terrain()->getWaterNormalTexture());
 	pRenderData->renderCtx.enableWaterRender = true;
-	pRenderData->pSkyBox = pSession->skyBox().get();
-	pRenderData->pTerrain = pSession->terrain().get();
+	pRenderData->pSkyBox = pSession->game()->skyBox().get();
+	pRenderData->pTerrain = pSession->game()->terrain().get();
 
 	setMouseCapture(true);
 }
 
-void onSessionEnded(RenderData *pRenderData) {
+void onGameEnded(RenderData *pRenderData) {
 	playerInputHandler.setTargetObject({});
 	pRenderData->renderCtx.meshRenderer->setWaterNormalTexture(0);
 	pRenderData->renderCtx.enableWaterRender = false;
@@ -462,16 +460,16 @@ void onSessionEnded(RenderData *pRenderData) {
 }
 
 std::shared_ptr<Session> initSession(RenderData *pRenderData, SessionConfig cfg) {
-	LOGLN("Creating new " << (cfg.type == Session::SESSION_HOST ? "HOST" : "CLIENT") << " session.");
-	pSession = std::make_shared<Session>(cfg.type, cfg.gameConfig);
-	pSession->onStart.add(std::bind(onSessionStarted, pRenderData));
-	pSession->onEnd.add(std::bind(onSessionEnded, pRenderData));
+	LOGLN("Creating new " << (cfg.type == SessionType::HOST ? "HOST" : "CLIENT") << " session.");
+	pSession = std::make_shared<Session>(cfg);
+	pSession->onGameStart.add(std::bind(onGameStarted, pRenderData));
+	pSession->onGameEnd.add(std::bind(onGameEnded, pRenderData));
 	return pSession;
 }
 
 void destroySession() {
-	if (pSession->isStarted())
-		pSession->stop();
+	if (pSession->game()->isStarted())
+		pSession->game()->stop();
 	LOGLN("Session close requested.");
 	LOGLN("Closing all network connections . . .");
 	stopNetwork();

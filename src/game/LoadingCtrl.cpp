@@ -1,7 +1,7 @@
 #include "LoadingCtrl.h"
 
 #include "Session.h"
-#include "GameConfig.h"
+#include "Game.h"
 
 #include "../GUI/LoadingScreen.h"
 #include "../terrain/Terrain.h"
@@ -23,8 +23,8 @@ enum TaskNames {
 	TerrainTextures,
 	WaterTextures,
 	SessionShaders,
-	SessionInit,
-	SessionUnload,
+	GameLoad,
+	GameUnload,
 };
 
 Progress loadInitialShaders(unsigned step) {
@@ -41,12 +41,12 @@ Progress loadSessionShaders(unsigned step) {
 	return {1, 1};
 }
 
-Progress sessionInit(unsigned step) {
-	return GameState::session()->load(step);
+Progress gameLoad(unsigned step) {
+	return GameState::session()->game()->load(step);
 }
 
-Progress sessionUnload(unsigned step) {
-	return GameState::session()->unload(step);
+Progress gameUnload(unsigned step) {
+	return GameState::session()->game()->unload(step);
 }
 
 static std::map<int, progressiveFunction> tasksMap {
@@ -54,8 +54,8 @@ static std::map<int, progressiveFunction> tasksMap {
 	{ SessionShaders, loadSessionShaders },
 	{ TerrainTextures, Terrain::loadTextures },
 	{ WaterTextures, Water::loadTextures },
-	{ SessionInit, sessionInit },
-	{ SessionUnload, sessionUnload },
+	{ GameLoad, gameLoad },
+	{ GameUnload, gameUnload },
 };
 
 LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
@@ -71,12 +71,12 @@ LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
 	case SESSION_START:
 		tasks_.push_back(SessionShaders);
 		tasks_.push_back(WaterTextures);
-		tasks_.push_back(SessionInit);
+		tasks_.push_back(GameLoad);
 
 		nextState_ = GameState::StateNames::GAMEPLAY;
 	break;
 	case SESSION_END:
-		tasks_.push_back(SessionUnload);
+		tasks_.push_back(GameUnload);
 
 		nextState_ = GameState::StateNames::MAIN_MENU;
 	break;
