@@ -1,8 +1,10 @@
 #include "NetHost.h"
 #include "ConnectionWrapper.h"
+#include "handshake.h"
 
 #include <boglfw/net/listener.h>
 #include <boglfw/net/connection.h>
+#include <boglfw/net/udp.h>
 #include <boglfw/utils/log.h>
 
 #include <vector>
@@ -11,6 +13,7 @@
 
 struct NetHost::HostData {
 	net::listener listener;
+	net::udpSocket advertiseSocket;
 	std::vector<std::shared_ptr<ConnectionWrapper>> connections;
 	std::thread thrAdvertise;
 	std::atomic_bool stopAdvertise { false };
@@ -18,7 +21,10 @@ struct NetHost::HostData {
 
 static void advertiseFunc(std::atomic_bool* pStopSignal) {
 	// set-up multicast
-	// ...
+	net::udpSocket advertiseSocket = net::createSocket(net::UDPSocketType::MULTICAST);
+	void* sendBuffer = (void*)magicAdvertiseMessage;
+	unsigned sendBytes = sizeof(magicAdvertiseMessage);
+
 	float pingInterval = 2.f; // seconds
 	float sleepInterval = 0.5f; // seconds
 
@@ -29,11 +35,11 @@ static void advertiseFunc(std::atomic_bool* pStopSignal) {
 		if (partialTime > pingInterval) {
 			partialTime -= pingInterval;
 			// send a multicast message to advertise the server's presence
-			// ...
+			net::writeUDP(advertiseSocket, sendBuffer, sendBytes);
 		}
 	}
 	// clean-up
-	// ...
+	net::closeSocket(advertiseSocket);
 }
 
 static void onNewConnection(NetHost* pHost, net::result result, net::connection connection) {
