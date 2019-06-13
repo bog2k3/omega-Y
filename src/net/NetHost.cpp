@@ -21,7 +21,7 @@ struct NetHost::HostData {
 
 static void advertiseFunc(std::atomic_bool* pStopSignal) {
 	// set-up multicast
-	net::udpSocket advertiseSocket = net::createMulticastSendSocket("239.255.0.1", advertiseUDPPort);
+	net::udpSocket advertiseSocket = net::createMulticastSendSocket(advertiseMulticastAddress, advertiseUDPPort);
 	void* sendBuffer = (void*)magicAdvertiseMessage;
 	unsigned sendBytes = sizeof(magicAdvertiseMessage);
 

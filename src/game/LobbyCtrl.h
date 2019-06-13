@@ -15,6 +15,12 @@ public:
 
 private:
 	std::shared_ptr<LobbyMenu> menu_;
+
+	struct NetData;
+	NetData *pNetData_;
+
+	void startHostsDiscovery();
+	void stopHostsDiscovery();
 };
 
 #endif // LOBBY_CONTROLLER_H
