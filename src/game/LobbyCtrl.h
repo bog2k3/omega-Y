@@ -4,6 +4,7 @@
 #include "StateController.h"
 
 #include <memory>
+#include <string>
 
 class LobbyMenu;
 
@@ -13,6 +14,8 @@ public:
 	LobbyCtrl(GameState &state);
 	~LobbyCtrl() override;
 
+	void update(float dt) override;
+
 private:
 	std::shared_ptr<LobbyMenu> menu_;
 
@@ -21,6 +24,11 @@ private:
 
 	void startHostsDiscovery();
 	void stopHostsDiscovery();
+	void searchNextHost();
+	// [async method]
+	void hostFoundCallback(const char msgBuf[], size_t length, std::string hostIp);
+	// [async method]
+	void addPendingHost(std::string ip);
 };
 
 #endif // LOBBY_CONTROLLER_H
