@@ -1,15 +1,19 @@
 #pragma once
 
-#include "VerticalMenu.h"
+#include <boglfw/GUI/GuiContainerElement.h>
 #include <boglfw/utils/Event.h>
 
 #include <memory>
 
-class LobbyMenu : public VerticalMenu {
+class LobbyMenu : public GuiContainerElement {
 public:
-	LobbyMenu(glm::vec2 size);
-	~LobbyMenu() override {}
+	LobbyMenu(glm::vec2 viewportSize);
+	~LobbyMenu() override;
 
 	Event<void()> onBack;
+
+	void addHost(std::string ip);
 private:
+	struct LobbyData;
+	LobbyData *pData_;
 };

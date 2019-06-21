@@ -11,10 +11,17 @@
 #include <mutex>
 #include <vector>
 
+struct HostInfo {
+	unsigned index;
+	std::string ipAddress;
+	bool isValid;
+};
+
 struct LobbyCtrl::NetData {
 	net::udpSocket discoverSocket_;
 	std::mutex mtxPendingHosts_;
 	std::vector<std::string> pendingHosts_;
+	std::map<std::string, HostInfo> discoveredHosts_;
 };
 
 LobbyCtrl::LobbyCtrl(GameState &s)
@@ -46,7 +53,28 @@ void LobbyCtrl::addPendingHost(std::string ip) {
 }
 
 void LobbyCtrl::update(float dt) {
+	std::vector<std::string> newHosts;
+	{
+		std::lock_guard<std::mutex> lk(pNetData_->mtxPendingHosts_);
+		newHosts.swap(pNetData_->pendingHosts_);
+	}
+	for (auto &ip : newHosts) {
+		if (pNetData_->discoveredHosts_.find(ip) == pNetData_->discoveredHosts_.end()) {
+			// this host does not yet exist in the list, add it:
+			pNetData_->discoveredHosts_[ip] = {
+				pNetData_->discoveredHosts_.size(),
+				ip,
+				false
+			};
+			getHostInfo(ip);
+		}
+	}
+}
 
+void LobbyCtrl::getHostInfo(std::string ip) {
+	// connect to host and get some info, also negociate protocol
+	// ...
+	menu_->addHost(ip);
 }
 
 // [async method]

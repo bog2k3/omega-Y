@@ -29,6 +29,7 @@ private:
 	void hostFoundCallback(const char msgBuf[], size_t length, std::string hostIp);
 	// [async method]
 	void addPendingHost(std::string ip);
+	void getHostInfo(std::string ip);
 };
 
 #endif // LOBBY_CONTROLLER_H
