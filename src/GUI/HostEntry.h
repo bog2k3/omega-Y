@@ -1,11 +1,17 @@
 #pragma once
 
 #include <boglfw/GUI/GuiContainerElement.h>
+#include <boglfw/utils/Event.h>
 
 class HostEntry : public GuiContainerElement {
 public:
-	HostEntry(glm::vec2 pos, glm::vec2 size, std::string hostName, std::string ip);
+	HostEntry(std::string hostName, std::string ip);
 	~HostEntry() override;
+
+	Event<void()> onClick;
+
+protected:
+	void clicked(glm::vec2 clickPosition, MouseButtons button) override;
 
 private:
 	std::string hostName_;

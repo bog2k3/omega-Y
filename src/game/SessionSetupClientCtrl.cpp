@@ -16,9 +16,8 @@ SessionSetupClientCtrl::SessionSetupClientCtrl(GameState &s)
 	sessionCfg.hostAddress = "localhost";
 	state_.initSession(sessionCfg);
 
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupClientMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(menu_);
+	menu_ = std::make_shared<SessionSetupClientMenu>();
+	World::getGlobal<GuiSystem>()->addElement(menu_);
 
 	menu_->onBack.add([this]() {
 		// delete session

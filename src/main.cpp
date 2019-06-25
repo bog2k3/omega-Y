@@ -348,7 +348,8 @@ void initWorld(RenderData &renderData) {
 	auto pImgDebugDraw = new ImgDebugDraw();
 	World::setGlobal<ImgDebugDraw>(pImgDebugDraw);
 
-	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.viewport, {0.f, 0.f}, {renderData.windowW, renderData.windowH}));
+	const int margin = 20; // pixels
+	World::setGlobal<GuiSystem>(new GuiSystem(&renderData.viewport, {margin, margin}, {renderData.windowW - 2*margin, renderData.windowH - 2*margin}));
 	World::getGlobal<GuiSystem>()->onMousePointerDisplayRequest.add([](bool show) {
 		setMouseCapture(!show);
 	});

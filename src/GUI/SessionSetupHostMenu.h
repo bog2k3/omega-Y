@@ -14,7 +14,7 @@ class Slider;
 
 class SessionSetupHostMenu : public GuiContainerElement {
 public:
-	SessionSetupHostMenu(glm::vec2 viewportSize, TerrainConfig* pData);
+	SessionSetupHostMenu(TerrainConfig* pData);
 	~SessionSetupHostMenu() override {}
 
 	Event<void()> onBack;

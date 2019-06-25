@@ -9,7 +9,7 @@ class Label;
 
 class LoadingScreen : public GuiContainerElement {
 public:
-	LoadingScreen(glm::vec2 viewportSize);
+	LoadingScreen();
 	~LoadingScreen() override;
 
 	void setProgress(float progress);

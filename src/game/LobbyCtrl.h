@@ -30,6 +30,8 @@ private:
 	// [async method]
 	void addPendingHost(std::string ip);
 	void getHostInfo(std::string ip);
+
+	void joinHost(std::string ip);
 };
 
 #endif // LOBBY_CONTROLLER_H

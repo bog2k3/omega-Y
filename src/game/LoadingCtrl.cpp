@@ -82,9 +82,8 @@ LoadingCtrl::LoadingCtrl(GameState &state, Situation situation)
 	break;
 	}
 
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	loadingScreen_ = std::make_shared<LoadingScreen>(guiSystem->getViewportSize());
-	guiSystem->addElement(loadingScreen_);
+	loadingScreen_ = std::make_shared<LoadingScreen>();
+	World::getGlobal<GuiSystem>()->addElement(loadingScreen_);
 }
 
 LoadingCtrl::~LoadingCtrl() {

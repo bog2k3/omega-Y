@@ -4,10 +4,9 @@
 
 #include <sstream>
 
-LoadingScreen::LoadingScreen(glm::vec2 viewportSize)
-	: GuiContainerElement({0, 0}, viewportSize)
-{
-	label_ = std::make_shared<Label>(glm::vec2{400, 200}, 30, "0%");
+LoadingScreen::LoadingScreen() {
+	//glm::vec2{400, 200},
+	label_ = std::make_shared<Label>(30, "0%");
 	label_->setColor({1.f, 1.f, 1.f});
 	addElement(label_);
 }

@@ -10,9 +10,8 @@
 GameCtrl::GameCtrl(GameState &s)
 	: StateController(s)
 {
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<InGameMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(menu_);
+	menu_ = std::make_shared<InGameMenu>();
+	World::getGlobal<GuiSystem>()->addElement(menu_);
 	menu_->onBack.add(std::bind(&GameCtrl::toggleMenu, this));
 	menu_->onQuit.add(std::bind(&GameCtrl::quit, this));
 	menu_->hide();

@@ -27,9 +27,8 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	state_.session()->gameConfig().terrainConfig.seed = new_RID();
 	state_.session()->gameConfig().terrainConfig.vertexDensity = 0.5;
 
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	menu_ = std::make_shared<SessionSetupHostMenu>(guiSystem->getViewportSize(), &state_.session()->gameConfig().terrainConfig);
-	guiSystem->addElement(menu_);
+	menu_ = std::make_shared<SessionSetupHostMenu>(&state_.session()->gameConfig().terrainConfig);
+	World::getGlobal<GuiSystem>()->addElement(menu_);
 
 	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));
 

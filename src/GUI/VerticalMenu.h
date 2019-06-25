@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 
 #include <boglfw/GUI/GuiContainerElement.h>
 #include <boglfw/GUI/controls/Button.h>
@@ -8,7 +8,7 @@
 
 class VerticalMenu : public GuiContainerElement {
 public:
-	VerticalMenu(glm::vec2 size);
+	VerticalMenu();
 	virtual ~VerticalMenu() override {}
 
 protected:
@@ -21,3 +21,4 @@ protected:
 	};
 	void setButtons(std::vector<buttonDescriptor> buttons);
 };
+*/

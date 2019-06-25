@@ -37,6 +37,7 @@ LobbyCtrl::LobbyCtrl(GameState &s)
 		// ...
 		onNewStateRequest.trigger(GameState::StateNames::MAIN_MENU);
 	});
+	menu_->onJoinHost.add(std::bind(&LobbyCtrl::joinHost, this, std::placeholders::_1));
 
 	startHostsDiscovery();
 }
@@ -53,6 +54,7 @@ void LobbyCtrl::addPendingHost(std::string ip) {
 }
 
 void LobbyCtrl::update(float dt) {
+	// check if we found any new hosts on the network and add them to the list:
 	std::vector<std::string> newHosts;
 	{
 		std::lock_guard<std::mutex> lk(pNetData_->mtxPendingHosts_);
@@ -61,6 +63,7 @@ void LobbyCtrl::update(float dt) {
 	for (auto &ip : newHosts) {
 		if (pNetData_->discoveredHosts_.find(ip) == pNetData_->discoveredHosts_.end()) {
 			// this host does not yet exist in the list, add it:
+			LOGLN("found new host on network at address: " << ip);
 			pNetData_->discoveredHosts_[ip] = {
 				pNetData_->discoveredHosts_.size(),
 				ip,
@@ -69,6 +72,7 @@ void LobbyCtrl::update(float dt) {
 			getHostInfo(ip);
 		}
 	}
+	// done checking for new hosts.
 }
 
 void LobbyCtrl::getHostInfo(std::string ip) {
@@ -80,7 +84,6 @@ void LobbyCtrl::getHostInfo(std::string ip) {
 // [async method]
 void LobbyCtrl::hostFoundCallback(const char msgBuf[], size_t length, std::string hostIp) {
 	if (length == sizeof(magicAdvertiseMessage) && !strncmp(msgBuf, magicAdvertiseMessage, sizeof(magicAdvertiseMessage))) {
-		LOGLN("found new host on network at address: " << hostIp);
 		addPendingHost(hostIp);
 	}
 }
@@ -105,4 +108,8 @@ void LobbyCtrl::searchNextHost() {
 
 void LobbyCtrl::stopHostsDiscovery() {
 	net::closeSocket(pNetData_->discoverSocket_);
+}
+
+void LobbyCtrl::joinHost(std::string ip) {
+	LOGLN("join host: " << ip);
 }

@@ -1,28 +1,23 @@
 #include "MainMenu.h"
 
-MainMenu::MainMenu(glm::vec2 size)
-	: VerticalMenu(size)
-{
-	std::vector<buttonDescriptor> buttons;
+#include <boglfw/GUI/ListLayout.h>
+#include <boglfw/GUI/controls/Button.h>
 
-	buttons.push_back({
-		"Host Game",
-		nullptr,
-		&onHostMulti
-	});
+MainMenu::MainMenu() {
+	setClientArea({400, 20}, {400, 20});
+	auto layout = std::make_shared<ListLayout>();
+	layout->setItemSpacing(30);
+	layout->setAlignment(ListLayout::CENTER);			// center items horizontally
+	layout->setVerticalAlignment(ListLayout::MIDDLE);	// center contents vertically
+	useLayout(layout);
 
-	buttons.push_back({
-		"Join Game",
-		nullptr,
-		&onJoinMulti
-	});
+	addButton("Host Game", onHostMulti);
+	addButton("Join Game", onJoinMulti);
+	addButton("Exit", onExit);
+}
 
-	buttons.push_back({
-		"Exit",
-		nullptr,
-		&onExit
-	});
-
-
-	setButtons(buttons);
+void MainMenu::addButton(const char* text, Event<void()> &onClick) {
+	auto pBut = std::make_shared<Button>(text);
+	pBut->onClick.forward(onClick);
+	addElement(pBut);
 }

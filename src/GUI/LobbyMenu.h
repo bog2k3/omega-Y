@@ -11,6 +11,7 @@ public:
 	~LobbyMenu() override;
 
 	Event<void()> onBack;
+	Event<void(std::string ip)> onJoinHost;
 
 	void addHost(std::string ip);
 private:

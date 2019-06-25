@@ -8,9 +8,8 @@
 MainMenuController::MainMenuController(GameState &s)
 	: StateController(s)
 {
-	auto guiSystem = World::getGlobal<GuiSystem>();
-	mainMenu_ = std::make_shared<MainMenu>(guiSystem->getViewportSize());
-	guiSystem->addElement(mainMenu_);
+	mainMenu_ = std::make_shared<MainMenu>();
+	World::getGlobal<GuiSystem>()->addElement(mainMenu_);
 
 	mainMenu_->onHostMulti.add([this]() {
 		onNewStateRequest.trigger(GameState::StateNames::SESSION_SETUP_HOST);
@@ -26,4 +25,3 @@ MainMenuController::MainMenuController(GameState &s)
 MainMenuController::~MainMenuController() {
 	World::getGlobal<GuiSystem>()->removeElement(mainMenu_);
 }
-

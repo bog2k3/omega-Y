@@ -1,10 +1,6 @@
-#include "VerticalMenu.h"
+/*#include "VerticalMenu.h"
 
-static const float margin = 0.02f; // of screen size
-
-VerticalMenu::VerticalMenu(glm::vec2 screenSize)
-	: GuiContainerElement(screenSize * margin, screenSize * (1 - 2*margin))
-{
+VerticalMenu::VerticalMenu() {
 }
 
 void VerticalMenu::setButtons(std::vector<buttonDescriptor> buttons) {
@@ -33,7 +29,8 @@ void VerticalMenu::setButtons(std::vector<buttonDescriptor> buttons) {
 	int buttonY = (getSize().y - actualVerticalCoverage) / 2;
 
 	for (auto &b : buttons) {
-		auto pB = std::make_shared<Button>(glm::vec2{buttonX, buttonY}, buttonSize, b.name);
+		//glm::vec2{buttonX, buttonY}, buttonSize,
+		auto pB = std::make_shared<Button>(b.name);
 		if (b.onClick)
 			pB->onClick.add(b.onClick);
 		if (b.forwardClick)
@@ -45,3 +42,4 @@ void VerticalMenu::setButtons(std::vector<buttonDescriptor> buttons) {
 		buttonY += buttonYOffs;
 	}
 }
+*/
