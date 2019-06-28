@@ -5,8 +5,9 @@
 #include <sstream>
 
 LoadingScreen::LoadingScreen() {
-	//glm::vec2{400, 200},
+	setSize({100, 100, FlexCoord::PERCENT});
 	label_ = std::make_shared<Label>(30, "0%");
+	label_->setPosition({50, 50, FlexCoord::PERCENT});
 	label_->setColor({1.f, 1.f, 1.f});
 	addElement(label_);
 }

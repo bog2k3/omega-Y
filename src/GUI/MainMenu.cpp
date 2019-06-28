@@ -4,6 +4,8 @@
 #include <boglfw/GUI/controls/Button.h>
 
 MainMenu::MainMenu() {
+	setSize({90, 90, FlexCoord::PERCENT});
+	setPosition({5, 5, FlexCoord::PERCENT});
 	setClientArea({400, 20}, {400, 20});
 	auto layout = std::make_shared<ListLayout>();
 	layout->setItemSpacing(30);

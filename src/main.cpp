@@ -274,24 +274,24 @@ void drawDebugTexts() {
 	if (pCrtState && pCrtState->name() == GameState::StateNames::GAMEPLAY) {
 		for (unsigned i=0; i<sizeof(texts)/sizeof(texts[0]); i++) {
 			GLText::get()->print(texts[i],
-				{20, 20 + 20*i, ViewportCoord::absolute, ViewportCoord::top | ViewportCoord::left},
+				{20, 20 + 20*i},
 				20, glm::vec3(0.4f, 0.6, 1.0f));
 		}
 
 		if (updatePaused) {
 			GLText::get()->print("PAUSED",
-					{50, 50, ViewportCoord::percent},
+					{50, 50},
 					32, glm::vec3(1.f, 0.8f, 0.2f));
 		}
 		if (slowMo) {
 			GLText::get()->print("~~ Slow Motion ON ~~",
-					{50, 5, ViewportCoord::percent, ViewportCoord::top | ViewportCoord::left},
+					{50, 5},
 					18, glm::vec3(1.f, 0.5f, 0.1f));
 		}
 	}
 
 	GLText::get()->print("Omega-Y v0.2",
-		{20, 20, ViewportCoord::absolute, ViewportCoord::bottom | ViewportCoord::left},
+		{20, 700},
 		20, glm::vec3(0.5f, 0.9, 1.0f));
 }
 
@@ -446,8 +446,8 @@ int main(int argc, char* argv[]) {
 		LOGLN("RAND seed: " << rand_seed);
 
 		SignalViewer sigViewer(
-				{24, 4, ViewportCoord::percent, ViewportCoord::top|ViewportCoord::right},	// position
-				{20, 10, ViewportCoord::percent}); 											// size
+				{80, 4, FlexCoord::PERCENT},	// position
+				{20, 10, FlexCoord::PERCENT});	// size
 		drawDebugList.push_back(&sigViewer);
 
 		UpdateList continuousUpdateList;
