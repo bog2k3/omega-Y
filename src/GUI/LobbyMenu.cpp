@@ -12,8 +12,6 @@ struct LobbyMenu::LobbyData {
 LobbyMenu::LobbyMenu(glm::vec2 viewportSize)
 	: pData_(new LobbyData())
 {
-	glm::vec2 mySize = getSize();
-
 	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Join Game");
 	addElement(pTitle);
 

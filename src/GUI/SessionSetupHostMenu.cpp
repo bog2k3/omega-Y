@@ -122,7 +122,7 @@ void SessionSetupHostMenu::setRTTexture(int texId) {
 }
 
 glm::vec2 SessionSetupHostMenu::terrainPictureSize() const {
-	return pTerrainPicture_->getSize();
+	return pTerrainPicture_->computedSize();
 }
 
 void SessionSetupHostMenu::onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> label) {
