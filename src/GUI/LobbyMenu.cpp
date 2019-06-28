@@ -4,6 +4,7 @@
 #include <boglfw/GUI/controls/ScrollingContainer.h>
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
+#include <boglfw/GUI/ListLayout.h>
 
 struct LobbyMenu::LobbyData {
 	std::shared_ptr<ScrollingContainer> spList;
@@ -12,6 +13,14 @@ struct LobbyMenu::LobbyData {
 LobbyMenu::LobbyMenu(glm::vec2 viewportSize)
 	: pData_(new LobbyData())
 {
+	setSize({100, 100, FlexCoord::PERCENT});
+	setClientArea({50, 50}, {50, 50});
+	auto layout = std::make_shared<ListLayout>();
+	layout->setItemSpacing(30);
+	layout->setAlignment(ListLayout::CENTER);			// center items horizontally
+	layout->setVerticalAlignment(ListLayout::MIDDLE);	// center contents vertically
+	useLayout(layout);
+
 	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Join Game");
 	addElement(pTitle);
 

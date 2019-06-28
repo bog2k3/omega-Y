@@ -255,7 +255,7 @@ void setMouseCapture(bool capture) {
 	delete boxMesh;
 }*/
 
-void drawDebugTexts() {
+void drawDebugTexts(Viewport const& vp) {
 	std::string texts[] {
 		"TAB : toggle playerCam / freeCam",
 		"F1 : capture / release mouse",
@@ -280,18 +280,18 @@ void drawDebugTexts() {
 
 		if (updatePaused) {
 			GLText::get()->print("PAUSED",
-					{50, 50},
+					FlexCoordPair(50, 50, FlexCoord::PERCENT).get(vp),
 					32, glm::vec3(1.f, 0.8f, 0.2f));
 		}
 		if (slowMo) {
 			GLText::get()->print("~~ Slow Motion ON ~~",
-					{50, 5},
+					FlexCoordPair(50, 5, FlexCoord::PERCENT).get(vp),
 					18, glm::vec3(1.f, 0.5f, 0.1f));
 		}
 	}
 
 	GLText::get()->print("Omega-Y v0.2",
-		{20, 700},
+		FlexCoordPair(20, 20, FlexCoord::PIXELS, FlexCoordPair::LEFT, FlexCoordPair::BOTTOM).get(vp),
 		20, glm::vec3(0.5f, 0.9, 1.0f));
 }
 
@@ -314,7 +314,7 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 	for (auto &d : list)
 		d.draw(ctx);
 	World::getGlobal<ImgDebugDraw>()->draw(ctx);
-	drawDebugTexts();
+	drawDebugTexts(ctx.viewport());
 }
 
 void initPhysics(RenderData const& renderData) {

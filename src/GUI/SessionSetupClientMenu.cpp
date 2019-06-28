@@ -3,8 +3,14 @@
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
 #include <boglfw/GUI/controls/Picture.h>
+#include <boglfw/GUI/GridLayout.h>
 
 SessionSetupClientMenu::SessionSetupClientMenu() {
+	setSize({100, 100, FlexCoord::PERCENT});
+	setClientArea({50, 50}, {50, 50});
+	auto layout = std::make_shared<GridLayout>();
+	useLayout(layout);
+
 	//glm::vec2{mySize.x / 2 - 100, 200}
 	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Join Game");
 	addElement(pTitle);

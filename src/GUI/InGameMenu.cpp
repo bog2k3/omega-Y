@@ -4,7 +4,8 @@
 #include <boglfw/GUI/controls/Button.h>
 
 InGameMenu::InGameMenu() {
-	setClientArea({400, 20}, {400, 20});
+	setSize({100, 100, FlexCoord::PERCENT});
+	setClientArea({400, 50}, {400, 50});
 	auto layout = std::make_shared<ListLayout>();
 	layout->setItemSpacing(30);
 	layout->setAlignment(ListLayout::CENTER);			// center items horizontally

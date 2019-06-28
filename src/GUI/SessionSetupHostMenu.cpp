@@ -5,6 +5,7 @@
 #include <boglfw/GUI/controls/TextField.h>
 #include <boglfw/GUI/controls/Picture.h>
 #include <boglfw/GUI/controls/Slider.h>
+#include <boglfw/GUI/GridLayout.h>
 #include <boglfw/utils/rand.h>
 
 #include <sstream>
@@ -13,6 +14,11 @@
 SessionSetupHostMenu::SessionSetupHostMenu(TerrainConfig* pData)
 	: pData_(pData)
 {
+	setSize({100, 100, FlexCoord::PERCENT});
+	setClientArea({50, 50}, {50, 50});
+	auto layout = std::make_shared<GridLayout>();
+	useLayout(layout);
+
 	//glm::vec2{mySize.x / 2 - 125, 85},
 	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Host Game");
 	addElement(pTitle);
