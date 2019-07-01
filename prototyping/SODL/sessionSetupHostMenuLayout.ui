@@ -10,14 +10,14 @@
 // some properties are mandatory, others are optional; ordering is important
 //
 // child object declaration:
-// child1 {
+// child1 #childId "childPrimaryPropValues" 42 {
 // }
 //
 // primary properties (all of the mandatory properties are primary) can be defined directly after the child element type as such:
 // child1 "stringPropValue" 13 {
 // }
 //
-// secondary properties are defined within the child's block with the property declaration syntax (name: value)
+// both primary and secondary properties can be defined within the object's block with the property declaration syntax (name: value)
 //
 // ID blocks can further extend a node that has already been defined:
 // someChild #childId {
@@ -37,8 +37,12 @@
 // @someType {	// instantiation
 //     ...
 // }
+//
+// data bindings and action callbacks are referenced with the $ symbol:
+// button "OK" $okAction		// bind $okAction callback to button
+// textField numeric $dataName	// bind $dataName value to field
 
-{
+container #root {
 	size: 100% 100%
 	padding: 50 50 50 50 // top, right, bottom, left
 	layout: split vertical 10% {
@@ -57,12 +61,12 @@
 		label "Host Game" 50 center
 	}
 	#bottom {
-		button "Back" "action:back" {
+		button "Back" $goBack {
 			pos: 10 0
 			size: 80 100%
 		}
-		button "Start" "action:back" {
-			pos: -10 0 
+		button "Start" $startGame {
+			pos: -10 0
 			size: 80 100%
 		}
 	}
@@ -79,11 +83,11 @@
 		}
 		@controlRow {						// terrain seed
 			label "Seed" 18
-			textField "0" {
+			textField numeric $terrainSeed {
 				width: 150
-				onChange: "..."
+				onChange: $seedChanged
 			}
-			button "Random" "action:randSeed"
+			button "Random" $randSeed
 		}
 		@controlRow {
 			label "0" 18
@@ -92,7 +96,7 @@
 				divisionStep: 5
 				labelStep: 1
 				width: 250
-				onChange: "..."
+				onChange: $minElevationChanged
 			}
 		}
 		@controlRow {
@@ -102,7 +106,7 @@
 				divisionStep: 5
 				labelStep: 2
 				width: 250
-				onChange: "..."
+				onChange: $maxElevationChanged
 			}
 		}
 		@controlRow {
@@ -112,9 +116,9 @@
 				divisionStep: 0.1
 				labelStep: 2
 				width: 250
-				onChange: "..."
+				onChange: $roughnessChanged
 			}
 		}
-		button "Randomize all" "action:randomizeAll"
+		button "Randomize all" $randomizeAll
 	}
 }

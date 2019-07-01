@@ -417,8 +417,6 @@ void destroySession() {
 }
 
 int main(int argc, char* argv[]) {
-	return testSODL_Loader("prototyping/sessionSetupHostMenuLayout.ui");
-
 	perf::setCrtThreadName("main");
 
 	int winW = 1280, winH = 900;
