@@ -1,0 +1,120 @@
+// data types:
+//		1. absolute number: 13
+//		2. relative number: 23%
+//		3. string: "hello"
+// 		4. predefined enumeration: someEnumValue
+//		5. IDentifier: #someID
+//
+// object property declaration:
+// propertyName: value1 value2 ...
+// some properties are mandatory, others are optional; ordering is important
+//
+// child object declaration:
+// child1 {
+// }
+//
+// primary properties (all of the mandatory properties are primary) can be defined directly after the child element type as such:
+// child1 "stringPropValue" 13 {
+// }
+//
+// secondary properties are defined within the child's block with the property declaration syntax (name: value)
+//
+// ID blocks can further extend a node that has already been defined:
+// someChild #childId {
+// ...
+// }
+// ...
+// #childId {
+//    further properties here
+// }
+//
+// a class can be defined with specific properties that will be inherited by all instances:
+// class someType primaryProp {
+//     secondary props and children
+//     ...
+// }
+// ...
+// @someType {	// instantiation
+//     ...
+// }
+
+{
+	size: 100% 100%
+	padding: 50 50 50 50 // top, right, bottom, left
+	layout: split vertical 10% {
+		first: #top fill
+		second: split vertical 89% {
+			first: split horizontal 60% {
+				first: #picture fill
+				second: #controls list {
+					align: right
+				}
+			}
+			second: #bottom free
+		}
+	}
+	#top {
+		label "Host Game" 50 center
+	}
+	#bottom {
+		button "Back" "action:back" {
+			pos: 10 0
+			size: 80 100%
+		}
+		button "Start" "action:back" {
+			pos: -10 0 
+			size: 80 100%
+		}
+	}
+	#picture {
+		picture #TerrainPicture
+	}
+	#controls {
+		class controlRow container {
+			height: 50
+			layout: list horizontal {
+				align: right
+				vertAlign: bottom
+			}
+		}
+		@controlRow {						// terrain seed
+			label "Seed" 18
+			textField "0" {
+				width: 150
+				onChange: "..."
+			}
+			button "Random" "action:randSeed"
+		}
+		@controlRow {
+			label "0" 18
+			slider "Min Elevation" -20 -1 0.5 0 {
+				precision: 0
+				divisionStep: 5
+				labelStep: 1
+				width: 250
+				onChange: "..."
+			}
+		}
+		@controlRow {
+			label "0" 18
+			slider "Max Elevation" 10 50 0.5 0 {
+				precision: 0
+				divisionStep: 5
+				labelStep: 2
+				width: 250
+				onChange: "..."
+			}
+		}
+		@controlRow {
+			label "0" 18
+			slider "Roughness" 0 1 0.1 0.5 {
+				precision: 1
+				divisionStep: 0.1
+				labelStep: 2
+				width: 250
+				onChange: "..."
+			}
+		}
+		button "Randomize all" "action:randomizeAll"
+	}
+}
