@@ -147,7 +147,6 @@ int main(int argc, char* argv[]) {
 			frameTime = 0.75 * frameTime + 0.25 * (newTime - t); // smooth out
 			frameRate = 1.0 / frameTime;
 			t = newTime;
-			realTime = newTime - initialTime;
 
 			// time step for simulation
 			float maxFrameDT = 0.1f;	// cap the dt to avoid unwanted artifacts when framerate drops too much

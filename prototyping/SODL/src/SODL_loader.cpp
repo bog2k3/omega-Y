@@ -20,6 +20,9 @@ SODL_Loader::result SODL_Loader::mergeObject(ISODL_Object* object, const char* f
 	if (!text.first || !text.second) {
 		return result { false, "Unable to open SODL file", nullptr };
 	}
+	std::ofstream f(std::string(filename) + ".out.txt");
+	f << text.first;
+	f.close();
 	return mergeObjectImpl(object, text.first, text.second);
 }
 
@@ -36,13 +39,48 @@ std::pair<char*, size_t> SODL_Loader::readFile(const char* fileName) {
 	delete [] buf;
 	return {preprocessBuf, length};
 }
+
 // remove all comments and reduce all whitespace to a single ' ' char
 size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
+	auto isWhitespace = [](const char c) {
+		return c == ' ' || c == '\t';
+	};
+	auto isEOL = [](const char c) {
+		return c == '\n';
+	};
+	auto commentStarts = [](const char *c, const char *end) {
+		return c+1 < end && *c == '/' && *(c+1)=='/';
+	};
+
+	char* outputStart = output;
 	const char* end = input + length;
 	const char* ptr = input;
 	while (ptr < end) {
-
+		// process current line
+		// 1. skip leading whitespace
+		while (ptr < end && isWhitespace(*ptr))
+			ptr++;
+		// we're now either at the end of file or at the first non-white-space character on the line
+		if (ptr == end)
+			break;
+		bool previousWhitespace = false;
+		while (ptr < end && !isEOL(*ptr) && !commentStarts(ptr, end)) {
+			// we want to reduce all whitespaces to a single character
+			while (ptr < end && isWhitespace(*ptr) && previousWhitespace)
+				ptr++;
+			if (ptr == end || commentStarts(ptr, end))
+				break;
+			previousWhitespace = isWhitespace(*ptr);
+			*output = previousWhitespace ? ' ' : *ptr, output++, ptr++;
+		}
+		// check and skip comments
+		if (commentStarts(ptr, end)) {
+			while (ptr < end && !isEOL(*ptr))
+				ptr++;
+		}
 	}
+	*output = 0; // don't forget the zero terminator
+	return output + 1 - outputStart; // return the size of the output
 }
 
 SODL_Loader::result SODL_Loader::loadObjectImpl(const char* buf, size_t length) {
