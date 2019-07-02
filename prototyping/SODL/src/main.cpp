@@ -1,3 +1,5 @@
+#include "SODL_loader.h"
+
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
 #include <boglfw/renderOpenGL/drawable.h>
@@ -72,9 +74,15 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 	drawDebugTexts(ctx.viewport());
 }
 
+void loadSODL(char const* path) {
+	SODL_Loader loader;
+	ISODL_Object* pRoot = nullptr;
+	loader.mergeObject(pRoot, path);
+}
+
 int main(int argc, char* argv[]) {
 	int winW = 1280, winH = 900;
-	
+
 	// set up window
 	if (!gltInitGLFW(winW, winH, "BOGLFW GUI Test", 0, false, true)) {
 		ERROR("Failed to initialize GLFW Window and/or OpenGL context");
@@ -83,18 +91,20 @@ int main(int argc, char* argv[]) {
 	glFrontFace(GL_CW);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	
+
 	// load render helpers
 	RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
 	RenderHelpers::load(rcfg);
-	
+
 	Viewport viewport(0, 0, winW, winH);
 	RenderContext renderCtx;
 	renderCtx.pViewport = &viewport;
 
+	loadSODL("sessionSetupHostMenuLayout.sodl");
+
 	do {
 		LOGLN("Initializing subsystems...");
-		
+
 		const int margin = 20; // pixels
 		World::setGlobal<GuiSystem>(new GuiSystem(&viewport, {margin, margin}, {winW - 2*margin, winH - 2*margin}));
 
@@ -103,7 +113,7 @@ int main(int argc, char* argv[]) {
 		GLFWInput::onInputEvent.add(onInputEventHandler);
 
 		randSeed(time(NULL));
-		
+
 		std::vector<drawable> debugDrawList;
 
 		SignalViewer sigViewer(
@@ -115,7 +125,6 @@ int main(int argc, char* argv[]) {
 		updateList.add(&sigViewer);
 		updateList.add(&World::getInstance());
 
-		float realTime = 0;							// [s] real time that passed since starting
 		float simulationTime = 0;					// [s] "simulation" or "in-game world" time that passed since starting - may be different when using slo-mo
 		float frameRate = 0;
 
@@ -132,7 +141,7 @@ int main(int argc, char* argv[]) {
 		float t = initialTime;
 		float frameTime = 0;
 		gltBegin();
-		
+
 		while (!signalQuit && GLFWInput::checkInput()) {
 			float newTime = glfwGetTime();
 			frameTime = 0.75 * frameTime + 0.25 * (newTime - t); // smooth out
