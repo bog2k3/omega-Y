@@ -2,6 +2,7 @@
 #include "ISODL_Object.h"
 
 #include <boglfw/utils/filesystem.h>
+#include <boglfw/utils/assert.h>
 
 #include <fstream>
 
@@ -43,7 +44,7 @@ std::pair<char*, size_t> SODL_Loader::readFile(const char* fileName) {
 // remove all comments and reduce all whitespace to a single ' ' char
 size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 	auto isWhitespace = [](const char c) {
-		return c == ' ' || c == '\t';
+		return c == ' ' || c == '\t' || c == '\r';
 	};
 	auto isEOL = [](const char c) {
 		return c == '\n';
@@ -61,8 +62,14 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 		while (ptr < end && isWhitespace(*ptr))
 			ptr++;
 		// we're now either at the end of file or at the first non-white-space character on the line
+		const char* lineStart = ptr;
 		if (ptr == end)
 			break;
+		// if the line was empty, skip it
+		if (isEOL(*ptr)) {
+			ptr++;
+			continue;
+		}
 		bool previousWhitespace = false;
 		while (ptr < end && !isEOL(*ptr) && !commentStarts(ptr, end)) {
 			// we want to reduce all whitespaces to a single character
@@ -74,9 +81,28 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 			*output = previousWhitespace ? ' ' : *ptr, output++, ptr++;
 		}
 		// check and skip comments
+		const char* commentBegining = nullptr;
 		if (commentStarts(ptr, end)) {
+			commentBegining = ptr;
 			while (ptr < end && !isEOL(*ptr))
 				ptr++;
+			if (ptr == end)
+				break;
+		}
+		assertDbg(ptr == end || isEOL(*ptr));
+		//bool lastOutputIsEOL = output > outputStart && isEOL(*(output-1));
+		if (ptr != end && isEOL(*ptr)) {
+			if (commentBegining != lineStart) {
+				// if there was something on the line before the comment, we also write the EOL char
+				*output = *ptr, output++, ptr++;
+			} else {
+				ptr++;
+			}
+			//if (!lastOutputIsEOL)
+			//	*output = *ptr, output++, ptr++;
+			// skip consecutive line endings
+			//while (ptr != end && isEOL(*ptr))
+			//	ptr++;
 		}
 	}
 	*output = 0; // don't forget the zero terminator
@@ -87,8 +113,9 @@ SODL_Loader::result SODL_Loader::loadObjectImpl(const char* buf, size_t length) 
 	// 1. read object type
 	// 2. instantiate object
 	// 3. call mergeObject on intantiated object with the rest of the buffer
+	return result { false, "not implemented", nullptr };
 }
 
 SODL_Loader::result SODL_Loader::mergeObjectImpl(ISODL_Object* object, const char* buf, size_t length) {
-
+	return result { false, "not implemented", object };
 }

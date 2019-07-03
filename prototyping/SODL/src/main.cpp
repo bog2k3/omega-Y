@@ -101,6 +101,7 @@ int main(int argc, char* argv[]) {
 	renderCtx.pViewport = &viewport;
 
 	loadSODL("sessionSetupHostMenuLayout.sodl");
+	return 0;
 
 	do {
 		LOGLN("Initializing subsystems...");
