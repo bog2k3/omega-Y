@@ -56,8 +56,8 @@
 			}
 		}
 		@controlRow {
-			label "0" 18
-			slider "Max Elevation" 10 50 0.5 0 {
+			label $maxElevation 18
+			slider "Max Elevation" 10 50 0.5 $maxElevation {
 				precision: 0
 				divisionStep: 5
 				labelStep: 2
@@ -66,8 +66,8 @@
 			}
 		}
 		@controlRow {
-			label "0" 18
-			slider "Roughness" 0 1 0.1 0.5 {
+			label $roughness 18
+			slider "Roughness" 0 1 0.1 $roughness {
 				precision: 1
 				divisionStep: 0.1
 				labelStep: 2

@@ -21,9 +21,6 @@ SODL_Loader::result SODL_Loader::mergeObject(ISODL_Object* object, const char* f
 	if (!text.first || !text.second) {
 		return result { false, "Unable to open SODL file", nullptr };
 	}
-	std::ofstream f(std::string(filename) + ".out.txt");
-	f << text.first;
-	f.close();
 	return mergeObjectImpl(object, text.first, text.second);
 }
 
@@ -90,7 +87,6 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 				break;
 		}
 		assertDbg(ptr == end || isEOL(*ptr));
-		//bool lastOutputIsEOL = output > outputStart && isEOL(*(output-1));
 		if (ptr != end && isEOL(*ptr)) {
 			if (commentBegining != lineStart) {
 				// if there was something on the line before the comment, we also write the EOL char
@@ -98,11 +94,6 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 			} else {
 				ptr++;
 			}
-			//if (!lastOutputIsEOL)
-			//	*output = *ptr, output++, ptr++;
-			// skip consecutive line endings
-			//while (ptr != end && isEOL(*ptr))
-			//	ptr++;
 		}
 	}
 	*output = 0; // don't forget the zero terminator
@@ -117,5 +108,6 @@ SODL_Loader::result SODL_Loader::loadObjectImpl(const char* buf, size_t length) 
 }
 
 SODL_Loader::result SODL_Loader::mergeObjectImpl(ISODL_Object* object, const char* buf, size_t length) {
+	result res = readPrimaryProps(object, )
 	return result { false, "not implemented", object };
 }
