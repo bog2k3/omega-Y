@@ -24,6 +24,10 @@ public:
 		std::string errorMessage;
 
 		ISODL_Object *rootObject = nullptr;
+
+		operator bool() const {
+			return success;
+		}
 	};
 
 	// loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
@@ -33,6 +37,8 @@ public:
 	result mergeObject(ISODL_Object* object, const char* filename);
 
 private:
+	class ParseStream;
+
 	std::pair<char*, size_t> readFile(const char* fileName);
 
 	// remove all comments and reduce all whitespace to a single ' ' char;
@@ -40,6 +46,11 @@ private:
 	// returns the size of the preprocessed data
 	size_t preprocess(const char* input, size_t length, char* output);
 
-	result loadObjectImpl(const char* buf, size_t length);
-	result mergeObjectImpl(ISODL_Object* object, const char* buf, size_t length);
+	result loadObjectImpl(ParseStream &stream);
+	result mergeObjectImpl(ISODL_Object* object, ParseStream &stream);
+
+	result readObjectType(ParseStream &stream, std::string &out_type);
+	result instantiateObject(std::string const& objType);
+	result readPrimaryProps(ISODL_Object* object, ParseStream &stream);
+	result readObjectBlock(ISODL_Object* object, ParseStream &stream);
 };

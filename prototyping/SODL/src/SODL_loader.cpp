@@ -6,13 +6,30 @@
 
 #include <fstream>
 
+class SODL_Loader::ParseStream {
+public:
+	ParseStream(const char* buf, size_t length)
+		: bufStart_(buf)
+		, bufCrt_(buf)
+		, length_(length)
+	{}
+
+	~ParseStream() {}
+
+private:
+	const char* bufStart_;
+	const char* bufCrt_;
+	const size_t length_;
+};
+
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
 SODL_Loader::result SODL_Loader::loadObject(const char* filename) {
 	auto text = readFile(filename);
 	if (!text.first || !text.second) {
 		return result { false, "Unable to open SODL file", nullptr };
 	}
-	return loadObjectImpl(text.first, text.second);
+	ParseStream stream(text.first, text.second);
+	return loadObjectImpl(stream);
 }
 
 // merges a SODL file with an existing ISODL_Object provided by user; The root node in the file mustn't specify a type.
@@ -21,7 +38,8 @@ SODL_Loader::result SODL_Loader::mergeObject(ISODL_Object* object, const char* f
 	if (!text.first || !text.second) {
 		return result { false, "Unable to open SODL file", nullptr };
 	}
-	return mergeObjectImpl(object, text.first, text.second);
+	ParseStream stream(text.first, text.second);
+	return mergeObjectImpl(object, stream);
 }
 
 std::pair<char*, size_t> SODL_Loader::readFile(const char* fileName) {
@@ -100,14 +118,49 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 	return output + 1 - outputStart; // return the size of the output
 }
 
-SODL_Loader::result SODL_Loader::loadObjectImpl(const char* buf, size_t length) {
+SODL_Loader::result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream) {
 	// 1. read object type
 	// 2. instantiate object
 	// 3. call mergeObject on intantiated object with the rest of the buffer
-	return result { false, "not implemented", nullptr };
+	result res;
+	do {
+		std::string objType;
+		res = readObjectType(stream, objType);
+		if (!res)
+			break;
+		res = instantiateObject(objType);
+		if (!res)
+			break;
+		res = mergeObjectImpl(res.rootObject, stream);
+	} while (0);
+	return res;
 }
 
-SODL_Loader::result SODL_Loader::mergeObjectImpl(ISODL_Object* object, const char* buf, size_t length) {
-	result res = readPrimaryProps(object, )
-	return result { false, "not implemented", object };
+SODL_Loader::result SODL_Loader::mergeObjectImpl(ISODL_Object* object, SODL_Loader::ParseStream &stream) {
+	result res;
+	do {
+		res = readPrimaryProps(object, stream);
+		if (!res)
+			break;
+		if (stream.nextChar() == '{')
+			res = readObjectBlock(object, stream);
+	} while (0);
+	res.rootObject = object;
+	return res;
+}
+
+SODL_Loader::result SODL_Loader::readObjectType(SODL_Loader::ParseStream &stream, std::string &out_type) {
+
+}
+
+SODL_Loader::result SODL_Loader::instantiateObject(std::string const& objType) {
+
+}
+
+SODL_Loader::result SODL_Loader::readPrimaryProps(ISODL_Object* object, SODL_Loader::ParseStream &stream) {
+
+}
+
+SODL_Loader::result SODL_Loader::readObjectBlock(ISODL_Object* object, SODL_Loader::ParseStream &stream) {
+
 }
