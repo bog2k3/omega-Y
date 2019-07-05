@@ -75,9 +75,15 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 }
 
 void loadSODL(char const* path) {
-	SODL_Loader loader;
+	class GUI_SODL_OBJ_Factory : public ISODL_Object_Factory {
+	public:
+		SODL_result constructObject(std::string const& objType, ISODL_Object* &outObj) override {
+			return SODL_result::error("not implemented");
+		}
+	} objFactory;
+	SODL_Loader loader(objFactory);
 	ISODL_Object* pRoot = nullptr;
-	loader.mergeObject(pRoot, path);
+	loader.mergeObject(*pRoot, path);
 }
 
 int main(int argc, char* argv[]) {

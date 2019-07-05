@@ -47,4 +47,5 @@ private:
 	SODL_result instantiateObject(std::string const& objType, ISODL_Object* &out_pObj);
 	SODL_result readPrimaryProps(ISODL_Object &object, ParseStream &stream);
 	SODL_result readObjectBlock(ISODL_Object &object, ParseStream &stream);
+	SODL_result readClass(ISODL_Object &object, ParseStream &stream);
 };

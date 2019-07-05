@@ -98,26 +98,47 @@
 
  */
 
+static auto isWhitespace = [](const char c) {
+	return c == ' ' || c == '\t' || c == '\r';
+};
+static auto isEOL = [](const char c) {
+	return c == '\n';
+};
+
 class SODL_Loader::ParseStream {
 public:
 	ParseStream(const char* buf, size_t length)
 		: bufStart_(buf)
 		, bufCrt_(buf)
-		, length_(length)
+		, bufEnd_(buf + length)
 	{}
 
 	~ParseStream() {}
 
+	// returns the next usable char in the stream, skipping whitespace and line ends
 	char nextChar() {
-		return ' ';
+		const char* ptr = bufCrt_;
+		while (ptr < bufEnd_ && (isWhitespace(*ptr) || isEOL(*ptr)))
+			ptr++;
+		if (ptr == bufEnd_)
+			return 0;
+		else
+			return *ptr;
+	}
+
+	void skipChar(char c) {
+		skipWhitespace(true);
+		assertDbg(bufCrt_ < bufEnd_ && *bufCrt_ == c);
+		bufCrt_++;
+		skipWhitespace(false);
 	}
 
 	bool eol() {
-		return false;
+		return bufCrt_ < bufEnd_ && isEOL(*bufCrt_);
 	}
 
 	bool eof() {
-		return false;
+		return bufCrt_ >= bufEnd_;
 	}
 
 	SODL_result readValue(SODL_Value &out_val) {
@@ -131,7 +152,12 @@ public:
 private:
 	const char* bufStart_;
 	const char* bufCrt_;
-	const size_t length_;
+	const char* bufEnd_;
+
+	void skipWhitespace(bool skipLineEnd) {
+		while (bufCrt_ < bufEnd_ && (isWhitespace(*bufCrt_) || (skipLineEnd && isEOL(*bufCrt_))))
+			bufCrt_++;
+	}
 };
 
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
@@ -170,12 +196,6 @@ std::pair<char*, size_t> SODL_Loader::readFile(const char* fileName) {
 
 // remove all comments and reduce all whitespace to a single ' ' char
 size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
-	auto isWhitespace = [](const char c) {
-		return c == ' ' || c == '\t' || c == '\r';
-	};
-	auto isEOL = [](const char c) {
-		return c == '\n';
-	};
 	auto commentStarts = [](const char *c, const char *end) {
 		return c+1 < end && *c == '/' && *(c+1)=='/';
 	};
@@ -312,23 +332,25 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 			if (!res)
 				return res;
 		} else if (ident == "class") {
-			res = readClass(stream, object);
+			res = readClass(object, stream);
 			if (!res)
 				return res;
 		} else if (stream.nextChar() == ':') {
 			// this is a property
 			stream.skipChar(':');
-			// read property values
-			std::vector<SODL_Value> values;
-			while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
-				SODL_Value val;
-				SODL_result res = stream.readValue(val);
-				if (!res)
-					return res;
-				values.push_back(val);
+			ISODL_Object *pPropObj = nullptr;
+			res = object.createProperty(ident, pPropObj);
+			if (!res)
+				return res;
+			res = mergeObjectImpl(*pPropObj, stream);
+			if (!res) {
+				delete pPropObj;
+				return res;
 			}
-			// TODO: treat compound node properties like layouts {...}
-			res = object.setPropertyValues(ident, values);
+			res = object.setPropertyValue(ident, *pPropObj);
+			delete pPropObj;
+			if (!res)
+				return res;
 		} else {
 			// this must be a child object
 			ISODL_Object *pObj = nullptr;
@@ -344,4 +366,8 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		return SODL_result::error("End of file while expecting '}'");
 	stream.skipChar('}');
 	return SODL_result::OK();
+}
+
+SODL_result SODL_Loader::readClass(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
+
 }
