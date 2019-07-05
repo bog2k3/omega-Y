@@ -18,7 +18,9 @@
 
 class SODL_Loader {
 public:
-	SODL_Loader() = default;
+	SODL_Loader(ISODL_Object_Factory &factory)
+		: factory_(factory) {
+	}
 
 	// loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
 	SODL_result loadObject(const char* filename, ISODL_Object* &out_pObj);
@@ -28,6 +30,8 @@ public:
 
 private:
 	class ParseStream;
+
+	ISODL_Object_Factory &factory_;
 
 	std::pair<char*, size_t> readFile(const char* fileName);
 

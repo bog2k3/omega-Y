@@ -266,13 +266,15 @@ SODL_result SODL_Loader::readObjectType(SODL_Loader::ParseStream &stream, std::s
 }
 
 SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Object* &out_pObj) {
-	out_pObj = nullptr;
-	return SODL_result::error("not implemented");
+	SODL_result res = factory_.constructObject(objType, out_pObj);
+	if (!res)
+		res.errorMessage = "Failed to construct object of type [" + objType + "]; Reason: \"" + res.errorMessage + "\"";
+	return res;
 }
 
 SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
 	unsigned propIdx = 0;
-	while (!stream.eof() && !stream.eol() && !stream.nextChar() == '{') {
+	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
 		SODL_Value val;
 		SODL_result res = stream.readValue(val);
 		if (!res)
@@ -282,8 +284,64 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 			return res;
 		propIdx++;
 	}
+	return SODL_result::OK();
 }
 
 SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
-	return SODL_result::error("not implemented");
+	assertDbg(stream.nextChar() == '}');
+	stream.skipChar('{');
+	while (!stream.eof() && stream.nextChar() != '}') {
+		bool classInstance = false;
+		if (stream.nextChar() == '@') {
+			classInstance = true;
+			stream.skipChar('@');
+		}
+		std::string ident;
+		SODL_result res = stream.readIdentifier(ident);
+		if (!res)
+			return res;
+		if (classInstance) {
+			ISODL_Object *pInstanceObj = nullptr;
+			res = object.instantiateClass(ident, pInstanceObj);
+			if (!res)
+				return res;
+			res = mergeObjectImpl(*pInstanceObj, stream);
+			if (!res)
+				return res;
+			res = object.addChildObject(pInstanceObj);
+			if (!res)
+				return res;
+		} else if (ident == "class") {
+			res = readClass(stream, object);
+			if (!res)
+				return res;
+		} else if (stream.nextChar() == ':') {
+			// this is a property
+			stream.skipChar(':');
+			// read property values
+			std::vector<SODL_Value> values;
+			while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
+				SODL_Value val;
+				SODL_result res = stream.readValue(val);
+				if (!res)
+					return res;
+				values.push_back(val);
+			}
+			// TODO: treat compound node properties like layouts {...}
+			res = object.setPropertyValues(ident, values);
+		} else {
+			// this must be a child object
+			ISODL_Object *pObj = nullptr;
+			res = loadObjectImpl(stream, pObj);
+			if (!res)
+				return res;
+			res = object.addChildObject(pObj);
+			if (!res)
+				return res;
+		}
+	}
+	if (stream.eof())
+		return SODL_result::error("End of file while expecting '}'");
+	stream.skipChar('}');
+	return SODL_result::OK();
 }

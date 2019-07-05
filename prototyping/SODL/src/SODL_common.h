@@ -25,3 +25,13 @@ struct SODL_result {
 struct SODL_Value {
 
 };
+
+class ISODL_Object;
+
+// implement this interface to construct your objects given a type
+class ISODL_Object_Factory {
+public:
+	// construct an object given a type;
+	// return success or error with description
+	virtual SODL_result constructObject(std::string const& objType, ISODL_Object* &outObj) = 0;
+};
