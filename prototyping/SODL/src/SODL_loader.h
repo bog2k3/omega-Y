@@ -11,7 +11,7 @@
 */
 
 #include "ISODL_Object.h"
-#include "SODL_Common.h"
+#include "SODL_common.h"
 
 #include <string>
 #include <utility>

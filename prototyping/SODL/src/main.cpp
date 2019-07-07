@@ -1,4 +1,5 @@
 #include "SODL_loader.h"
+#include "GUI_SODL_OBJ_Factory.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -75,15 +76,42 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 }
 
 void loadSODL(char const* path) {
-	class GUI_SODL_OBJ_Factory : public ISODL_Object_Factory {
-	public:
-		SODL_result constructObject(std::string const& objType, ISODL_Object* &outObj) override {
-			return SODL_result::error("not implemented");
-		}
-	} objFactory;
+	struct {
+		float terrainSeed = 1234567.f;
+		float minElevation = 1.5f;
+		float maxElevation = 15.2f;
+		float roughness = 0.4f;
+	} data;
+	struct CALLBACKS {
+		void onSeedChanged(float value) {}
+		void onMinElevationChanged(float value) {}
+		void onMaxElevationChanged(float value) {}
+		void onRoughnessChanged(float value) {}
+		void onRandSeed() {}
+		void onRandomizeAll() {}
+		void onGoBack() {}
+		void onStartGame() {}
+	} callbacks;
+
+	GUI_SODL_OBJ_Factory objFactory;
 	SODL_Loader loader(objFactory);
+
+	loader.addDataBinding("terrainSeed", SODL_Value::Type::Number, &data.terrainSeed);
+	loader.addDataBinding("minElevation", SODL_Value::Type::Number, &data.minElevation);
+	loader.addDataBinding("maxElevation", SODL_Value::Type::Number, &data.maxElevation);
+	loader.addDataBinding("roughness", SODL_Value::Type::Number, &data.roughness);
+
+	loader.addActionBinding("seedChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onSeedChanged, callbacks, std::placeholders::_1));
+	loader.addActionBinding("minElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMinElevationChanged, callbacks, std::placeholders::_1));
+	loader.addActionBinding("maxElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMaxElevationChanged, callbacks, std::placeholders::_1));
+	loader.addActionBinding("roughnessChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onRoughnessChanged, callbacks, std::placeholders::_1));
+	loader.addActionBinding("randomizeAll", {}, std::bind(&CALLBACKS::onRandomizeAll, callbacks));
+	loader.addActionBinding("goBack", {}, std::bind(&CALLBACKS::onGoBack, callbacks));
+	loader.addActionBinding("startGame", {}, std::bind(&CALLBACKS::onStartGame, callbacks));
+
 	ISODL_Object* pRoot = nullptr;
-	loader.mergeObject(*pRoot, path);
+	if (objFactory.constructObject("container", pRoot))
+		loader.mergeObject(*pRoot, path);
 }
 
 int main(int argc, char* argv[]) {

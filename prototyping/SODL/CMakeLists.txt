@@ -54,7 +54,7 @@ if (WIN32)
 	include_directories("C:/mingw64/include")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WIN32__")
 else()
-	link_directories("/usr/lib" "usr/local/lib")
+	link_directories("/usr/lib" "/usr/local/lib")
 	include_directories("/usr/include" "/usr/local/include")
 endif()
 

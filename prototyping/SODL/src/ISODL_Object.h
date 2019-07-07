@@ -4,6 +4,11 @@
 
 class ISODL_Object {
 public:
+	virtual ~ISODL_Object() {}
+	
+private:
+	friend class SODL_Loader;
+
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
 	SODL_result instantiateClass(std::string className, ISODL_Object* &out_pInstance);
 	SODL_result addChildObject(ISODL_Object* &out_pInstance);

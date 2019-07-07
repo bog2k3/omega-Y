@@ -23,7 +23,14 @@ struct SODL_result {
 };
 
 struct SODL_Value {
-
+	enum class Type {
+		ID,
+		Number,
+		String,
+		Enum,
+		Object,
+		Binding
+	};
 };
 
 class ISODL_Object;
