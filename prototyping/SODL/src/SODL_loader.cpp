@@ -306,6 +306,10 @@ SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Obj
 SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
 	unsigned propIdx = 0;
 	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
+		if (stream.nextChar() == '#') {
+			read id...
+		}
+		check the type of nth property in the object and try to read that type
 		SODL_Value val;
 		SODL_result res = stream.readValue(val);
 		if (!res)
@@ -319,7 +323,7 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 }
 
 SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
-	assertDbg(stream.nextChar() == '}');
+	assertDbg(stream.nextChar() == '{');
 	stream.skipChar('{');
 	while (!stream.eof() && stream.nextChar() != '}') {
 		bool classInstance = false;
