@@ -101,13 +101,13 @@ void loadSODL(char const* path) {
 	loader.addDataBinding("maxElevation", SODL_Value::Type::Number, &data.maxElevation);
 	loader.addDataBinding("roughness", SODL_Value::Type::Number, &data.roughness);
 
-	loader.addActionBinding("seedChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onSeedChanged, callbacks, std::placeholders::_1));
-	loader.addActionBinding("minElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMinElevationChanged, callbacks, std::placeholders::_1));
-	loader.addActionBinding("maxElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMaxElevationChanged, callbacks, std::placeholders::_1));
-	loader.addActionBinding("roughnessChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onRoughnessChanged, callbacks, std::placeholders::_1));
-	loader.addActionBinding("randomizeAll", {}, std::bind(&CALLBACKS::onRandomizeAll, callbacks));
-	loader.addActionBinding("goBack", {}, std::bind(&CALLBACKS::onGoBack, callbacks));
-	loader.addActionBinding("startGame", {}, std::bind(&CALLBACKS::onStartGame, callbacks));
+	loader.addActionBinding<void(float)>("seedChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onSeedChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void(float)>("minElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMinElevationChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void(float)>("maxElevationChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onMaxElevationChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void(float)>("roughnessChanged", {{SODL_Value::Type::Number}}, std::bind(&CALLBACKS::onRoughnessChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void()>("randomizeAll", {}, std::bind(&CALLBACKS::onRandomizeAll, &callbacks));
+	loader.addActionBinding<void()>("goBack", {}, std::bind(&CALLBACKS::onGoBack, &callbacks));
+	loader.addActionBinding<void()>("startGame", {}, std::bind(&CALLBACKS::onStartGame, &callbacks));
 
 	ISODL_Object* pRoot = nullptr;
 	if (objFactory.constructObject("container", pRoot))

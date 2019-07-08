@@ -160,6 +160,17 @@ private:
 	}
 };
 
+SODL_Loader::~SODL_Loader() {
+	for (auto &pair : mapActionBindings_)
+		if (pair.second)
+			delete pair.second;
+	mapActionBindings_.clear();
+}
+
+void SODL_Loader::addDataBinding(const char* name, SODL_Value::Type type, void* valuePtr) {
+	// TOOD
+}
+
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
 SODL_result SODL_Loader::loadObject(const char* filename, ISODL_Object* &out_pObj) {
 	auto text = readFile(filename);

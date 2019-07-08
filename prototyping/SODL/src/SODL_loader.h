@@ -14,13 +14,23 @@
 #include "SODL_common.h"
 
 #include <string>
-#include <utility>
+#include <vector>
+#include <functional>
+#include <map>
 
 class SODL_Loader {
 public:
 	SODL_Loader(ISODL_Object_Factory &factory)
 		: factory_(factory) {
 	}
+	~SODL_Loader();
+
+	// registers a new data binding that can be referenced from the SODL that will be loaded
+	void addDataBinding(const char* name, SODL_Value::Type type, void* valuePtr);
+
+	// registers an action callback that can be referenced from the SODL that will be loaded
+	template <class FuncType>
+	void addActionBinding(const char* name, std::vector<SODL_Value::Type> argumentTypes, std::function<FuncType> func);
 
 	// loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
 	SODL_result loadObject(const char* filename, ISODL_Object* &out_pObj);
@@ -30,8 +40,11 @@ public:
 
 private:
 	class ParseStream;
+	struct _SODL_Loader_ActionBindingDescriptor;
 
 	ISODL_Object_Factory &factory_;
+	std::map<std::string, std::pair<SODL_Value::Type, void*>> mapDataBindings_;
+	std::map<std::string, _SODL_Loader_ActionBindingDescriptor*> mapActionBindings_;
 
 	std::pair<char*, size_t> readFile(const char* fileName);
 
@@ -49,3 +62,5 @@ private:
 	SODL_result readObjectBlock(ISODL_Object &object, ParseStream &stream);
 	SODL_result readClass(ISODL_Object &object, ParseStream &stream);
 };
+
+#include "SODL_loader_private.h"

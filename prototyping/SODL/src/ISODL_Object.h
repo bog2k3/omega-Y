@@ -5,7 +5,14 @@
 class ISODL_Object {
 public:
 	virtual ~ISODL_Object() {}
-	
+
+protected:
+	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
+	void definePrimaryProperty(const char* name, SODL_Value::Type type);
+
+	// defines a "secondary" (optional) property; these must be defined as name: value within the element's block
+	void defineSecondaryProperty(const char* name, SODL_Value::Type type);
+
 private:
 	friend class SODL_Loader;
 
