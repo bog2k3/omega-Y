@@ -1,5 +1,6 @@
 #include "SODL_loader.h"
 #include "ISODL_Object.h"
+#include "strcat.h"
 
 #include <boglfw/utils/filesystem.h>
 #include <boglfw/utils/assert.h>
@@ -98,12 +99,13 @@
 
  */
 
-static auto isWhitespace = [](const char c) {
+static bool isWhitespace(const char c) {
 	return c == ' ' || c == '\t' || c == '\r';
-};
-static auto isEOL = [](const char c) {
+}
+
+static bool isEOL(const char c) {
 	return c == '\n';
-};
+}
 
 class SODL_Loader::ParseStream {
 public:
@@ -141,7 +143,7 @@ public:
 		return bufCrt_ >= bufEnd_;
 	}
 
-	SODL_result readValue(SODL_Value &out_val) {
+	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
 		return SODL_result::error("not implemented");
 	}
 
@@ -304,20 +306,64 @@ SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Obj
 }
 
 SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
-	unsigned propIdx = 0;
-	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
-		if (stream.nextChar() == '#') {
-			read id...
-		}
-		check the type of nth property in the object and try to read that type
-		SODL_Value val;
-		SODL_result res = stream.readValue(val);
+	SODL_result res;
+	if (stream.nextChar() == '#') {
+		stream.skipChar('#');
+		std::string idStr;
+		res = stream.readIdentifier(idStr);
 		if (!res)
 			return res;
-		res = object.setPrimaryProperty(propIdx, val);
+		object.setId(idStr);
+	}
+	unsigned propIdx = 0;
+	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
+		SODL_Property_Descriptor desc = object.describePrimaryProperty(propIdx);
+		assertDbg(!desc.isObject);
+		SODL_Value val;
+		res = stream.readValue(desc.type, val);
+		if (!res)
+			return res;
+		if (val.isBinding) {
+			if (desc.type == SODL_Value::Type::Callback) {
+				// retrieve the registered action callback for this binding and set it onto the object
+				auto it = mapActionBindings_.find(val.bindingName);
+				if (it == mapActionBindings_.end())
+					return SODL_result::error("Action $" + val.bindingName + " was not defined.");
+				auto &actionDesc = *it->second;
+				res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
+				if (!res)
+					return res;
+				if (desc.callbackPtr == nullptr)
+					return SODL_result::error(strcat() << "Callback property " << propIdx << " does not supply a function pointer");
+				actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
+			} else {
+				// retrieve the registered data binding and set its value onto the object
+				res = resolveDataBinding(val, desc.type);
+				if (!res)
+					return res;
+				res = object.setPrimaryProperty(propIdx, val);
+			}
+		} else
+			res = object.setPrimaryProperty(propIdx, val);
 		if (!res)
 			return res;
 		propIdx++;
+	}
+	return SODL_result::OK();
+}
+
+SODL_result SODL_Loader::resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType) {
+	// 1. look up the data bindings map using inOutVal.bindingName as key
+	// 2. check its type against expectedType
+	// 3. update inOutVal's actual value to the retrieved data, and type to expectedType
+}
+
+SODL_result SODL_Loader::checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes) {
+	if (argTypes.size() != expectedTypes.size())
+		return SODL_result::error("Action binding mismatch: wrong number of arguments");
+	for (unsigned i=0; i<argTypes.size(); i++) {
+		if (argTypes[i] != expectedTypes[i])
+			return SODL_result::error(strcat() << "Action binding mismatch: argument " << i+1 << " type mismatch");
 	}
 	return SODL_result::OK();
 }

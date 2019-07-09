@@ -24,13 +24,13 @@ struct SODL_result {
 
 struct SODL_Value {
 	enum class Type {
-		ID,
 		Number,
 		String,
 		Enum,
-		Object,
-		Binding
+		Callback
 	};
+	bool isBinding;
+	std::string bindingName;
 };
 
 class ISODL_Object;

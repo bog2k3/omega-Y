@@ -61,6 +61,9 @@ private:
 	SODL_result readPrimaryProps(ISODL_Object &object, ParseStream &stream);
 	SODL_result readObjectBlock(ISODL_Object &object, ParseStream &stream);
 	SODL_result readClass(ISODL_Object &object, ParseStream &stream);
+
+	SODL_result resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType);
+	SODL_result checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes);
 };
 
 #include "SODL_loader_private.h"
