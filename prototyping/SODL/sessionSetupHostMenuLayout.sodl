@@ -1,0 +1,81 @@
+#root {
+	size: 100% 100%
+	padding: 50 50 50 50 // top, right, bottom, left
+	layout: split vertical 10% {
+		marker: #splitTop	// where to split the controls between first and second layout nodes
+		first: fill
+		second: split vertical 89% {
+			marker: #splitBottom
+			first: split horizontal 60% {
+				marker: #splitPicture
+				first: fill
+				second: fill
+			}
+			second: free
+		}
+	}
+	label #title "Host Game" 50 center
+	marker #splitTop
+	picture #TerrainPicture
+	marker #splitPicture
+	container #controls {
+		layout: list {
+			align: right
+		}
+		class controlRow container {
+			height: 50
+			layout: list horizontal {
+				align: right
+				vertAlign: bottom
+			}
+		}
+		@controlRow {						// terrain seed
+			label "Seed" 18
+			textField numeric $terrainSeed {
+				width: 150
+				onChange: $seedChanged
+			}
+			button "Random" $randSeed
+		}
+		@controlRow {
+			label $minElevation 18
+			slider "Min Elevation" -20 -1 0.5 $minElevation {
+				precision: 0
+				divisionStep: 5
+				labelStep: 1
+				width: 250
+				onChange: $minElevationChanged
+			}
+		}
+		@controlRow {
+			label $maxElevation 18
+			slider "Max Elevation" 10 50 0.5 $maxElevation {
+				precision: 0
+				divisionStep: 5
+				labelStep: 2
+				width: 250
+				onChange: $maxElevationChanged
+			}
+		}
+		@controlRow {
+			label $roughness 18
+			slider "Roughness" 0 1 0.1 $roughness {
+				precision: 1
+				divisionStep: 0.1
+				labelStep: 2
+				width: 250
+				onChange: $roughnessChanged
+			}
+		}
+		button "Randomize all" $randomizeAll
+	}
+	marker #splitBottom
+	button "Back" $goBack {
+		pos: 10 0
+		size: 80 100%
+	}
+	button "Start" $startGame {
+		pos: -10 0
+		size: 80 100%
+	}
+}

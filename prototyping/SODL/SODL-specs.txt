@@ -1,0 +1,31 @@
+SODL (Simplified Object Description Language) specifications
+
+data types:
+	1. absolute number: 13
+	2. relative number: 23%
+	3. string: "hello"
+		4. predefined enumeration: someEnumValue
+	5. IDentifier: #someID
+object property declaration:
+propertyName: value1 value2 ...
+some properties are mandatory, others are optional; ordering is important
+child object declaration:
+child1 #childId "childPrimaryPropValues" 42 {
+}
+primary properties (all of the mandatory properties are primary) can be defined directly after the child element type as such:
+child1 "stringPropValue" 13 {
+}
+both primary and secondary properties can be defined within the object's block with the property declaration syntax (name: value)
+
+a class can be defined with specific properties that will be inherited by all instances:
+class someType primaryProp {
+    secondary props and children
+    ...
+}
+...
+@someType {	// instantiation
+    ...
+}
+data bindings and action callbacks are referenced with the $ symbol:
+button "OK" $okAction		// bind $okAction callback to button
+textField numeric $dataName	// bind $dataName value to field
