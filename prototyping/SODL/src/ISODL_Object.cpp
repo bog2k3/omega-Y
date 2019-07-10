@@ -29,3 +29,12 @@ SODL_result ISODL_Object::createProperty(std::string propName, ISODL_Object* &ou
 SODL_result ISODL_Object::setPropertyValue(std::string propName, ISODL_Object &propObj) {
 
 }
+
+SODL_Property_Descriptor ISODL_Object::describePrimaryProperty(unsigned index) {
+	return SODL_Property_Descriptor {};
+}
+
+SODL_Property_Descriptor describeProperty(std::string const& propName) {
+	return SODL_Property_Descriptor {};
+}
+	

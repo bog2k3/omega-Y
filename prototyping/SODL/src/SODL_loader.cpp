@@ -148,7 +148,19 @@ public:
 	}
 
 	SODL_result readIdentifier(std::string &out_str) {
-		return SODL_result::error("not implemented");
+		skipWhitespace(false);
+		const char* idStart = bufCrt_;
+		// first char must be treated special
+		if (eof())
+			return SODL_result::error("Reached end of file while expecting an identifier.");
+		if (!isValidFirstChar(*bufCrt_))
+			return SODL_result::error("Identifier starts with invalid character.");
+		bufCrt_++;
+		while (!eof() && isValidIdentChar(*bufCrt_))
+			bufCrt_++;
+		out_str = std::string(idStart, bufCrt_);
+		skipWhitespace(false);
+		return SODL_result::OK();
 	}
 
 private:
@@ -159,6 +171,19 @@ private:
 	void skipWhitespace(bool skipLineEnd) {
 		while (bufCrt_ < bufEnd_ && (isWhitespace(*bufCrt_) || (skipLineEnd && isEOL(*bufCrt_))))
 			bufCrt_++;
+	}
+	
+	// returns true if the char is valid as a first character of an identifier
+	bool isValidFirstChar(char c) {
+		return (c >= 'a' && c <= 'z')
+			|| (c >= 'A' && c <= 'Z')
+			|| c == '_';
+	}
+	
+	// returns true if the char is a valid char in the middle of an identifier
+	bool isValidIdentChar(char c) {
+		return isValidFirstChar(c)
+			|| (c >= '0' && c <= '9');
 	}
 };
 

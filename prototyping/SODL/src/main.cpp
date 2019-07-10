@@ -110,15 +110,23 @@ void loadSODL(char const* path) {
 	loader.addActionBinding<void()>("startGame", {}, std::bind(&CALLBACKS::onStartGame, &callbacks));
 
 	ISODL_Object* pRoot = nullptr;
-	if (objFactory.constructObject("container", pRoot))
-		loader.mergeObject(*pRoot, path);
+	if (objFactory.constructObject("container", pRoot)) {
+		auto res = loader.mergeObject(*pRoot, path);
+		if (!res) {
+			ERROR("Failed to load SODL: " << res.errorMessage);
+			signalQuit = true;
+		} else {
+			LOGLN("SODL Load success");
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
-	int winW = 1280, winH = 900;
+	int winW = 1280, winH = 700;
 
 	// set up window
-	if (!gltInitGLFW(winW, winH, "BOGLFW GUI Test", 0, false, true)) {
+	GLFW_Init_Config glfwCfg(winW, winH, "SODL Test");
+	if (!gltInitGLFW(glfwCfg)) {
 		ERROR("Failed to initialize GLFW Window and/or OpenGL context");
 		return -1;
 	}
@@ -128,6 +136,8 @@ int main(int argc, char* argv[]) {
 
 	// load render helpers
 	RenderHelpers::Config rcfg = RenderHelpers::defaultConfig();
+	rcfg.disableMeshRenderer = true;
+	rcfg.disablePictureDraw = true;
 	RenderHelpers::load(rcfg);
 
 	Viewport viewport(0, 0, winW, winH);
@@ -135,7 +145,6 @@ int main(int argc, char* argv[]) {
 	renderCtx.pViewport = &viewport;
 
 	loadSODL("sessionSetupHostMenuLayout.sodl");
-	return 0;
 
 	do {
 		LOGLN("Initializing subsystems...");
