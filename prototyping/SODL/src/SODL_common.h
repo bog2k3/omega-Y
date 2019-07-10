@@ -31,9 +31,17 @@ struct SODL_Value {
 	};
 	bool isBinding;
 	std::string bindingName;
+	float numberVal;
+	std::string stringVal;
+	std::string enumVal;
 };
 
 class ISODL_Object;
+
+struct SODL_PropValue {
+	SODL_Value simpleValue;
+	ISODL_Object *pObject = nullptr;
+};
 
 // implement this interface to construct your objects given a type
 class ISODL_Object_Factory {

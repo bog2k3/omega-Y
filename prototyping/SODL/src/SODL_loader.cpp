@@ -134,6 +134,11 @@ public:
 		bufCrt_++;
 		skipWhitespace(false);
 	}
+	
+	void skipEOL() {
+		assertDbg(eol());
+		skipWhitespace(true);
+	}
 
 	bool eol() {
 		return bufCrt_ < bufEnd_ && isEOL(*bufCrt_);
@@ -374,6 +379,9 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 			return res;
 		propIdx++;
 	}
+	if (stream.eol()) {
+		stream.skipEOL();
+	}
 	return SODL_result::OK();
 }
 
@@ -397,6 +405,10 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 	assertDbg(stream.nextChar() == '{');
 	stream.skipChar('{');
 	while (!stream.eof() && stream.nextChar() != '}') {
+		if (stream.eol()) {
+			stream.skipEOL();
+			continue;
+		}
 		bool classInstance = false;
 		if (stream.nextChar() == '@') {
 			classInstance = true;
@@ -424,17 +436,23 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		} else if (stream.nextChar() == ':') {
 			// this is a property
 			stream.skipChar(':');
-			ISODL_Object *pPropObj = nullptr;
-			res = object.createProperty(ident, pPropObj);
-			if (!res)
-				return res;
-			res = mergeObjectImpl(*pPropObj, stream);
-			if (!res) {
-				delete pPropObj;
-				return res;
+			SODL_Property_Descriptor pdesc = object.describeProperty(ident);
+			SODL_PropValue pvalue;
+			if (pdesc.isObject) {
+				res = factory_.constructObject(ident, pvalue.pObject);
+				if (!res)
+					return res;
+				res = mergeObjectImpl(*pvalue.pObject, stream);
+				if (!res) {
+					delete pvalue.pObject;
+					return res;
+				}
+			} else {
+				res = stream.readValue(pdesc.type, pvalue.simpleValue);
 			}
-			res = object.setPropertyValue(ident, *pPropObj);
-			delete pPropObj;
+			res = object.setPropertyValue(ident, pvalue);
+			if (pvalue.pObject)
+				delete pvalue.pObject;
 			if (!res)
 				return res;
 		} else {

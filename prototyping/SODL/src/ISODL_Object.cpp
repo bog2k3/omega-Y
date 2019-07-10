@@ -6,7 +6,7 @@ void ISODL_Object::definePrimaryProperty(const char* name, SODL_Value::Type type
 }
 
 // defines a "secondary" (optional) property; these must be defined as name: value within the element's block
-void ISODL_Object::defineSecondaryProperty(const char* name, SODL_Value::Type type) {
+void ISODL_Object::defineSecondaryProperty(const char* name, SODL_Property_Descriptor) {
 
 }
 
@@ -22,11 +22,7 @@ SODL_result ISODL_Object::addChildObject(ISODL_Object* &out_pInstance) {
 
 }
 
-SODL_result ISODL_Object::createProperty(std::string propName, ISODL_Object* &out_pProperty) {
-
-}
-
-SODL_result ISODL_Object::setPropertyValue(std::string propName, ISODL_Object &propObj) {
+SODL_result ISODL_Object::setPropertyValue(std::string propName, SODL_PropValue const& val) {
 
 }
 
