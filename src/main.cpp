@@ -47,8 +47,8 @@
 #include <boglfw/perf/frameCapture.h>
 #include <boglfw/perf/perfPrint.h>
 
-#include <bullet3/btBulletDynamicsCommon.h>
-#include <bullet3/LinearMath/btDefaultMotionState.h>
+#include <bullet/btBulletDynamicsCommon.h>
+#include <bullet/LinearMath/btDefaultMotionState.h>
 
 #include <GLFW/glfw3.h>
 

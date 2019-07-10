@@ -6,8 +6,8 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <bullet3/LinearMath/btVector3.h>
-#include <bullet3/LinearMath/btQuaternion.h>
+#include <bullet/LinearMath/btVector3.h>
+#include <bullet/LinearMath/btQuaternion.h>
 
 // Bullet to GLM functions -----------------------------------------------------------
 

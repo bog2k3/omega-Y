@@ -4,7 +4,7 @@
 
 #include <boglfw/renderOpenGL/Mesh.h>
 
-#include <bullet3/BulletCollision/CollisionShapes/btBoxShape.h>
+#include <bullet/BulletCollision/CollisionShapes/btBoxShape.h>
 
 Mesh* TestBullet::pMeshShared_ = nullptr;
 std::shared_ptr<btCollisionShape> TestBullet::pCollisionShapeShared_;

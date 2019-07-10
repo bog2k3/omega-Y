@@ -96,7 +96,7 @@ Water::Water()
 	glGenBuffers(1, &renderData_->IBO_);
 
 	renderData_->reloadHandler = renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
-		setupVAO();
+		this->setupVAO();
 	});
 	setupVAO();
 }

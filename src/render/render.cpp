@@ -11,7 +11,7 @@
 #include <boglfw/World.h>
 #include <boglfw/GUI/GuiSystem.h>
 
-#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
 #include <GLFW/glfw3.h>
 #include <GL/glew.h>

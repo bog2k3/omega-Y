@@ -39,16 +39,15 @@ endif()
 # ----- done checking framework version
 
 # The following folder will be included
-include_directories("${BOGLFW_DIST_DIR}/include"
-					"${CMAKE_SOURCE_DIR}/3rdparty/bullet3/include")
+include_directories("${BOGLFW_DIST_DIR}/include")
 link_directories("${BOGLFW_DIST_DIR}/lib")
 if (WIN32)
 	link_directories("C:/mingw64/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/mingw/${CMAKE_BUILD_TYPE}")
 	include_directories("C:/mingw64/include")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WIN32__  -mthreads")
 else()
-	link_directories("/usr/lib" "${CMAKE_SOURCE_DIR}/3rdparty/bullet3/lib/linux/${CMAKE_BUILD_TYPE}")
-	include_directories("/usr/include")
+	link_directories("/usr/lib" "/usr/local/lib" "/usr/lib/x86_64-linux-gnu")
+	include_directories("/usr/include" "/usr/local/include" "/usr/include/bullet")
 endif()
 
 # add sources
@@ -60,7 +59,7 @@ file( GLOB_RECURSE dataFiles	${BOGLFW_DIST_DIR}/data/*.* )
 add_executable(${PROJECT_NAME} ${sources})
 
 #add libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletDynamics Bullet3Dynamics Bullet3Geometry BulletCollision Bullet3Collision Bullet3Common LinearMath)
+target_link_libraries(${PROJECT_NAME} PUBLIC boglfw GLEW png BulletDynamics BulletCollision LinearMath)
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 ws2_32 wsock32 opengl32)
 else()
@@ -72,7 +71,7 @@ endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS "${BOGLFW_DIST_DIR}/lib/libboglfw.a")
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -DGLM_FORCE_RADIANS -DWITH_GLFW)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -march=x86-64 -fPIC -DGLM_FORCE_RADIANS -DWITH_GLFW)
 
 # add this flag to enable profiling with perfMarkers
 # target_compile_options(${PROJECT_NAME} PUBLIC -DENABLE_PERF_MARKERS)

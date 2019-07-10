@@ -26,9 +26,9 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
-#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
-#include <bullet3/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+#include <bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <bullet/BulletDynamics/Dynamics/btRigidBody.h>
+#include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include <GL/glew.h>
 
@@ -193,7 +193,7 @@ Terrain::Terrain(bool previewMode)
 	glGenBuffers(1, &renderData_->IBO_);
 
 	renderData_->reloadHandler = renderData_->shaderProgram_->onProgramReloaded.add([this](auto const&) {
-		setupVAO();
+		this->setupVAO();
 	});
 	setupVAO();
 
