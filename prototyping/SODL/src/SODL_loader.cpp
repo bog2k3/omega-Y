@@ -151,6 +151,10 @@ public:
 	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
 		return SODL_result::error("not implemented");
 	}
+	
+	bool nextIsWhitespace() {
+		return !eof() && isWhitespace(*bufCrt_);
+	}
 
 	SODL_result readIdentifier(std::string &out_str) {
 		skipWhitespace(false);
@@ -335,10 +339,46 @@ SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Obj
 	return res;
 }
 
+SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
+	SODL_Value& val, unsigned primaryPropIdx, const char* propName) {
+	SODL_result res;
+	if (val.isBinding) {
+		if (desc.type == SODL_Value::Type::Callback) {
+			// retrieve the registered action callback for this binding and set it onto the object
+			auto it = mapActionBindings_.find(val.bindingName);
+			if (it == mapActionBindings_.end())
+				return SODL_result::error("Action $" + val.bindingName + " was not defined.");
+			auto &actionDesc = *it->second;
+			res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
+			if (!res)
+				return res;
+			if (desc.callbackPtr == nullptr)
+				return SODL_result::error(strcat() << "Callback property " << propIdx << " does not supply a function pointer");
+			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
+		} else {
+			// retrieve the registered data binding and set its value onto the object
+			res = resolveDataBinding(val, desc.type);
+			if (!res)
+				return res;
+			if (propName == nullptr)
+				res = object.setPrimaryProperty(propIdx, val);
+			else
+				res = object.setPropertyValue(propName, val);
+		}
+	} else if (propName == nullptr)
+		res = object.setPrimaryProperty(propIdx, val);
+	else
+		res = object.setPropertyValue(propName, val);
+	return res;
+}
+
 SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
 	SODL_result res;
 	if (stream.nextChar() == '#') {
 		stream.skipChar('#');
+		if (stream.nextIsWhitespace()) {
+			return SODL_result::error("Expected identifier after #, found white space");
+		}
 		std::string idStr;
 		res = stream.readIdentifier(idStr);
 		if (!res)
@@ -353,28 +393,7 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 		res = stream.readValue(desc.type, val);
 		if (!res)
 			return res;
-		if (val.isBinding) {
-			if (desc.type == SODL_Value::Type::Callback) {
-				// retrieve the registered action callback for this binding and set it onto the object
-				auto it = mapActionBindings_.find(val.bindingName);
-				if (it == mapActionBindings_.end())
-					return SODL_result::error("Action $" + val.bindingName + " was not defined.");
-				auto &actionDesc = *it->second;
-				res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
-				if (!res)
-					return res;
-				if (desc.callbackPtr == nullptr)
-					return SODL_result::error(strcat() << "Callback property " << propIdx << " does not supply a function pointer");
-				actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
-			} else {
-				// retrieve the registered data binding and set its value onto the object
-				res = resolveDataBinding(val, desc.type);
-				if (!res)
-					return res;
-				res = object.setPrimaryProperty(propIdx, val);
-			}
-		} else
-			res = object.setPrimaryProperty(propIdx, val);
+		res = assignPropertyValue(object, val, propIdx, nullptr);
 		if (!res)
 			return res;
 		propIdx++;
@@ -413,6 +432,9 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		if (stream.nextChar() == '@') {
 			classInstance = true;
 			stream.skipChar('@');
+			if (stream.nextIsWhitespace()) {
+				return SODL_result::error("Expected identifier after @, found white space");
+			}
 		}
 		std::string ident;
 		SODL_result res = stream.readIdentifier(ident);
@@ -447,10 +469,13 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 					delete pvalue.pObject;
 					return res;
 				}
+				res = object.setPropertyObject(ident, pvalue.pObject);
 			} else {
 				res = stream.readValue(pdesc.type, pvalue.simpleValue);
+				if (!res)
+					return res;
+				res = assignPropertyValue(object, pdesc, pvalue.simpleValue, 0, ident);
 			}
-			res = object.setPropertyValue(ident, pvalue);
 			if (pvalue.pObject)
 				delete pvalue.pObject;
 			if (!res)

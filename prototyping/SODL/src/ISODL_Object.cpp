@@ -11,23 +11,25 @@ void ISODL_Object::defineSecondaryProperty(const char* name, SODL_Property_Descr
 }
 
 SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& val) {
-
+	return SODL_result::error("not implemented");
 }
 
 SODL_result ISODL_Object::instantiateClass(std::string className, ISODL_Object* &out_pInstance) {
-
+	return SODL_result::error("not implemented");
 }
 
 SODL_result ISODL_Object::addChildObject(ISODL_Object* &out_pInstance) {
-
+	return SODL_result::error("not implemented");
 }
 
 SODL_result ISODL_Object::setPropertyValue(std::string propName, SODL_PropValue const& val) {
-
+	return SODL_result::error("not implemented");
 }
 
 SODL_Property_Descriptor ISODL_Object::describePrimaryProperty(unsigned index) {
-	return SODL_Property_Descriptor {};
+	if (index > primaryPropertyDesc_)
+		return 
+	return primaryPropertyDesc_[index];
 }
 
 SODL_Property_Descriptor describeProperty(std::string const& propName) {

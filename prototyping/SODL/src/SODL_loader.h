@@ -64,6 +64,8 @@ private:
 
 	SODL_result resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType);
 	SODL_result checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes);
+	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
+									SODL_Value& val, unsigned primaryPropIdx, const char* propName);
 };
 
 #include "SODL_loader_private.h"
