@@ -3,6 +3,7 @@
 #include "SODL_common.h"
 
 #include <vector>
+#include <unordered_map>
 
 struct SODL_Property_Descriptor {
 	// true if property is an object type, false if it's a value type
@@ -14,7 +15,9 @@ struct SODL_Property_Descriptor {
 	// types of arguments if the property is a callback
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the std::function<...> within the object that will receive the callback binding
-	void* callbackPtr;
+	void* callbackPtr = nullptr;
+	
+	SODL_Property_Descriptor() = default;
 	
 	// constructs a descriptor for a simple value type property
 	SODL_Property_Descriptor(SODL_Value::Type valueType);
@@ -45,6 +48,8 @@ private:
 	friend class SODL_Loader;
 
 	std::string id_ = "UNIDENTIFIED";
+	std::vector<SODL_Property_Descriptor> primaryPropertyDesc_;
+	std::unordered_map<std::string, SODL_Property_Descriptor> mapPropertyDesc_;
 
 	void setId(std::string id) { id_ = id; }
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
@@ -52,6 +57,6 @@ private:
 	SODL_result instantiateClass(std::string className, ISODL_Object* &out_pInstance);
 	SODL_result addChildObject(ISODL_Object* &out_pInstance);
 
-	SODL_Property_Descriptor describePrimaryProperty(unsigned index);
-	SODL_Property_Descriptor describeProperty(std::string const& propName);
+	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
+	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);
 };

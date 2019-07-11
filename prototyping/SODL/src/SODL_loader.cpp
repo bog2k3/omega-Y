@@ -340,7 +340,7 @@ SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Obj
 }
 
 SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
-	SODL_Value& val, unsigned primaryPropIdx, const char* propName) {
+	SODL_Value& val, unsigned primaryPropIdx, std::string propName) {
 	SODL_result res;
 	if (val.isBinding) {
 		if (desc.type == SODL_Value::Type::Callback) {
@@ -353,22 +353,22 @@ SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property
 			if (!res)
 				return res;
 			if (desc.callbackPtr == nullptr)
-				return SODL_result::error(strcat() << "Callback property " << propIdx << " does not supply a function pointer");
+				return SODL_result::error(strcat() << "Callback property does not supply a function pointer");
 			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
 		} else {
 			// retrieve the registered data binding and set its value onto the object
 			res = resolveDataBinding(val, desc.type);
 			if (!res)
 				return res;
-			if (propName == nullptr)
-				res = object.setPrimaryProperty(propIdx, val);
+			if (propName.empty())
+				res = object.setPrimaryProperty(primaryPropIdx, val);
 			else
-				res = object.setPropertyValue(propName, val);
+				res = object.setPropertyValue(propName, {val});
 		}
-	} else if (propName == nullptr)
-		res = object.setPrimaryProperty(propIdx, val);
+	} else if (propName.empty())
+		res = object.setPrimaryProperty(primaryPropIdx, val);
 	else
-		res = object.setPropertyValue(propName, val);
+		res = object.setPropertyValue(propName, {val});
 	return res;
 }
 
@@ -387,13 +387,16 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 	}
 	unsigned propIdx = 0;
 	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
-		SODL_Property_Descriptor desc = object.describePrimaryProperty(propIdx);
+		SODL_Property_Descriptor desc;
+		res = object.describePrimaryProperty(propIdx, desc);
+		if (!res)
+			return res;
 		assertDbg(!desc.isObject);
 		SODL_Value val;
 		res = stream.readValue(desc.type, val);
 		if (!res)
 			return res;
-		res = assignPropertyValue(object, val, propIdx, nullptr);
+		res = assignPropertyValue(object, desc, val, propIdx, nullptr);
 		if (!res)
 			return res;
 		propIdx++;
@@ -458,10 +461,13 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		} else if (stream.nextChar() == ':') {
 			// this is a property
 			stream.skipChar(':');
-			SODL_Property_Descriptor pdesc = object.describeProperty(ident);
+			SODL_Property_Descriptor pdesc;
+			res = object.describeProperty(ident, pdesc);
+			if (!res)
+				return res;
 			SODL_PropValue pvalue;
 			if (pdesc.isObject) {
-				res = factory_.constructObject(ident, pvalue.pObject);
+				res = factory_.constructObject(pdesc.objectType, pvalue.pObject);
 				if (!res)
 					return res;
 				res = mergeObjectImpl(*pvalue.pObject, stream);
@@ -469,7 +475,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 					delete pvalue.pObject;
 					return res;
 				}
-				res = object.setPropertyObject(ident, pvalue.pObject);
+				res = object.setPropertyValue(ident, pvalue);
 			} else {
 				res = stream.readValue(pdesc.type, pvalue.simpleValue);
 				if (!res)
@@ -477,7 +483,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 				res = assignPropertyValue(object, pdesc, pvalue.simpleValue, 0, ident);
 			}
 			if (pvalue.pObject)
-				delete pvalue.pObject;
+				delete pvalue.pObject; // TODO use some shared_ptr or something to avoid problems
 			if (!res)
 				return res;
 		} else {

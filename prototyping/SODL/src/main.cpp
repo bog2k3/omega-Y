@@ -118,6 +118,9 @@ void loadSODL(char const* path) {
 		} else {
 			LOGLN("SODL Load success");
 		}
+		delete pRoot;
+	} else {
+		ERROR("Failed to construct root object");
 	}
 }
 
