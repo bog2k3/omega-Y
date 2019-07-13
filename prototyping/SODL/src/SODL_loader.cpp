@@ -208,7 +208,7 @@ void SODL_Loader::addDataBinding(const char* name, SODL_Value::Type type, void* 
 }
 
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
-SODL_result SODL_Loader::loadObject(const char* filename, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::loadObject(const char* filename, std::shared_ptr<ISODL_Object> &out_pObj) {
 	auto text = readFile(filename);
 	if (!text.first || !text.second) {
 		return SODL_result::error("Unable to open SODL file");
@@ -297,7 +297,7 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 	return output + 1 - outputStart; // return the size of the output
 }
 
-SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, std::shared_ptr<ISODL_Object> &out_pObj) {
 	// 1. read object type
 	// 2. instantiate object
 	// 3. call mergeObject on intantiated object with the rest of the buffer
@@ -310,7 +310,7 @@ SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, ISODL_
 		res = instantiateObject(objType, out_pObj);
 		if (!res)
 			break;
-		assertDbg(out_pObj);
+		assertDbg(out_pObj != nullptr);
 		res = mergeObjectImpl(*out_pObj, stream);
 	} while (0);
 	return res;
@@ -332,7 +332,7 @@ SODL_result SODL_Loader::readObjectType(SODL_Loader::ParseStream &stream, std::s
 	return stream.readIdentifier(out_type);
 }
 
-SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::instantiateObject(std::string const& objType, std::shared_ptr<ISODL_Object> &out_pObj) {
 	SODL_result res = factory_.constructObject(objType, out_pObj);
 	if (!res)
 		res.errorMessage = "Failed to construct object of type [" + objType + "]; Reason: \"" + res.errorMessage + "\"";
@@ -363,12 +363,12 @@ SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property
 			if (propName.empty())
 				res = object.setPrimaryProperty(primaryPropIdx, val);
 			else
-				res = object.setPropertyValue(propName, {val});
+				res = object.setProperty(propName, val);
 		}
 	} else if (propName.empty())
 		res = object.setPrimaryProperty(primaryPropIdx, val);
 	else
-		res = object.setPropertyValue(propName, {val});
+		res = object.setProperty(propName, val);
 	return res;
 }
 
@@ -444,7 +444,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		if (!res)
 			return res;
 		if (classInstance) {
-			ISODL_Object *pInstanceObj = nullptr;
+			std::shared_ptr<ISODL_Object> pInstanceObj;
 			res = object.instantiateClass(ident, pInstanceObj);
 			if (!res)
 				return res;
@@ -461,34 +461,43 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		} else if (stream.nextChar() == ':') {
 			// this is a property
 			stream.skipChar(':');
+			if (stream.eol())
+				return SODL_result::error("End of line while expecting property value after ':'");
 			SODL_Property_Descriptor pdesc;
 			res = object.describeProperty(ident, pdesc);
 			if (!res)
 				return res;
-			SODL_PropValue pvalue;
 			if (pdesc.isObject) {
-				res = factory_.constructObject(pdesc.objectType, pvalue.pObject);
+				assertDbg(pdesc.objectTypes.size() > 0);
+				std::shared_ptr<ISODL_Object> pPropObj;
+				std::string objectType = pdesc.objectTypes[0];
+				if (pdesc.objectTypes.size() > 1) {
+					// there are multiple possible object types, we read the first primary value and 
+					// that will tell us the object type to instantiate
+					res = stream.readIdentifier(objectType);
+					if (!res)
+						return res;
+				}
+				res = instantiateObject(objectType, pPropObj);
 				if (!res)
 					return res;
-				res = mergeObjectImpl(*pvalue.pObject, stream);
+				res = mergeObjectImpl(*pPropObj, stream);
 				if (!res) {
-					delete pvalue.pObject;
 					return res;
 				}
-				res = object.setPropertyValue(ident, pvalue);
+				res = object.setProperty(ident, objectType, pPropObj);
 			} else {
-				res = stream.readValue(pdesc.type, pvalue.simpleValue);
+				SODL_Value val;
+				res = stream.readValue(pdesc.type, val);
 				if (!res)
 					return res;
-				res = assignPropertyValue(object, pdesc, pvalue.simpleValue, 0, ident);
+				res = assignPropertyValue(object, pdesc, val, 0, ident);
 			}
-			if (pvalue.pObject)
-				delete pvalue.pObject; // TODO use some shared_ptr or something to avoid problems
 			if (!res)
 				return res;
 		} else {
 			// this must be a child object
-			ISODL_Object *pObj = nullptr;
+			std::shared_ptr<ISODL_Object> pObj;
 			res = loadObjectImpl(stream, pObj);
 			if (!res)
 				return res;

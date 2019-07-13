@@ -1,4 +1,6 @@
 #include "GUI_SODL_OBJ_Factory.h"
+#include "SODL_wrappers/common/Coord2SODLWrapper.h"
+#include "SODL_wrappers/common/Coord4SODLWrapper.h"
 #include "SODL_wrappers/GUI/ButtonSODLWrapper.h"
 #include "SODL_wrappers/GUI/ContainerSODLWrapper.h"
 #include "SODL_wrappers/GUI/LabelSODLWrapper.h"
@@ -7,15 +9,17 @@
 #include "SODL_wrappers/GUI/SliderSODLWrapper.h"
 #include "SODL_wrappers/GUI/TextFieldSODLWrapper.h"
 
-SODL_result GUI_SODL_OBJ_Factory::constructObject(std::string const& objType, ISODL_Object* &outObj) {
+SODL_result GUI_SODL_OBJ_Factory::constructObject(std::string const& objType, std::shared_ptr<ISODL_Object> &outObj) {
 	auto it = mapFuncs_.find(objType);
 	if (it == mapFuncs_.end())
 		return SODL_result::error("Unknown object type: " + objType);
-	outObj = (this->*it->second)();
+	outObj = std::shared_ptr<ISODL_Object>{ (this->*it->second)() };
 	return SODL_result::OK();
 }
 
 GUI_SODL_OBJ_Factory::GUI_SODL_OBJ_Factory() {
+	mapFuncs_["coord2"] = &GUI_SODL_OBJ_Factory::createCoord2;
+	mapFuncs_["coord4"] = &GUI_SODL_OBJ_Factory::createCoord4;
 	mapFuncs_["label"] = &GUI_SODL_OBJ_Factory::createLabel;
 	mapFuncs_["marker"] = &GUI_SODL_OBJ_Factory::createMarker;
 	mapFuncs_["picture"] = &GUI_SODL_OBJ_Factory::createPicture;
@@ -23,6 +27,14 @@ GUI_SODL_OBJ_Factory::GUI_SODL_OBJ_Factory() {
 	mapFuncs_["textField"] = &GUI_SODL_OBJ_Factory::createTextField;
 	mapFuncs_["slider"] = &GUI_SODL_OBJ_Factory::createSlider;
 	mapFuncs_["button"] = &GUI_SODL_OBJ_Factory::createButton;
+}
+
+ISODL_Object* GUI_SODL_OBJ_Factory::createCoord2() {
+	return new Coord2SODLWrapper();
+}
+
+ISODL_Object* GUI_SODL_OBJ_Factory::createCoord4() {
+	return new Coord4SODLWrapper();
 }
 
 ISODL_Object* GUI_SODL_OBJ_Factory::createLabel() {

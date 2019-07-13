@@ -8,7 +8,13 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type valueType)
 
 // constructs a descriptor for an object type property
 SODL_Property_Descriptor::SODL_Property_Descriptor(std::string objectType)
-	: isObject(true), objectType(objectType) {
+	: isObject(true) {
+	objectTypes.push_back(objectType);
+}
+
+// constructs a descriptor for an object type property that can accept one of multiple object types
+SODL_Property_Descriptor::SODL_Property_Descriptor(std::vector<std::string> objectTypes)
+	: isObject(true), objectTypes(objectTypes) {
 }
 
 // constructs a descriptor for a callback (std::function<void(argTypes...)>)
@@ -32,15 +38,20 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 	return SODL_result::error("not implemented");
 }
 
-SODL_result ISODL_Object::instantiateClass(std::string className, ISODL_Object* &out_pInstance) {
+SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
 	return SODL_result::error("not implemented");
 }
 
-SODL_result ISODL_Object::addChildObject(ISODL_Object* &out_pInstance) {
+SODL_result ISODL_Object::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 	return SODL_result::error("not implemented");
 }
 
-SODL_result ISODL_Object::setPropertyValue(std::string propName, SODL_PropValue const& val) {
+SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value const& val) {
+	return SODL_result::error("not implemented");
+}
+
+SODL_result ISODL_Object::setProperty(std::string const& propName, 
+	std::string const& objectType, std::shared_ptr<ISODL_Object> objPtr) {
 	return SODL_result::error("not implemented");
 }
 

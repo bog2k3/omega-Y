@@ -4,14 +4,17 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 struct SODL_Property_Descriptor {
 	// true if property is an object type, false if it's a value type
 	bool isObject;
 	// the value type of the property, assuming isObject==false
 	SODL_Value::Type type;
-	// the object type of the property, assuming isObject==true
-	std::string objectType;
+	// the possible object types of the property, assuming isObject==true
+	// if more than one value is supplied, then the first primary property read is interpreted as
+	// the effective object type and must match one of these; then that object type is instantiated;
+	std::vector<std::string> objectTypes;
 	// types of arguments if the property is a callback
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the std::function<...> within the object that will receive the callback binding
@@ -24,6 +27,9 @@ struct SODL_Property_Descriptor {
 	
 	// constructs a descriptor for an object type property
 	SODL_Property_Descriptor(std::string objectType);
+	
+	// constructs a descriptor for an object type property that can accept one of multiple object types
+	SODL_Property_Descriptor(std::vector<std::string> objectTypes);
 	
 	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
 	SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes);
@@ -53,9 +59,10 @@ private:
 
 	void setId(std::string id) { id_ = id; }
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
-	SODL_result setPropertyValue(std::string propName, SODL_PropValue const& val);
-	SODL_result instantiateClass(std::string className, ISODL_Object* &out_pInstance);
-	SODL_result addChildObject(ISODL_Object* &out_pInstance);
+	SODL_result setProperty(std::string const& propName, SODL_Value const& val);
+	SODL_result setProperty(std::string const& propName, std::string const& objectType, std::shared_ptr<ISODL_Object> objPtr);
+	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance);
+	SODL_result addChildObject(std::shared_ptr<ISODL_Object> pObj);
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);

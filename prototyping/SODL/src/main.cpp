@@ -109,7 +109,7 @@ void loadSODL(char const* path) {
 	loader.addActionBinding<void()>("goBack", {}, std::bind(&CALLBACKS::onGoBack, &callbacks));
 	loader.addActionBinding<void()>("startGame", {}, std::bind(&CALLBACKS::onStartGame, &callbacks));
 
-	ISODL_Object* pRoot = nullptr;
+	std::shared_ptr<ISODL_Object> pRoot;
 	if (objFactory.constructObject("container", pRoot)) {
 		auto res = loader.mergeObject(*pRoot, path);
 		if (!res) {
@@ -118,7 +118,6 @@ void loadSODL(char const* path) {
 		} else {
 			LOGLN("SODL Load success");
 		}
-		delete pRoot;
 	} else {
 		ERROR("Failed to construct root object");
 	}
