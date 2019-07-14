@@ -31,9 +31,10 @@ struct SODL_Value {
 		Enum,			// enums are written as enum element names, and delivered as int
 		Callback		// callbacks have special handling - see SODL_Property_Descriptor
 	};
-	bool isBinding;
+	bool isBinding = false;
 	std::string bindingName;
-	float numberVal;
+	float numberVal = 0;
+	bool isPercentCoord = false;
 	std::string stringVal;
 	std::string enumVal;
 };

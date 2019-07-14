@@ -149,7 +149,32 @@ public:
 	}
 
 	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
-		return SODL_result::error("not implemented");
+		switch (type) {
+			case SODL_Value::Type::Callback:
+				if (nextChar() != '$')
+					return SODL_result::error("Expected callback binding to start with $");
+				skipChar('$');
+				out_val.isBinding = true;
+				return readIdentifier(out_val.bindingName);
+			case SODL_Value::Type::Coordinate: {
+				auto res = readNumber(out_val.numberVal);
+				if (!res)
+					return res;
+				if (!eof() && *bufCrt_ == '%') {
+					skipChar('%');
+					out_val.isPercentCoord = true;
+				}
+				return SODL_result::OK();
+			}
+			case SODL_Value::Type::Enum:
+				return readIdentifier(out_val.enumVal);
+			case SODL_Value::Type::Number:
+				return readNumber(out_val.numberVal);
+			case SODL_Value::Type::String:
+				return readQuotedString(out_val.stringVal);
+			default:
+				return SODL_result::error(strcat() << "unknown value type: " << type);
+		}
 	}
 	
 	bool nextIsWhitespace() {
