@@ -470,13 +470,23 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 			if (pdesc.isObject) {
 				assertDbg(pdesc.objectTypes.size() > 0);
 				std::shared_ptr<ISODL_Object> pPropObj;
-				std::string objectType = pdesc.objectTypes[0];
+				std::string objectType = pdesc.objectTypes[0].second;
 				if (pdesc.objectTypes.size() > 1) {
 					// there are multiple possible object types, we read the first primary value and 
 					// that will tell us the object type to instantiate
-					res = stream.readIdentifier(objectType);
+					std::string typeAlias;
+					res = stream.readIdentifier(typeAlias);
 					if (!res)
 						return res;
+					bool found = false;
+					for (auto &p : pdesc.objectTypes)
+						if (p.first == typeAlias) {
+							objectType = p.second;
+							found = true;
+							break;
+						}
+					if (!found)
+						return SODL_result::error(strcat() << "Object type alias '" << typeAlias << "' for property '" << ident << "' is not known");
 				}
 				res = instantiateObject(objectType, pPropObj);
 				if (!res)

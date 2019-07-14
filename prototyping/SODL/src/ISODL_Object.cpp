@@ -9,11 +9,11 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type valueType)
 // constructs a descriptor for an object type property
 SODL_Property_Descriptor::SODL_Property_Descriptor(std::string objectType)
 	: isObject(true) {
-	objectTypes.push_back(objectType);
+	objectTypes.push_back({objectType, objectType});
 }
 
 // constructs a descriptor for an object type property that can accept one of multiple object types
-SODL_Property_Descriptor::SODL_Property_Descriptor(std::vector<std::string> objectTypes)
+SODL_Property_Descriptor::SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes)
 	: isObject(true), objectTypes(objectTypes) {
 }
 

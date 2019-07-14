@@ -14,7 +14,8 @@ struct SODL_Property_Descriptor {
 	// the possible object types of the property, assuming isObject==true
 	// if more than one value is supplied, then the first primary property read is interpreted as
 	// the effective object type and must match one of these; then that object type is instantiated;
-	std::vector<std::string> objectTypes;
+	// first is type alias, second is actual object type to instantiate
+	std::vector<std::pair<std::string, std::string>> objectTypes;
 	// types of arguments if the property is a callback
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the std::function<...> within the object that will receive the callback binding
@@ -29,7 +30,12 @@ struct SODL_Property_Descriptor {
 	SODL_Property_Descriptor(std::string objectType);
 	
 	// constructs a descriptor for an object type property that can accept one of multiple object types
-	SODL_Property_Descriptor(std::vector<std::string> objectTypes);
+	// for each element in vector: first is type alias (to be read from SODL file), second is actual object type
+	// this allows you to use shorter aliases for different possible object types of one property; for example:
+	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...} 
+	// SODL file: property1: alias1 5 3 1 "somePrimaryProp"
+	// property1 will receive an object of type Prop1ObjectType1
+	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes);
 	
 	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
 	SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes);
