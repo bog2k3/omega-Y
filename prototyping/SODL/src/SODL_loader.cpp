@@ -6,6 +6,7 @@
 #include <boglfw/utils/assert.h>
 
 #include <fstream>
+#include <cmath>
 
 /*
 	SODL file structure
@@ -147,6 +148,10 @@ public:
 	bool eof() {
 		return bufCrt_ >= bufEnd_;
 	}
+	
+	bool nextIsWhitespace() {
+		return !eof() && isWhitespace(*bufCrt_);
+	}
 
 	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
 		switch (type) {
@@ -173,14 +178,69 @@ public:
 			case SODL_Value::Type::String:
 				return readQuotedString(out_val.stringVal);
 			default:
-				return SODL_result::error(strcat() << "unknown value type: " << type);
+				return SODL_result::error(strcat() << "unknown value type: " << (int)type);
 		}
 	}
 	
-	bool nextIsWhitespace() {
-		return !eof() && isWhitespace(*bufCrt_);
+	SODL_result readQuotedString(std::string &out_str) {
+		skipWhitespace(false);
+		if (eol() || eof())
+			return SODL_result::error("End of line while expecting a string value");
+		if (*bufCrt_ != '"')
+			return SODL_result::error(strcat() << "Unexpected character while expecting a string value: '" << *bufCrt_ << "'");
+		bufCrt_++;
+		const char* strBegin = bufCrt_;
+		const char* strEnd = strBegin;
+		while (!eol() && !eof() && *bufCrt_ != '"')
+			strEnd++, bufCrt_++;
+		if (eol() || eof())
+			return SODL_result::error("End of line while reading a string value");
+		skipChar('"');
+		out_str = std::string(strBegin, strEnd);
+		return SODL_result::OK();
 	}
-
+	
+	SODL_result readNumber(float &out_nr) {
+		skipWhitespace(false);
+		out_nr = 0;
+		bool firstDigit = true;
+		bool hasDot = false;
+		bool negative = false;
+		int decimalPlace = 0;
+		while (!eof() && !eol() && !nextIsWhitespace()) {
+			if (*bufCrt_ == '-') {
+				if (!firstDigit)
+					return SODL_result::error(strcat() << "Invalid char within number: '-'");
+				negative = true;
+				bufCrt_++;
+				continue;
+			} else if (*bufCrt_ == '.') {
+				if (firstDigit)
+					return SODL_result::error("Number cannot begin with decimal dot");
+				if (hasDot)
+					return SODL_result::error("Number cannot contain multiple decimal dots");
+				hasDot = true;
+				decimalPlace = 1;
+				bufCrt_++;
+				continue;
+			} else if (!isValidDigit(*bufCrt_))
+				return SODL_result::error(strcat() << "Invalid char within number: '" << *bufCrt_ << "'");
+			int digitValue = (*bufCrt_ - '0') * (negative ? -1 : +1);
+			if (hasDot) {
+				out_nr += digitValue * pow(10, -decimalPlace);
+				decimalPlace++;
+			} else {
+				out_nr = out_nr * 10 + digitValue;
+			}
+			bufCrt_++;
+		}
+		if (firstDigit) {
+			// no digits were read
+			return SODL_result::error("End of line while expecting a number");
+		}
+		return SODL_result::OK();
+	}
+	
 	SODL_result readIdentifier(std::string &out_str) {
 		skipWhitespace(false);
 		const char* idStart = bufCrt_;
@@ -218,6 +278,10 @@ private:
 	bool isValidIdentChar(char c) {
 		return isValidFirstChar(c)
 			|| (c >= '0' && c <= '9');
+	}
+	
+	bool isValidDigit(char c) {
+		return (c >= '0') && (c <= '9');
 	}
 };
 
