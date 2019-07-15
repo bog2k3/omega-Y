@@ -447,9 +447,9 @@ SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property
 			res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
 			if (!res)
 				return res;
-			if (desc.callbackPtr == nullptr)
+			if (desc.valueOrCallbackPtr == nullptr)
 				return SODL_result::error(strcat() << "Callback property does not supply a function pointer");
-			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
+			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.valueOrCallbackPtr);
 		} else {
 			// retrieve the registered data binding and set its value onto the object
 			res = resolveDataBinding(val, desc.type);
@@ -590,7 +590,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 				if (!res) {
 					return res;
 				}
-				res = object.setProperty(ident, objectType, pPropObj);
+				res = object.setProperty(ident, pPropObj);
 			} else {
 				SODL_Value val;
 				res = stream.readValue(pdesc.type, val);

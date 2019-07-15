@@ -9,58 +9,28 @@
 #include "SODL_wrappers/GUI/SliderSODLWrapper.h"
 #include "SODL_wrappers/GUI/TextFieldSODLWrapper.h"
 
+GUI_SODL_OBJ_Factory::~GUI_SODL_OBJ_Factory() {
+	for (auto &p : mapCreators_)
+		delete p.second;
+	mapCreators_.clear();
+}
+
 SODL_result GUI_SODL_OBJ_Factory::constructObject(std::string const& objType, std::shared_ptr<ISODL_Object> &outObj) {
-	auto it = mapFuncs_.find(objType);
-	if (it == mapFuncs_.end())
+	auto it = mapCreators_.find(objType);
+	if (it == mapCreators_.end())
 		return SODL_result::error("Unknown object type: " + objType);
-	outObj = std::shared_ptr<ISODL_Object>{ (this->*it->second)() };
+	outObj = it->second->create();
 	return SODL_result::OK();
 }
 
 GUI_SODL_OBJ_Factory::GUI_SODL_OBJ_Factory() {
-	mapFuncs_["coord2"] = &GUI_SODL_OBJ_Factory::createCoord2;
-	mapFuncs_["coord4"] = &GUI_SODL_OBJ_Factory::createCoord4;
-	mapFuncs_["label"] = &GUI_SODL_OBJ_Factory::createLabel;
-	mapFuncs_["marker"] = &GUI_SODL_OBJ_Factory::createMarker;
-	mapFuncs_["picture"] = &GUI_SODL_OBJ_Factory::createPicture;
-	mapFuncs_["container"] = &GUI_SODL_OBJ_Factory::createContainer;
-	mapFuncs_["textField"] = &GUI_SODL_OBJ_Factory::createTextField;
-	mapFuncs_["slider"] = &GUI_SODL_OBJ_Factory::createSlider;
-	mapFuncs_["button"] = &GUI_SODL_OBJ_Factory::createButton;
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createCoord2() {
-	return new Coord2SODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createCoord4() {
-	return new Coord4SODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createLabel() {
-	return new LabelSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createMarker() {
-	return new MarkerSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createPicture() {
-	return new PictureSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createContainer() {
-	return new ContainerSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createTextField() {
-	return new TextFieldSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createSlider() {
-	return new SliderSODLWrapper();
-}
-
-ISODL_Object* GUI_SODL_OBJ_Factory::createButton() {
-	return new ButtonSODLWrapper();
+	addClassCreator<Coord2SODLWrapper>();
+	addClassCreator<Coord4SODLWrapper>();
+	addClassCreator<LabelSODLWrapper>();
+	addClassCreator<MarkerSODLWrapper>();
+	addClassCreator<PictureSODLWrapper>();
+	addClassCreator<ContainerSODLWrapper>();
+	addClassCreator<TextFieldSODLWrapper>();
+	addClassCreator<SliderSODLWrapper>();
+	addClassCreator<ButtonSODLWrapper>();
 }

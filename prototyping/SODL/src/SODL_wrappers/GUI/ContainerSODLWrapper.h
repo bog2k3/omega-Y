@@ -6,6 +6,7 @@
 
 class ContainerSODLWrapper : public ISODL_Object {
 public:
+	const std::string objectType() const override { return "container"; }
 	~ContainerSODLWrapper() override {}
 	ContainerSODLWrapper();
 	
