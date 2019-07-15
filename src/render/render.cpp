@@ -122,7 +122,12 @@ void deletePostProcessData(PostProcessData &postProcessData) {
 bool initRender(const char* winTitle, RenderData &renderData) {
 	LOGPREFIX("RENDER");
 	// set up window
-	if (!gltInitGLFW(renderData.windowW, renderData.windowH, winTitle, 0, false, true))
+	GLFW_Init_Config glfwCfg(renderData.windowW, renderData.windowH, winTitle);
+	glfwCfg.GL_Context_Major = 3;
+	glfwCfg.GL_Context_Minor = 3;
+	glfwCfg.GL_Context_Core_Profile = true;
+	glfwCfg.enableVSync = true;
+	if (!gltInitGLFW(glfwCfg))
 		return false;
 	renderData.setupDependencies();
 
