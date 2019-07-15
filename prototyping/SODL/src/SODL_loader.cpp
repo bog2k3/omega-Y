@@ -162,7 +162,7 @@ public:
 				out_val.isBinding = true;
 				return readIdentifier(out_val.bindingName);
 			case SODL_Value::Type::Coordinate: {
-				auto res = readNumber(out_val.numberVal);
+				auto res = readNumber(out_val.numberVal, true);
 				if (!res)
 					return res;
 				if (!eof() && *bufCrt_ == '%') {
@@ -174,7 +174,7 @@ public:
 			case SODL_Value::Type::Enum:
 				return readIdentifier(out_val.enumVal);
 			case SODL_Value::Type::Number:
-				return readNumber(out_val.numberVal);
+				return readNumber(out_val.numberVal, false);
 			case SODL_Value::Type::String:
 				return readQuotedString(out_val.stringVal);
 			default:
@@ -200,7 +200,7 @@ public:
 		return SODL_result::OK();
 	}
 	
-	SODL_result readNumber(float &out_nr) {
+	SODL_result readNumber(float &out_nr, bool allowPercent) {
 		skipWhitespace(false);
 		out_nr = 0;
 		bool firstDigit = true;
@@ -223,8 +223,13 @@ public:
 				decimalPlace = 1;
 				bufCrt_++;
 				continue;
-			} else if (!isValidDigit(*bufCrt_))
-				return SODL_result::error(strcat() << "Invalid char within number: '" << *bufCrt_ << "'");
+			} else if (!isValidDigit(*bufCrt_)) {
+				if (allowPercent && *bufCrt_ == '%')
+					break; // this would be the end of our number
+				else
+					return SODL_result::error(strcat() << "Invalid char within number: '" << *bufCrt_ << "'");
+
+			}
 			int digitValue = (*bufCrt_ - '0') * (negative ? -1 : +1);
 			if (hasDot) {
 				out_nr += digitValue * pow(10, -decimalPlace);
@@ -232,6 +237,7 @@ public:
 			} else {
 				out_nr = out_nr * 10 + digitValue;
 			}
+			firstDigit = false;
 			bufCrt_++;
 		}
 		if (firstDigit) {
@@ -485,7 +491,7 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 		res = stream.readValue(desc.type, val);
 		if (!res)
 			return res;
-		res = assignPropertyValue(object, desc, val, propIdx, nullptr);
+		res = assignPropertyValue(object, desc, val, propIdx, "");
 		if (!res)
 			return res;
 		propIdx++;
