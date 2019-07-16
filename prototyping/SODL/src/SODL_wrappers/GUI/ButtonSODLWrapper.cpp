@@ -3,6 +3,6 @@
 ButtonSODLWrapper::ButtonSODLWrapper()
 	: button_(new Button("unset")) {
 
-	definePrimaryProperty("text", SODL_Value::Type::String, nullptr);
-	definePrimaryProperty("onClick", SODL_Value::Type::Callback, nullptr);
+	definePrimaryProperty<std::string>("text", nullptr);
+	definePrimaryProperty<void*>("onClick", nullptr);
 }

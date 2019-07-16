@@ -2,11 +2,12 @@
 
 #include "SODL_common.h"
 
+#include <boglfw/utils/FlexibleCoordinate.h>
+
 #include <vector>
 #include <unordered_map>
 #include <memory>
 
-class FlexibleCoordinate;
 class ISODL_Object;
 
 struct SODL_Property_Descriptor {
@@ -23,23 +24,23 @@ struct SODL_Property_Descriptor {
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the receiving value or callback of type std::function<...> within the object that will receive the callback binding
 	void* valueOrCallbackPtr = nullptr;
-	
+
 	SODL_Property_Descriptor() = default;
-	
+
 	// constructs a descriptor for a simple value type property
 	SODL_Property_Descriptor(SODL_Value::Type valueType, void* valuePtr);
-	
+
 	// constructs a descriptor for an object type property
 	SODL_Property_Descriptor(std::string objectType, std::shared_ptr<ISODL_Object> *objectPtr);
-	
+
 	// constructs a descriptor for an object type property that can accept one of multiple object types
 	// for each element in vector: first is type alias (to be read from SODL file), second is actual object type
 	// this allows you to use shorter aliases for different possible object types of one property; for example:
-	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...} 
+	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
 	// SODL file: property1: alias1 5 3 1 "somePrimaryProp"
 	// property1 will receive an object of type Prop1ObjectType1
 	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr);
-	
+
 	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
 	SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes);
 };
@@ -57,9 +58,9 @@ protected:
 	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
 	// these can only be simple types;
 	// if user supplies a non-null valuePtr, then this will be used to set the value directly when it is loaded from the file;
-	// the loader assumes the pointer points to the correct data type for the specified [type] parameter;
 	// if null is provided as [valuePtr], then the value is set by invoking the [setUserPropertyValue] method which you must override.
-	void definePrimaryProperty(const char* name, SODL_Value::Type type, void* valuePtr);
+	template <class PropType>
+	void definePrimaryProperty(const char* name, PropType* valuePtr);
 
 	// defines a "secondary" (optional) property; these must be defined as name: value within the element's block
 	// these can also be object types
@@ -72,7 +73,7 @@ protected:
 	virtual bool setUserPropertyValue(const char* propName, float numberVal) { return false; }
 	virtual bool setUserPropertyValue(const char* propName, FlexibleCoordinate const& coordVal) { return false; }
 	virtual bool setUserPropertyValue(const char* propName, std::string const& stringVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, unsigned enumVal) { return false; }
+	virtual bool setUserPropertyValue(const char* propName, int32_t enumVal) { return false; }
 	// this method is invoked for object-type properties;
 	// the actual object type that is provided can be found by calling objPtr->objectType()
 	virtual bool setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) { return false; }
@@ -93,4 +94,15 @@ private:
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);
+
+	void definePrimaryPropertyImpl(const char* name, SODL_Value::Type valueType, void* valuePtr);
 };
+
+template<>
+void ISODL_Object::definePrimaryProperty(const char* name, float* numberValuePtr);
+template<>
+void ISODL_Object::definePrimaryProperty(const char* name, FlexibleCoordinate* coordValuePtr);
+template<>
+void ISODL_Object::definePrimaryProperty(const char* name, std::string* stringValuePtr);
+template<>
+void ISODL_Object::definePrimaryProperty(const char* name, int32_t* enumValuePtr);

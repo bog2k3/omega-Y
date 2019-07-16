@@ -3,14 +3,14 @@
 #include <sstream>
 #include <string>
 
-class strcat {
+class strbld {
 public:
 	operator std::string() const {
 		return sstream_.str();
 	}
 
 	template <class C>
-	strcat& operator << (C const& c) {
+	strbld& operator << (C const& c) {
 		sstream_ << c;
 		return *this;
 	}

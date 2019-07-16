@@ -9,10 +9,10 @@ public:
 	const std::string objectType() const override { return "coord4"; }
 	~Coord4SODLWrapper() override {}
 	Coord4SODLWrapper() {
-		definePrimaryProperty("top", SODL_Value::Type::Coordinate, &coordPairTopLeft_.y);
-		definePrimaryProperty("right", SODL_Value::Type::Coordinate, &coordPairBottomRight_.x);
-		definePrimaryProperty("bottom", SODL_Value::Type::Coordinate, &coordPairBottomRight_.y);
-		definePrimaryProperty("left", SODL_Value::Type::Coordinate, &coordPairTopLeft_.x);
+		definePrimaryProperty("top", &coordPairTopLeft_.y);
+		definePrimaryProperty("right", &coordPairBottomRight_.x);
+		definePrimaryProperty("bottom", &coordPairBottomRight_.y);
+		definePrimaryProperty("left", &coordPairTopLeft_.x);
 	}
 
 private:

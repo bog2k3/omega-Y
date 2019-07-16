@@ -1,6 +1,6 @@
 #include "SODL_loader.h"
 #include "ISODL_Object.h"
-#include "strcat.h"
+#include "strbld.h"
 
 #include <boglfw/utils/filesystem.h>
 #include <boglfw/utils/assert.h>
@@ -135,7 +135,7 @@ public:
 		bufCrt_++;
 		skipWhitespace(false);
 	}
-	
+
 	void skipEOL() {
 		assertDbg(eol());
 		skipWhitespace(true);
@@ -148,7 +148,7 @@ public:
 	bool eof() {
 		return bufCrt_ >= bufEnd_;
 	}
-	
+
 	bool nextIsWhitespace() {
 		return !eof() && isWhitespace(*bufCrt_);
 	}
@@ -178,16 +178,16 @@ public:
 			case SODL_Value::Type::String:
 				return readQuotedString(out_val.stringVal);
 			default:
-				return SODL_result::error(strcat() << "unknown value type: " << (int)type);
+				return SODL_result::error(strbld() << "unknown value type: " << (int)type);
 		}
 	}
-	
+
 	SODL_result readQuotedString(std::string &out_str) {
 		skipWhitespace(false);
 		if (eol() || eof())
 			return SODL_result::error("End of line while expecting a string value");
 		if (*bufCrt_ != '"')
-			return SODL_result::error(strcat() << "Unexpected character while expecting a string value: '" << *bufCrt_ << "'");
+			return SODL_result::error(strbld() << "Unexpected character while expecting a string value: '" << *bufCrt_ << "'");
 		bufCrt_++;
 		const char* strBegin = bufCrt_;
 		const char* strEnd = strBegin;
@@ -199,7 +199,7 @@ public:
 		out_str = std::string(strBegin, strEnd);
 		return SODL_result::OK();
 	}
-	
+
 	SODL_result readNumber(float &out_nr, bool allowPercent) {
 		skipWhitespace(false);
 		out_nr = 0;
@@ -210,7 +210,7 @@ public:
 		while (!eof() && !eol() && !nextIsWhitespace()) {
 			if (*bufCrt_ == '-') {
 				if (!firstDigit)
-					return SODL_result::error(strcat() << "Invalid char within number: '-'");
+					return SODL_result::error(strbld() << "Invalid char within number: '-'");
 				negative = true;
 				bufCrt_++;
 				continue;
@@ -227,7 +227,7 @@ public:
 				if (allowPercent && *bufCrt_ == '%')
 					break; // this would be the end of our number
 				else
-					return SODL_result::error(strcat() << "Invalid char within number: '" << *bufCrt_ << "'");
+					return SODL_result::error(strbld() << "Invalid char within number: '" << *bufCrt_ << "'");
 
 			}
 			int digitValue = (*bufCrt_ - '0') * (negative ? -1 : +1);
@@ -246,7 +246,7 @@ public:
 		}
 		return SODL_result::OK();
 	}
-	
+
 	SODL_result readIdentifier(std::string &out_str) {
 		skipWhitespace(false);
 		const char* idStart = bufCrt_;
@@ -272,20 +272,20 @@ private:
 		while (bufCrt_ < bufEnd_ && (isWhitespace(*bufCrt_) || (skipLineEnd && isEOL(*bufCrt_))))
 			bufCrt_++;
 	}
-	
+
 	// returns true if the char is valid as a first character of an identifier
 	bool isValidFirstChar(char c) {
 		return (c >= 'a' && c <= 'z')
 			|| (c >= 'A' && c <= 'Z')
 			|| c == '_';
 	}
-	
+
 	// returns true if the char is a valid char in the middle of an identifier
 	bool isValidIdentChar(char c) {
 		return isValidFirstChar(c)
 			|| (c >= '0' && c <= '9');
 	}
-	
+
 	bool isValidDigit(char c) {
 		return (c >= '0') && (c <= '9');
 	}
@@ -434,7 +434,7 @@ SODL_result SODL_Loader::instantiateObject(std::string const& objType, std::shar
 	return res;
 }
 
-SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
+SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc,
 	SODL_Value& val, unsigned primaryPropIdx, std::string propName) {
 	SODL_result res;
 	if (val.isBinding) {
@@ -442,13 +442,13 @@ SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property
 			// retrieve the registered action callback for this binding and set it onto the object
 			auto it = mapActionBindings_.find(val.bindingName);
 			if (it == mapActionBindings_.end())
-				return SODL_result::error(strcat() << "Action $" << val.bindingName << " was not defined.");
+				return SODL_result::error(strbld() << "Action $" << val.bindingName << " was not defined.");
 			auto &actionDesc = *it->second;
 			res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
 			if (!res)
 				return res;
 			if (desc.valueOrCallbackPtr == nullptr)
-				return SODL_result::error(strcat() << "Callback property does not supply a function pointer");
+				return SODL_result::error(strbld() << "Callback property does not supply a function pointer");
 			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.valueOrCallbackPtr);
 		} else {
 			// retrieve the registered data binding and set its value onto the object
@@ -513,7 +513,7 @@ SODL_result SODL_Loader::checkCallbackArgumentsMatch(std::vector<SODL_Value::Typ
 		return SODL_result::error("Action binding mismatch: wrong number of arguments");
 	for (unsigned i=0; i<argTypes.size(); i++) {
 		if (argTypes[i] != expectedTypes[i])
-			return SODL_result::error(strcat() << "Action binding mismatch: argument " << (i+1) << " type mismatch");
+			return SODL_result::error(strbld() << "Action binding mismatch: argument " << (i+1) << " type mismatch");
 	}
 	return SODL_result::OK();
 }
@@ -567,7 +567,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 				std::shared_ptr<ISODL_Object> pPropObj;
 				std::string objectType = pdesc.objectTypes[0].second;
 				if (pdesc.objectTypes.size() > 1) {
-					// there are multiple possible object types, we read the first primary value and 
+					// there are multiple possible object types, we read the first primary value and
 					// that will tell us the object type to instantiate
 					std::string typeAlias;
 					res = stream.readIdentifier(typeAlias);
@@ -581,7 +581,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 							break;
 						}
 					if (!found)
-						return SODL_result::error(strcat() << "Object type alias '" << typeAlias << "' for property '" << ident << "' is not known");
+						return SODL_result::error(strbld() << "Object type alias '" << typeAlias << "' for property '" << ident << "' is not known");
 				}
 				res = instantiateObject(objectType, pPropObj);
 				if (!res)

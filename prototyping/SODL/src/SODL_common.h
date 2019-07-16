@@ -25,10 +25,10 @@ struct SODL_result {
 
 struct SODL_Value {
 	enum class Type {
-		Number,			// simple floating point number
+		Number,			// simple 32-bit floating point number
 		Coordinate,		// coordinates can be written either as numbers or percents and are delivered as FlexibleCoordinate
 		String,			// strings are delivered as std::string
-		Enum,			// enums are written as enum element names, and delivered as int
+		Enum,			// enums are written as enum element names, and delivered as int32
 		Callback		// callbacks have special handling - see SODL_Property_Descriptor
 	};
 	bool isBinding = false;
