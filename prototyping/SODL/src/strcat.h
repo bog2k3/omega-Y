@@ -5,8 +5,6 @@
 
 class strcat {
 public:
-	strcat();
-
 	operator std::string() const {
 		return sstream_.str();
 	}

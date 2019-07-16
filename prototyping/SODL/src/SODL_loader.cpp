@@ -328,7 +328,7 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 				// retrieve the registered action callback for this binding and set it onto the object
 				auto it = mapActionBindings_.find(val.bindingName);
 				if (it == mapActionBindings_.end())
-					return SODL_result::error("Action $" + val.bindingName + " was not defined.");
+					return SODL_result::error(strcat() << "Action $" << val.bindingName << " was not defined.");
 				auto &actionDesc = *it->second;
 				res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
 				if (!res)
@@ -363,7 +363,7 @@ SODL_result SODL_Loader::checkCallbackArgumentsMatch(std::vector<SODL_Value::Typ
 		return SODL_result::error("Action binding mismatch: wrong number of arguments");
 	for (unsigned i=0; i<argTypes.size(); i++) {
 		if (argTypes[i] != expectedTypes[i])
-			return SODL_result::error(strcat() << "Action binding mismatch: argument " << i+1 << " type mismatch");
+			return SODL_result::error(strcat() << "Action binding mismatch: argument " << (i+1) << " type mismatch");
 	}
 	return SODL_result::OK();
 }
