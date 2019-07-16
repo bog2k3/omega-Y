@@ -52,7 +52,7 @@ SkyBox::SkyBox() {
 
 	renderData_->shaderProgram = &ShaderProgramManager::requestProgram<ShaderSkybox>();
 	renderData_->reloadHandler = renderData_->shaderProgram->onProgramReloaded.add([this](auto const&) {
-		setupVAO();
+		this->setupVAO();
 	});
 	setupVAO();
 

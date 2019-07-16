@@ -3,10 +3,10 @@
 
 #include <boglfw/World.h>
 
-#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
-#include <bullet3/LinearMath/btDefaultMotionState.h>
-#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
-#include <bullet3/BulletCollision/CollisionShapes/btCollisionShape.h>
+#include <bullet/BulletDynamics/Dynamics/btRigidBody.h>
+#include <bullet/LinearMath/btDefaultMotionState.h>
+#include <bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <bullet/BulletCollision/CollisionShapes/btCollisionShape.h>
 
 #include <glm/gtc/quaternion.hpp>
 

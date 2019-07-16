@@ -4,11 +4,11 @@
 #include <boglfw/World.h>
 #include <boglfw/math/math3D.h>
 
-#include <bullet3/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
-#include <bullet3/BulletCollision/BroadphaseCollision/btDispatcher.h>
-#include <bullet3/BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
-#include <bullet3/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
-#include <bullet3/BulletDynamics/Dynamics/btRigidBody.h>
+#include <bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <bullet/BulletCollision/BroadphaseCollision/btDispatcher.h>
+#include <bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
+#include <bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <bullet/BulletDynamics/Dynamics/btRigidBody.h>
 
 void checkCollision(PhysBodyProxy* pA, PhysBodyProxy* pB, btPersistentManifold* contactManifold, bool reverse) {
 	CollisionEvent ev;

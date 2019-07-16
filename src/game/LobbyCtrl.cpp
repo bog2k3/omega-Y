@@ -10,6 +10,7 @@
 
 #include <mutex>
 #include <vector>
+#include <cstring>
 
 struct HostInfo {
 	unsigned index;

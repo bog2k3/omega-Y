@@ -6,6 +6,7 @@
 #include <boglfw/utils/assert.h>
 
 #include <fstream>
+#include <cmath>
 
 /*
 	SODL file structure
@@ -134,6 +135,11 @@ public:
 		bufCrt_++;
 		skipWhitespace(false);
 	}
+	
+	void skipEOL() {
+		assertDbg(eol());
+		skipWhitespace(true);
+	}
 
 	bool eol() {
 		return bufCrt_ < bufEnd_ && isEOL(*bufCrt_);
@@ -142,13 +148,119 @@ public:
 	bool eof() {
 		return bufCrt_ >= bufEnd_;
 	}
-
-	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
-		return SODL_result::error("not implemented");
+	
+	bool nextIsWhitespace() {
+		return !eof() && isWhitespace(*bufCrt_);
 	}
 
+	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
+		switch (type) {
+			case SODL_Value::Type::Callback:
+				if (nextChar() != '$')
+					return SODL_result::error("Expected callback binding to start with $");
+				skipChar('$');
+				out_val.isBinding = true;
+				return readIdentifier(out_val.bindingName);
+			case SODL_Value::Type::Coordinate: {
+				auto res = readNumber(out_val.numberVal, true);
+				if (!res)
+					return res;
+				if (!eof() && *bufCrt_ == '%') {
+					skipChar('%');
+					out_val.isPercentCoord = true;
+				}
+				return SODL_result::OK();
+			}
+			case SODL_Value::Type::Enum:
+				return readIdentifier(out_val.enumVal);
+			case SODL_Value::Type::Number:
+				return readNumber(out_val.numberVal, false);
+			case SODL_Value::Type::String:
+				return readQuotedString(out_val.stringVal);
+			default:
+				return SODL_result::error(strcat() << "unknown value type: " << (int)type);
+		}
+	}
+	
+	SODL_result readQuotedString(std::string &out_str) {
+		skipWhitespace(false);
+		if (eol() || eof())
+			return SODL_result::error("End of line while expecting a string value");
+		if (*bufCrt_ != '"')
+			return SODL_result::error(strcat() << "Unexpected character while expecting a string value: '" << *bufCrt_ << "'");
+		bufCrt_++;
+		const char* strBegin = bufCrt_;
+		const char* strEnd = strBegin;
+		while (!eol() && !eof() && *bufCrt_ != '"')
+			strEnd++, bufCrt_++;
+		if (eol() || eof())
+			return SODL_result::error("End of line while reading a string value");
+		skipChar('"');
+		out_str = std::string(strBegin, strEnd);
+		return SODL_result::OK();
+	}
+	
+	SODL_result readNumber(float &out_nr, bool allowPercent) {
+		skipWhitespace(false);
+		out_nr = 0;
+		bool firstDigit = true;
+		bool hasDot = false;
+		bool negative = false;
+		int decimalPlace = 0;
+		while (!eof() && !eol() && !nextIsWhitespace()) {
+			if (*bufCrt_ == '-') {
+				if (!firstDigit)
+					return SODL_result::error(strcat() << "Invalid char within number: '-'");
+				negative = true;
+				bufCrt_++;
+				continue;
+			} else if (*bufCrt_ == '.') {
+				if (firstDigit)
+					return SODL_result::error("Number cannot begin with decimal dot");
+				if (hasDot)
+					return SODL_result::error("Number cannot contain multiple decimal dots");
+				hasDot = true;
+				decimalPlace = 1;
+				bufCrt_++;
+				continue;
+			} else if (!isValidDigit(*bufCrt_)) {
+				if (allowPercent && *bufCrt_ == '%')
+					break; // this would be the end of our number
+				else
+					return SODL_result::error(strcat() << "Invalid char within number: '" << *bufCrt_ << "'");
+
+			}
+			int digitValue = (*bufCrt_ - '0') * (negative ? -1 : +1);
+			if (hasDot) {
+				out_nr += digitValue * pow(10, -decimalPlace);
+				decimalPlace++;
+			} else {
+				out_nr = out_nr * 10 + digitValue;
+			}
+			firstDigit = false;
+			bufCrt_++;
+		}
+		if (firstDigit) {
+			// no digits were read
+			return SODL_result::error("End of line while expecting a number");
+		}
+		return SODL_result::OK();
+	}
+	
 	SODL_result readIdentifier(std::string &out_str) {
-		return SODL_result::error("not implemented");
+		skipWhitespace(false);
+		const char* idStart = bufCrt_;
+		// first char must be treated special
+		if (eof())
+			return SODL_result::error("Reached end of file while expecting an identifier.");
+		if (!isValidFirstChar(*bufCrt_))
+			return SODL_result::error("Identifier starts with invalid character.");
+		bufCrt_++;
+		while (!eof() && isValidIdentChar(*bufCrt_))
+			bufCrt_++;
+		out_str = std::string(idStart, bufCrt_);
+		skipWhitespace(false);
+		return SODL_result::OK();
 	}
 
 private:
@@ -159,6 +271,23 @@ private:
 	void skipWhitespace(bool skipLineEnd) {
 		while (bufCrt_ < bufEnd_ && (isWhitespace(*bufCrt_) || (skipLineEnd && isEOL(*bufCrt_))))
 			bufCrt_++;
+	}
+	
+	// returns true if the char is valid as a first character of an identifier
+	bool isValidFirstChar(char c) {
+		return (c >= 'a' && c <= 'z')
+			|| (c >= 'A' && c <= 'Z')
+			|| c == '_';
+	}
+	
+	// returns true if the char is a valid char in the middle of an identifier
+	bool isValidIdentChar(char c) {
+		return isValidFirstChar(c)
+			|| (c >= '0' && c <= '9');
+	}
+	
+	bool isValidDigit(char c) {
+		return (c >= '0') && (c <= '9');
 	}
 };
 
@@ -174,7 +303,7 @@ void SODL_Loader::addDataBinding(const char* name, SODL_Value::Type type, void* 
 }
 
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
-SODL_result SODL_Loader::loadObject(const char* filename, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::loadObject(const char* filename, std::shared_ptr<ISODL_Object> &out_pObj) {
 	auto text = readFile(filename);
 	if (!text.first || !text.second) {
 		return SODL_result::error("Unable to open SODL file");
@@ -263,7 +392,7 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 	return output + 1 - outputStart; // return the size of the output
 }
 
-SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, std::shared_ptr<ISODL_Object> &out_pObj) {
 	// 1. read object type
 	// 2. instantiate object
 	// 3. call mergeObject on intantiated object with the rest of the buffer
@@ -276,7 +405,7 @@ SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, ISODL_
 		res = instantiateObject(objType, out_pObj);
 		if (!res)
 			break;
-		assertDbg(out_pObj);
+		assertDbg(out_pObj != nullptr);
 		res = mergeObjectImpl(*out_pObj, stream);
 	} while (0);
 	return res;
@@ -298,10 +427,43 @@ SODL_result SODL_Loader::readObjectType(SODL_Loader::ParseStream &stream, std::s
 	return stream.readIdentifier(out_type);
 }
 
-SODL_result SODL_Loader::instantiateObject(std::string const& objType, ISODL_Object* &out_pObj) {
+SODL_result SODL_Loader::instantiateObject(std::string const& objType, std::shared_ptr<ISODL_Object> &out_pObj) {
 	SODL_result res = factory_.constructObject(objType, out_pObj);
 	if (!res)
 		res.errorMessage = "Failed to construct object of type [" + objType + "]; Reason: \"" + res.errorMessage + "\"";
+	return res;
+}
+
+SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
+	SODL_Value& val, unsigned primaryPropIdx, std::string propName) {
+	SODL_result res;
+	if (val.isBinding) {
+		if (desc.type == SODL_Value::Type::Callback) {
+			// retrieve the registered action callback for this binding and set it onto the object
+			auto it = mapActionBindings_.find(val.bindingName);
+			if (it == mapActionBindings_.end())
+				return SODL_result::error(strcat() << "Action $" << val.bindingName << " was not defined.");
+			auto &actionDesc = *it->second;
+			res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
+			if (!res)
+				return res;
+			if (desc.valueOrCallbackPtr == nullptr)
+				return SODL_result::error(strcat() << "Callback property does not supply a function pointer");
+			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.valueOrCallbackPtr);
+		} else {
+			// retrieve the registered data binding and set its value onto the object
+			res = resolveDataBinding(val, desc.type);
+			if (!res)
+				return res;
+			if (propName.empty())
+				res = object.setPrimaryProperty(primaryPropIdx, val);
+			else
+				res = object.setProperty(propName, val);
+		}
+	} else if (propName.empty())
+		res = object.setPrimaryProperty(primaryPropIdx, val);
+	else
+		res = object.setProperty(propName, val);
 	return res;
 }
 
@@ -309,6 +471,9 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 	SODL_result res;
 	if (stream.nextChar() == '#') {
 		stream.skipChar('#');
+		if (stream.nextIsWhitespace()) {
+			return SODL_result::error("Expected identifier after #, found white space");
+		}
 		std::string idStr;
 		res = stream.readIdentifier(idStr);
 		if (!res)
@@ -317,37 +482,22 @@ SODL_result SODL_Loader::readPrimaryProps(ISODL_Object &object, SODL_Loader::Par
 	}
 	unsigned propIdx = 0;
 	while (!stream.eof() && !stream.eol() && stream.nextChar() != '{') {
-		SODL_Property_Descriptor desc = object.describePrimaryProperty(propIdx);
+		SODL_Property_Descriptor desc;
+		res = object.describePrimaryProperty(propIdx, desc);
+		if (!res)
+			return res;
 		assertDbg(!desc.isObject);
 		SODL_Value val;
 		res = stream.readValue(desc.type, val);
 		if (!res)
 			return res;
-		if (val.isBinding) {
-			if (desc.type == SODL_Value::Type::Callback) {
-				// retrieve the registered action callback for this binding and set it onto the object
-				auto it = mapActionBindings_.find(val.bindingName);
-				if (it == mapActionBindings_.end())
-					return SODL_result::error(strcat() << "Action $" << val.bindingName << " was not defined.");
-				auto &actionDesc = *it->second;
-				res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
-				if (!res)
-					return res;
-				if (desc.callbackPtr == nullptr)
-					return SODL_result::error(strcat() << "Callback property " << propIdx << " does not supply a function pointer");
-				actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.callbackPtr);
-			} else {
-				// retrieve the registered data binding and set its value onto the object
-				res = resolveDataBinding(val, desc.type);
-				if (!res)
-					return res;
-				res = object.setPrimaryProperty(propIdx, val);
-			}
-		} else
-			res = object.setPrimaryProperty(propIdx, val);
+		res = assignPropertyValue(object, desc, val, propIdx, "");
 		if (!res)
 			return res;
 		propIdx++;
+	}
+	if (stream.eol()) {
+		stream.skipEOL();
 	}
 	return SODL_result::OK();
 }
@@ -372,17 +522,24 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 	assertDbg(stream.nextChar() == '{');
 	stream.skipChar('{');
 	while (!stream.eof() && stream.nextChar() != '}') {
+		if (stream.eol()) {
+			stream.skipEOL();
+			continue;
+		}
 		bool classInstance = false;
 		if (stream.nextChar() == '@') {
 			classInstance = true;
 			stream.skipChar('@');
+			if (stream.nextIsWhitespace()) {
+				return SODL_result::error("Expected identifier after @, found white space");
+			}
 		}
 		std::string ident;
 		SODL_result res = stream.readIdentifier(ident);
 		if (!res)
 			return res;
 		if (classInstance) {
-			ISODL_Object *pInstanceObj = nullptr;
+			std::shared_ptr<ISODL_Object> pInstanceObj;
 			res = object.instantiateClass(ident, pInstanceObj);
 			if (!res)
 				return res;
@@ -399,22 +556,53 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		} else if (stream.nextChar() == ':') {
 			// this is a property
 			stream.skipChar(':');
-			ISODL_Object *pPropObj = nullptr;
-			res = object.createProperty(ident, pPropObj);
+			if (stream.eol())
+				return SODL_result::error("End of line while expecting property value after ':'");
+			SODL_Property_Descriptor pdesc;
+			res = object.describeProperty(ident, pdesc);
 			if (!res)
 				return res;
-			res = mergeObjectImpl(*pPropObj, stream);
-			if (!res) {
-				delete pPropObj;
-				return res;
+			if (pdesc.isObject) {
+				assertDbg(pdesc.objectTypes.size() > 0);
+				std::shared_ptr<ISODL_Object> pPropObj;
+				std::string objectType = pdesc.objectTypes[0].second;
+				if (pdesc.objectTypes.size() > 1) {
+					// there are multiple possible object types, we read the first primary value and 
+					// that will tell us the object type to instantiate
+					std::string typeAlias;
+					res = stream.readIdentifier(typeAlias);
+					if (!res)
+						return res;
+					bool found = false;
+					for (auto &p : pdesc.objectTypes)
+						if (p.first == typeAlias) {
+							objectType = p.second;
+							found = true;
+							break;
+						}
+					if (!found)
+						return SODL_result::error(strcat() << "Object type alias '" << typeAlias << "' for property '" << ident << "' is not known");
+				}
+				res = instantiateObject(objectType, pPropObj);
+				if (!res)
+					return res;
+				res = mergeObjectImpl(*pPropObj, stream);
+				if (!res) {
+					return res;
+				}
+				res = object.setProperty(ident, pPropObj);
+			} else {
+				SODL_Value val;
+				res = stream.readValue(pdesc.type, val);
+				if (!res)
+					return res;
+				res = assignPropertyValue(object, pdesc, val, 0, ident);
 			}
-			res = object.setPropertyValue(ident, *pPropObj);
-			delete pPropObj;
 			if (!res)
 				return res;
 		} else {
 			// this must be a child object
-			ISODL_Object *pObj = nullptr;
+			std::shared_ptr<ISODL_Object> pObj;
 			res = loadObjectImpl(stream, pObj);
 			if (!res)
 				return res;

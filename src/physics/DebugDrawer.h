@@ -1,7 +1,7 @@
 #ifndef DebugDrawer_H
 #define DebugDrawer_H
 
-#include <bullet3/LinearMath/btIDebugDraw.h>
+#include <bullet/LinearMath/btIDebugDraw.h>
 
 namespace physics {
 
@@ -18,7 +18,7 @@ public:
 	virtual void setDebugMode(int debugMode) override { debugMode_ = debugMode; }
 	virtual int getDebugMode() const override { return debugMode_; }
 
-	virtual void clearLines() override;
+	virtual void clearLines();
 	virtual void flushLines() override;
 
 private:

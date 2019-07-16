@@ -12,7 +12,7 @@
 
 #include <boglfw/entities/Entity.h>
 
-#include <bullet3/LinearMath/btScalar.h>
+#include <bullet/LinearMath/btScalar.h>
 
 #include <vector>
 

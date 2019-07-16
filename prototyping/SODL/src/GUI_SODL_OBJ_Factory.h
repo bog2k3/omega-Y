@@ -6,20 +6,28 @@
 
 class GUI_SODL_OBJ_Factory : public ISODL_Object_Factory {
 public:
-	SODL_result constructObject(std::string const& objType, ISODL_Object* &outObj) override;
+	SODL_result constructObject(std::string const& objType, std::shared_ptr<ISODL_Object> &outObj) override;
 
 	GUI_SODL_OBJ_Factory();
+	~GUI_SODL_OBJ_Factory();
 
 private:
-	using createFunc = ISODL_Object* (GUI_SODL_OBJ_Factory::*)();
 
-	std::unordered_map<std::string, createFunc> mapFuncs_;
+	class creatorModel {
+	public:
+		virtual std::shared_ptr<ISODL_Object> create() = 0;
+	};
 
-	ISODL_Object* createLabel();
-	ISODL_Object* createMarker();
-	ISODL_Object* createPicture();
-	ISODL_Object* createContainer();
-	ISODL_Object* createTextField();
-	ISODL_Object* createSlider();
-	ISODL_Object* createButton();
+	template <class C>
+	class creator : public creatorModel {
+	public:
+		std::shared_ptr<ISODL_Object> create() override { return std::shared_ptr<ISODL_Object>(new C()); }
+	};
+
+	std::unordered_map<std::string, creatorModel*> mapCreators_;
+
+	template <class C>
+	void addClassCreator() {
+		mapCreators_[C().objectType()] = new creator<C>();
+	}
 };
