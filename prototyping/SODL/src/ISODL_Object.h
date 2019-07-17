@@ -25,16 +25,19 @@ struct SODL_Property_Descriptor {
 	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
 	SODL_Property_Descriptor(SODL_Value::Type valueType);
 
+	// constructs a descriptor for an enumeration type (that must have been previously defined within the ISODL_Object)
+	SODL_Property_Descriptor(const char* enumType, int32_t &valuePtr);
+
 	// constructs a descriptor for an object type property;
 	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
-	SODL_Property_Descriptor(std::string objectType, std::shared_ptr<ISODL_Object> *objectPtr);
+	SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr);
 
 	// constructs a descriptor for an object type property that can accept one of multiple object types
-	// for each element in vector: first is type alias (to be read from SODL file), second is actual object type
-	// this allows you to use shorter aliases for different possible object types of one property; for example:
-	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
-	// SODL file: property1: alias1 5 3 1 "somePrimaryProp"
-	// 'property1' will receive an object of type Prop1ObjectType1
+	// 		for each element in vector: first is type alias (to be read from SODL file), second is actual object type;
+	// 		this allows you to use shorter aliases for different possible object types of one property; for example:
+	// 			descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
+	// 			SODL file: property1: alias1 5 3 1 "somePrimaryProp"
+	// 			'property1' will receive an object of type Prop1ObjectType1
 	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
 	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr);
 
@@ -61,9 +64,11 @@ private:
 	bool isEvent;
 	// the value type of the property, assuming isObject==false
 	SODL_Value::Type type;
-	// the possible object types of the property, assuming isObject==true
+	// for enum type properties, this holds the name of the enum defined within ISODL_Object
+	std::string enumName;
+	// the possible object types of the property, assuming isObject==true;
 	// if more than one value is supplied, then the first primary property read is interpreted as
-	// the effective object type and must match one of these; then that object type is instantiated;
+	// 		the effective object type and must match one of these; then that object type is instantiated;
 	// first is type alias, second is actual object type to instantiate
 	std::vector<std::pair<std::string, std::string>> objectTypes;
 	// types of arguments if the property is a callback
@@ -98,6 +103,11 @@ protected:
 	// these can also be object types
 	void defineSecondaryProperty(const char* name, SODL_Property_Descriptor descriptor);
 
+	// defines an enumeration type for this object;
+	// properties can be defined with this enum type and they will receive as value an int32_t corresponding to the index
+	//   (within the provided array) of the enum value written in the SODL file
+	void defineEnum(const char* enumName, std::vector<std::string> enumLabels);
+
 	// the following methods allow the user to receive property values via callbacks instead of them being directly set into variables;
 	// override any one of these that you need;
 	// return true if the set was successful, or false if anything's wrong with the received value.
@@ -116,6 +126,7 @@ private:
 	std::string id_ = "UNIDENTIFIED";
 	std::vector<SODL_Property_Descriptor> primaryPropertyDesc_;
 	std::unordered_map<std::string, SODL_Property_Descriptor> mapPropertyDesc_;
+	std::unordered_map<std::string, std::vector<std::string>> userEnums_;
 
 	void setId(std::string id) { id_ = id; }
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
@@ -126,6 +137,7 @@ private:
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);
+	SODL_result resolveEnumValue(std::string const& enumName, std::string const& identName, int32_t &out_val);
 };
 
 #include "ISODL_Object_private.h"

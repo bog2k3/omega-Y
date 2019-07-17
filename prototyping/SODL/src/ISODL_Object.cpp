@@ -8,8 +8,13 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type valueType, v
 	: isObject(false), type(valueType), valueOrCallbackPtr(valuePtr) {
 }
 
+SODL_Property_Descriptor::SODL_Property_Descriptor(const char* enumType, int32_t &valuePtr)
+	: SODL_Property_Descriptor(SODL_Value::Type::Enum, &valuePtr) {
+	this->enumName = enumType;
+}
+
 // constructs a descriptor for an object type property
-SODL_Property_Descriptor::SODL_Property_Descriptor(std::string objectType, std::shared_ptr<ISODL_Object> *objectPtr)
+SODL_Property_Descriptor::SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr)
 	: isObject(true), valueOrCallbackPtr(objectPtr) {
 	objectTypes.push_back({objectType, objectType});
 }
@@ -24,6 +29,10 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(void* funcPtr, std::vector<SO
 	: isObject(false), isEvent(isEvent)
 	, type(SODL_Value::Type::Callback)
 	, callbackArgTypes(argTypes), valueOrCallbackPtr(funcPtr) {
+}
+
+void ISODL_Object::defineEnum(const char* enumName, std::vector<std::string> enumLabels) {
+	userEnums_[enumName] = enumLabels;
 }
 
 void ISODL_Object::definePrimaryProperty(const char* name, SODL_Property_Descriptor descriptor) {
@@ -54,10 +63,14 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 			success = setUserPropertyValue(desc.name.c_str(), coordVal);
 	} break;
 	case SODL_Value::Type::Enum: {
+		int32_t enumVal;
+		auto res = resolveEnumValue(desc.enumName, val.enumVal, enumVal);
+		if (!res)
+			return res;
 		if (desc.valueOrCallbackPtr)
-			*static_cast<int32_t*>(desc.valueOrCallbackPtr) = val.enumVal;
+			*static_cast<int32_t*>(desc.valueOrCallbackPtr) = enumVal;
 		else
-			success = setUserPropertyValue(desc.name.c_str(), val.enumVal));
+			success = setUserPropertyValue(desc.name.c_str(), enumVal);
 	} break;
 	case SODL_Value::Type::Number:
 	case SODL_Value::Type::String:
@@ -101,4 +114,21 @@ SODL_result ISODL_Object::describeProperty(std::string const& propName, SODL_Pro
 		return SODL_result::error(strbld() << "Unknown property \"" << propName << "\"");
 	out_desc = it->second;
 	return SODL_result::OK();
+}
+
+SODL_result ISODL_Object::resolveEnumValue(std::string const& enumName, std::string const& identName, int32_t &out_val) {
+	auto it = userEnums_.find(enumName);
+	if (it == userEnums_.end())
+		return SODL_result::error(strbld() << "Enum with name '" << enumName << "' was not defined for object type '" << objectType() << "'");
+	out_val = -1;
+	for (unsigned i=0; i<it->second.size(); i++) {
+		if (it->second[i] == identName) {
+			out_val = i;
+			break;
+		}
+	}
+	if (out_val >= 0)
+		return SODL_result::OK();
+	else
+		return SODL_result::error(strbld() << "Enum value '" << identName << "' doesnt exist in enum '" << enumName << "' within object type '" << objectType << "'");
 }

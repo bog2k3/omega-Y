@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../ISODL_Object.h"
-#include "LayoutSODLWrapper.h"
+#include "layouts/LayoutSODLWrapper.h"
 
 #include <boglfw/GUI/GuiContainerElement.h>
 
