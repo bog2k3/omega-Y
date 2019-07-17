@@ -135,7 +135,7 @@ SODL_result ISODL_Object::describePrimaryProperty(unsigned index, SODL_Property_
 SODL_result ISODL_Object::describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc) {
 	auto it = mapPropertyDesc_.find(propName);
 	if (it == mapPropertyDesc_.end())
-		return SODL_result::error(strbld() << "Unknown property \"" << propName << "\"");
+		return SODL_result::error(strbld() << "Unknown property '" << propName << "'");
 	out_desc = it->second;
 	return SODL_result::OK();
 }

@@ -168,6 +168,7 @@ public:
 				if (!eof() && *bufCrt_ == '%') {
 					skipChar('%');
 					out_val.isPercentCoord = true;
+					skipWhitespace(false);
 				}
 				return SODL_result::OK();
 			}
@@ -244,6 +245,7 @@ public:
 			// no digits were read
 			return SODL_result::error("End of line while expecting a number");
 		}
+		skipWhitespace(false);
 		return SODL_result::OK();
 	}
 
