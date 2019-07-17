@@ -1,8 +1,18 @@
 #include "ButtonSODLWrapper.h"
 
+#include <cstring>
+
 ButtonSODLWrapper::ButtonSODLWrapper()
 	: button_(new Button("unset")) {
 
-	definePrimaryProperty<std::string>("text", nullptr);
-	definePrimaryProperty<void*>("onClick", nullptr);
+	definePrimaryProperty("text", {SODL_Value::Type::String});
+	definePrimaryProperty("onClick", {button_->onClick, {}});
+}
+
+bool ButtonSODLWrapper::setUserPropertyValue(const char* propName, std::string const& stringVal) {
+	if (!strcmp(propName, "text")) {
+		button_->setText(stringVal);
+		return true;
+	} else
+		return false;
 }

@@ -8,7 +8,7 @@
 class _SODL_Loader_ActionBindingModel {
 public:
 	virtual ~_SODL_Loader_ActionBindingModel() {}
-	virtual void setObjectCallbackBinding(void* fnPtr) = 0;
+	virtual void setObjectCallbackBinding(void* fnPtr, bool isEvent) = 0;
 };
 
 template<class FuncType>
@@ -18,9 +18,12 @@ public:
 		: func_(func) {
 	}
 	~_SODL_Loader_ActionBindingWrapper() {}
-	void setObjectCallbackBinding(void* fnPtr) override {
-		assert(fnPtr != nullptr);
-		*reinterpret_cast<std::function<FuncType>*>(fnPtr) = func_;
+	void setObjectCallbackBinding(void* fnPtr, bool isEvent) override {
+		assertDbg(fnPtr != nullptr);
+		if (isEvent)
+			reinterpret_cast<Event<FuncType>*>(fnPtr)->add(func_);
+		else
+			*reinterpret_cast<std::function<FuncType>*>(fnPtr) = func_;
 	}
 private:
 	std::function<FuncType> func_;

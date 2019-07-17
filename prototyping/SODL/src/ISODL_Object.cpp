@@ -20,39 +20,21 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(std::vector<std::pair<std::st
 }
 
 // constructs a descriptor for a callback (std::function<void(argTypes...)>)
-SODL_Property_Descriptor::SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes)
-	: isObject(false), type(SODL_Value::Type::Callback)
+SODL_Property_Descriptor::SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes, bool isEvent)
+	: isObject(false), isEvent(isEvent)
+	, type(SODL_Value::Type::Callback)
 	, callbackArgTypes(argTypes), valueOrCallbackPtr(funcPtr) {
 }
 
-// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
-void ISODL_Object::definePrimaryPropertyImpl(const char* name, SODL_Value::Type type, void* valuePtr) {
-	primaryPropertyDesc_.push_back({type, valuePtr});
-	mapPropertyDesc_[name] = {type, valuePtr};
-}
-
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, float* numberValuePtr) {
-	definePrimaryPropertyImpl(name, SODL_Value::Type::Number, numberValuePtr);
-}
-
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, FlexibleCoordinate* coordValuePtr) {
-	definePrimaryPropertyImpl(name, SODL_Value::Type::Coordinate, coordValuePtr);
-}
-
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, std::string* stringValuePtr) {
-	definePrimaryPropertyImpl(name, SODL_Value::Type::String, stringValuePtr);
-}
-
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, int32_t* enumValuePtr) {
-	definePrimaryPropertyImpl(name, SODL_Value::Type::Enum, enumValuePtr);
+void ISODL_Object::definePrimaryProperty(const char* name, SODL_Property_Descriptor descriptor) {
+	descriptor.name = name;
+	primaryPropertyDesc_.push_back(descriptor);
+	mapPropertyDesc_[name] = descriptor;
 }
 
 // defines a "secondary" (optional) property; these must be defined as name: value within the element's block
 void ISODL_Object::defineSecondaryProperty(const char* name, SODL_Property_Descriptor desc) {
+	desc.name = name;
 	mapPropertyDesc_[name] = desc;
 }
 
@@ -61,21 +43,33 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 	auto &desc = primaryPropertyDesc_[index];
 	assertDbg(!desc.isObject);
 	assertDbg(!val.isBinding);
-	assertDbg(desc.type != SODL_Value::Type::Callback);
+	bool success = true;
 	switch (desc.type)
 	{
 	case SODL_Value::Type::Coordinate: {
-		//FlexibleCoordinate coordVal()
+		FlexCoord coordVal {val.numberVal, val.isPercentCoord ? FlexCoord::PERCENT : FlexCoord::PIXELS};
+		if (desc.valueOrCallbackPtr)
+			*static_cast<FlexCoord*>(desc.valueOrCallbackPtr) = coordVal;
+		else
+			success = setUserPropertyValue(desc.name.c_str(), coordVal);
 	} break;
-	case SODL_Value::Type::Enum:
-		//if (desc)
+	case SODL_Value::Type::Enum: {
+		if (desc.valueOrCallbackPtr)
+			*static_cast<int32_t*>(desc.valueOrCallbackPtr) = val.enumVal;
+		else
+			success = setUserPropertyValue(desc.name.c_str(), val.enumVal));
+	} break;
 	case SODL_Value::Type::Number:
 	case SODL_Value::Type::String:
-
+	case SODL_Value::Type::Callback:
+		success = false;
 	default:
 		return SODL_result::error(strbld() << "Unhandled value type : " << (int)desc.type);
 	}
-	return SODL_result::OK();
+	if (!success)
+		return SODL_result::error(strbld() << "Failed to set user property '" << desc.name << "' for object type '" << objectType() << "'");
+	else
+		return SODL_result::OK();
 }
 
 SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {

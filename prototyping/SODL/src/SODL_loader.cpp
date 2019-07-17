@@ -420,6 +420,8 @@ SODL_result SODL_Loader::mergeObjectImpl(ISODL_Object &object, SODL_Loader::Pars
 		if (stream.nextChar() == '{')
 			res = readObjectBlock(object, stream);
 	} while (0);
+	if (res)
+		object.loadingFinished();
 	return res;
 }
 
@@ -447,9 +449,7 @@ SODL_result SODL_Loader::assignPropertyValue(ISODL_Object &object, SODL_Property
 			res = checkCallbackArgumentsMatch(actionDesc.argTypes_, desc.callbackArgTypes);
 			if (!res)
 				return res;
-			if (desc.valueOrCallbackPtr == nullptr)
-				return SODL_result::error(strbld() << "Callback property does not supply a function pointer");
-			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.valueOrCallbackPtr);
+			actionDesc.pBindingWrapper_->setObjectCallbackBinding(desc.valueOrCallbackPtr, desc.isEvent);
 		} else {
 			// retrieve the registered data binding and set its value onto the object
 			res = resolveDataBinding(val, desc.type);

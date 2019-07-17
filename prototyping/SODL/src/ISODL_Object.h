@@ -3,16 +3,62 @@
 #include "SODL_common.h"
 
 #include <boglfw/utils/FlexibleCoordinate.h>
+#include <boglfw/utils/Event.h>
 
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <functional>
 
 class ISODL_Object;
 
+// Describes a property of any simple or object type;
+// if user supplies a non-null valuePtr, then this will be used to set the value directly when it is loaded from the file;
+// if null is provided as [valuePtr], then the value is set by invoking the [ISODL_Object::setUserPropertyValue] method which you must override.
 struct SODL_Property_Descriptor {
+	SODL_Property_Descriptor() = default;
+
+	// constructs a descriptor for a simple non-callback value type property defined by SODL_Value::Type, that will be set directly into the receiving object
+	template <class PropType>
+	SODL_Property_Descriptor(PropType &valuePtr);
+
+	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
+	SODL_Property_Descriptor(SODL_Value::Type valueType);
+
+	// constructs a descriptor for an object type property;
+	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
+	SODL_Property_Descriptor(std::string objectType, std::shared_ptr<ISODL_Object> *objectPtr);
+
+	// constructs a descriptor for an object type property that can accept one of multiple object types
+	// for each element in vector: first is type alias (to be read from SODL file), second is actual object type
+	// this allows you to use shorter aliases for different possible object types of one property; for example:
+	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
+	// SODL file: property1: alias1 5 3 1 "somePrimaryProp"
+	// 'property1' will receive an object of type Prop1ObjectType1
+	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
+	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr);
+
+	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
+	template<class FuncType>
+	SODL_Property_Descriptor(std::function<FuncType> &func, std::vector<SODL_Value::Type> argTypes);
+
+	// constructs a descriptor for an Event that will receive a handler from an action binding
+	template<class HandlerFuncType>
+	SODL_Property_Descriptor(Event<HandlerFuncType> &event, std::vector<SODL_Value::Type> argTypes);
+
+	// static method for convenient template type deduction
+	static SODL_Property_Descriptor multiObjType(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr) {
+		return SODL_Property_Descriptor { objectTypes, objectPtr };
+	}
+
+private:
+	friend class SODL_Loader;
+	friend class ISODL_Object;
+
 	// true if property is an object type, false if it's a value type
 	bool isObject;
+	// true if the valueOrCallbackPtr points to an Event<> object, false otherwise
+	bool isEvent;
 	// the value type of the property, assuming isObject==false
 	SODL_Value::Type type;
 	// the possible object types of the property, assuming isObject==true
@@ -25,24 +71,10 @@ struct SODL_Property_Descriptor {
 	// pointer to the receiving value or callback of type std::function<...> within the object that will receive the callback binding
 	void* valueOrCallbackPtr = nullptr;
 
-	SODL_Property_Descriptor() = default;
+	std::string name;
 
-	// constructs a descriptor for a simple value type property
-	SODL_Property_Descriptor(SODL_Value::Type valueType, void* valuePtr);
-
-	// constructs a descriptor for an object type property
-	SODL_Property_Descriptor(std::string objectType, std::shared_ptr<ISODL_Object> *objectPtr);
-
-	// constructs a descriptor for an object type property that can accept one of multiple object types
-	// for each element in vector: first is type alias (to be read from SODL file), second is actual object type
-	// this allows you to use shorter aliases for different possible object types of one property; for example:
-	// descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
-	// SODL file: property1: alias1 5 3 1 "somePrimaryProp"
-	// property1 will receive an object of type Prop1ObjectType1
-	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr);
-
-	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
-	SODL_Property_Descriptor(void* funcPtr, std::vector<SODL_Value::Type> argTypes);
+	SODL_Property_Descriptor(SODL_Value::Type type, void* valPtr);
+	SODL_Property_Descriptor(void* funcOrEventPtr, std::vector<SODL_Value::Type> argTypes, bool isEvent);
 };
 
 class ISODL_Object {
@@ -55,12 +87,12 @@ public:
 	virtual const std::string objectType() const = 0;
 
 protected:
+	// override this method if you need to do post-processing after the object has been fully loaded
+	virtual void loadingFinished() {};
+
 	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
-	// these can only be simple types;
-	// if user supplies a non-null valuePtr, then this will be used to set the value directly when it is loaded from the file;
-	// if null is provided as [valuePtr], then the value is set by invoking the [setUserPropertyValue] method which you must override.
-	template <class PropType>
-	void definePrimaryProperty(const char* name, PropType* valuePtr);
+	// these can only be simple types or callbacks defined by SODL_Value::Type;
+	void definePrimaryProperty(const char* name, SODL_Property_Descriptor descriptor);
 
 	// defines a "secondary" (optional) property; these must be defined as name: value within the element's block
 	// these can also be object types
@@ -94,15 +126,6 @@ private:
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);
-
-	void definePrimaryPropertyImpl(const char* name, SODL_Value::Type valueType, void* valuePtr);
 };
 
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, float* numberValuePtr);
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, FlexibleCoordinate* coordValuePtr);
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, std::string* stringValuePtr);
-template<>
-void ISODL_Object::definePrimaryProperty(const char* name, int32_t* enumValuePtr);
+#include "ISODL_Object_private.h"

@@ -12,6 +12,9 @@ public:
 	~ButtonSODLWrapper() override {}
 	ButtonSODLWrapper();
 
+protected:
+	bool setUserPropertyValue(const char* propName, std::string const& stringVal) override;
+
 private:
 	std::shared_ptr<Button> button_;
 };

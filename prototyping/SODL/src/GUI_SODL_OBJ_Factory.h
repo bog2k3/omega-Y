@@ -15,6 +15,7 @@ private:
 
 	class creatorModel {
 	public:
+		virtual ~creatorModel() = default;
 		virtual std::shared_ptr<ISODL_Object> create() = 0;
 	};
 
