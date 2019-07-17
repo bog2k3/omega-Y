@@ -15,6 +15,9 @@ public:
 	~ContainerSODLWrapper() override {}
 	ContainerSODLWrapper();
 
+protected:
+	bool addChildObject(std::shared_ptr<ISODL_Object> pObj) override;
+
 private:
 	std::shared_ptr<GuiContainerElement> container_;
 	std::shared_ptr<LayoutSODLWrapper> layout_;

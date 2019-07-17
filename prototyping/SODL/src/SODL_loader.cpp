@@ -66,15 +66,12 @@
 	#root {
 		size: 100% 100%		// values can be absolute or relative
 		padding: 50 50 50 50 // top, right, bottom, left
-		layout: split vertical 10% {
-			marker: #splitTop	// where to split the controls between first and second layout nodes
+		layout: split vertical 10% 2 {
 			first: fill
 			second: fill
 		}
 		label #title "Host Game" 50 center	// one line child with no block
-		marker #splitTop
 		picture #TerrainPicture
-		marker #splitPicture
 		container #controls {			// container is the node type
 			layout: list {
 				align: right

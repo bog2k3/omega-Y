@@ -12,6 +12,8 @@ public:
 	virtual ~GuiElementSODLWrapper() override = default;
 	GuiElementSODLWrapper();
 
+	std::shared_ptr<GuiBasicElement> get() const { return element_; }
+
 protected:
 	void setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement);
 

@@ -5,6 +5,8 @@
 ButtonSODLWrapper::ButtonSODLWrapper()
 	: button_(new Button("unset")) {
 
+	setupCommonProperties(button_);
+
 	definePrimaryProperty("text", {SODL_Value::Type::String});
 	definePrimaryProperty("onClick", {button_->onClick, {}});
 }

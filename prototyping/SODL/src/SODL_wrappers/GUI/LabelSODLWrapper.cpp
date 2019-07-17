@@ -2,6 +2,9 @@
 
 LabelSODLWrapper::LabelSODLWrapper()
 	: label_(new Label(14, "")) {
+
+	setupCommonProperties(label_);
+
 	defineEnum("enumAlignment", {
 		"left", "center", "right"
 	});
