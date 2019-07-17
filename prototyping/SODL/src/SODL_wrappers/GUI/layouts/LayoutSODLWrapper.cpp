@@ -83,7 +83,7 @@ LayoutSODLWrapper::LayoutSODLWrapper()
 		"list",
 		"split"
 	});
-	definePrimaryProperty("type", {"enumLayoutType", nullptr});
+	definePrimaryProperty("type", {SODL_Value::Type::Enum, "enumLayoutType"});
 	// the rest of the properties are defined dynamically depending on this first one
 	// see setUserPropertyValue
 
