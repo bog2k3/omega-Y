@@ -311,7 +311,7 @@ SODL_result SODL_Loader::loadObject(const char* filename, std::shared_ptr<ISODL_
 		return SODL_result::error("Unable to open SODL file");
 	}
 	ParseStream stream(text.first, text.second);
-	return loadObjectImpl(stream, out_pObj);
+	return loadObjectImpl(stream, nullptr, out_pObj);
 }
 
 // merges a SODL file with an existing ISODL_Object provided by user; The root node in the file mustn't specify a type.
@@ -394,16 +394,20 @@ size_t SODL_Loader::preprocess(const char* input, size_t length, char* output) {
 	return output + 1 - outputStart; // return the size of the output
 }
 
-SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, std::shared_ptr<ISODL_Object> &out_pObj) {
+SODL_result SODL_Loader::loadObjectImpl(SODL_Loader::ParseStream &stream, std::string *pObjType, std::shared_ptr<ISODL_Object> &out_pObj) {
 	// 1. read object type
 	// 2. instantiate object
 	// 3. call mergeObject on intantiated object with the rest of the buffer
 	SODL_result res;
 	do {
 		std::string objType;
-		res = readObjectType(stream, objType);
-		if (!res)
-			break;
+		if (pObjType)
+			objType = *pObjType;
+		else {
+			res = readObjectType(stream, objType);
+			if (!res)
+				break;
+		}
 		res = instantiateObject(objType, out_pObj);
 		if (!res)
 			break;
@@ -605,7 +609,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 		} else {
 			// this must be a child object
 			std::shared_ptr<ISODL_Object> pObj;
-			res = loadObjectImpl(stream, pObj);
+			res = loadObjectImpl(stream, &ident, pObj);
 			if (!res)
 				return res;
 			res = object.addChildObject(pObj);

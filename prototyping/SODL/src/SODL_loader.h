@@ -53,7 +53,7 @@ private:
 	// returns the size of the preprocessed data
 	size_t preprocess(const char* input, size_t length, char* output);
 
-	SODL_result loadObjectImpl(ParseStream &stream, std::shared_ptr<ISODL_Object> &out_pObj);
+	SODL_result loadObjectImpl(ParseStream &stream, std::string *pObjType, std::shared_ptr<ISODL_Object> &out_pObj);
 	SODL_result mergeObjectImpl(ISODL_Object &object, ParseStream &stream);
 
 	SODL_result readObjectType(ParseStream &stream, std::string &out_type);
@@ -64,7 +64,7 @@ private:
 
 	SODL_result resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType);
 	SODL_result checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes);
-	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc, 
+	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc,
 									SODL_Value& val, unsigned primaryPropIdx, std::string propName);
 };
 

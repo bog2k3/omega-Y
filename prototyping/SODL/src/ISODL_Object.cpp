@@ -89,7 +89,17 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value co
 			success = setUserPropertyValue(desc.name.c_str(), enumVal);
 	} break;
 	case SODL_Value::Type::Number:
+		if (desc.valueOrCallbackPtr)
+			*static_cast<float*>(desc.valueOrCallbackPtr) = val.numberVal;
+		else
+			success = setUserPropertyValue(desc.name.c_str(), val.numberVal);
+		break;
 	case SODL_Value::Type::String:
+		if (desc.valueOrCallbackPtr)
+			*static_cast<std::string*>(desc.valueOrCallbackPtr) = val.stringVal;
+		else
+			success = setUserPropertyValue(desc.name.c_str(), val.stringVal);
+		break;
 	case SODL_Value::Type::Callback:
 		success = false;
 	default:

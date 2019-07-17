@@ -29,7 +29,7 @@ template<class HandlerFuncType>
 inline SODL_Property_Descriptor::SODL_Property_Descriptor(Event<HandlerFuncType> &event, std::vector<SODL_Value::Type> argTypes)
 	: SODL_Property_Descriptor((void*)&event, argTypes, true) {}
 
-template<class C>
-inline SODL_Property_Descriptor::SODL_Property_Descriptor(C& c) {
+template<class C, class D>
+inline SODL_Property_Descriptor::SODL_Property_Descriptor(C &c) {
 	static_assert(std::is_convertible<C, void>(), "Property type not allowed");
 }

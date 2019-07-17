@@ -14,6 +14,9 @@ public:
 
 private:
 	std::shared_ptr<SplitLayout> layout_;
-	int32_t direction_ = 0;
+	std::shared_ptr<LayoutSODLWrapper> splitFirst_;
+	std::shared_ptr<LayoutSODLWrapper> splitSecond_;
+	int32_t direction_;
 	FlexCoord offset_;
+	float splitPoint_;
 };

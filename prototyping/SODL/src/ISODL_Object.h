@@ -17,9 +17,13 @@ class ISODL_Object;
 // if null is provided as [valuePtr], then the value is set by invoking the [ISODL_Object::setUserPropertyValue] method which you must override.
 struct SODL_Property_Descriptor {
 	SODL_Property_Descriptor() = default;
+	SODL_Property_Descriptor(SODL_Property_Descriptor const&) = default;
+	SODL_Property_Descriptor(SODL_Property_Descriptor &&) = default;
+	SODL_Property_Descriptor& operator=(SODL_Property_Descriptor const&) = default;
+	SODL_Property_Descriptor& operator=(SODL_Property_Descriptor &&) = default;
 
 	// constructs a descriptor for a simple non-callback value type property defined by SODL_Value::Type, that will be set directly into the receiving object
-	template <class PropType>
+	template <class PropType, class = typename std::enable_if<!std::is_same<SODL_Property_Descriptor, PropType>::value, void*>::type>
 	SODL_Property_Descriptor(PropType &valuePtr);
 
 	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
@@ -49,7 +53,7 @@ struct SODL_Property_Descriptor {
 	template<class HandlerFuncType>
 	SODL_Property_Descriptor(Event<HandlerFuncType> &event, std::vector<SODL_Value::Type> argTypes);
 
-	// static method for convenient template type deduction
+	// static method for convenient overload resolution when arg types are assignable but not identical
 	static SODL_Property_Descriptor multiObjType(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr) {
 		return SODL_Property_Descriptor { objectTypes, objectPtr };
 	}

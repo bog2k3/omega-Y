@@ -1,13 +1,10 @@
 #root {
 	size: 100% 100%
 	padding: 50 50 50 50 // top, right, bottom, left
-	layout: split vertical 10% {
-		marker: #splitTop	// where to split the controls between first and second layout nodes
+	layout: split vertical 10% 1 {
 		first: fill
-		second: split vertical 89% {
-			marker: #splitBottom
-			first: split horizontal 60% {
-				marker: #splitPicture
+		second: split vertical 89% 2 {
+			first: split horizontal 60% 1 {
 				first: fill
 				second: fill
 			}
@@ -15,9 +12,7 @@
 		}
 	}
 	label #title "Host Game" 50 center
-	marker #splitTop
 	picture #TerrainPicture
-	marker #splitPicture
 	container #controls {
 		layout: list {
 			align: right
@@ -70,7 +65,6 @@
 		}
 		button "Randomize all" $randomizeAll
 	}
-	marker #splitBottom
 	button "Back" $goBack {
 		pos: 10 0
 		size: 80 100%

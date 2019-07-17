@@ -9,6 +9,10 @@
 #include "SODL_wrappers/GUI/SliderSODLWrapper.h"
 #include "SODL_wrappers/GUI/TextFieldSODLWrapper.h"
 #include "SODL_wrappers/GUI/layouts/SplitLayoutSODLWrapper.h"
+#include "SODL_wrappers/GUI/layouts/ListLayoutSODLWrapper.h"
+#include "SODL_wrappers/GUI/layouts/FreeLayoutSODLWrapper.h"
+#include "SODL_wrappers/GUI/layouts/FillLayoutSODLWrapper.h"
+#include "SODL_wrappers/GUI/layouts/GridLayoutSODLWrapper.h"
 
 GUI_SODL_OBJ_Factory::~GUI_SODL_OBJ_Factory() {
 	for (auto &p : mapCreators_)
@@ -35,4 +39,8 @@ GUI_SODL_OBJ_Factory::GUI_SODL_OBJ_Factory() {
 	addClassCreator<SliderSODLWrapper>();
 	addClassCreator<ButtonSODLWrapper>();
 	addClassCreator<SplitLayoutSODLWrapper>();
+	addClassCreator<FreeLayoutSODLWrapper>();
+	addClassCreator<FillLayoutSODLWrapper>();
+	addClassCreator<GridLayoutSODLWrapper>();
+	addClassCreator<ListLayoutSODLWrapper>();
 }

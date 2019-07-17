@@ -6,12 +6,8 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 	: container_(new GuiContainerElement()) {
 	defineSecondaryProperty("size", {"coord2", nullptr});
 	defineSecondaryProperty("padding", {"coord4", nullptr});
-	defineSecondaryProperty("layout", SODL_Property_Descriptor::multiObjType({
-		{"free", "freeLayout"},
-		{"fill", "fillLayout"},
-		{"grid", "gridLayout"},
-		{"split", "splitLayout"}
-	}, (std::shared_ptr<ISODL_Object>*)&layout_));
+	defineSecondaryProperty("layout", SODL_Property_Descriptor::multiObjType(
+		LayoutSODLWrapper::allLayoutTypes(), (std::shared_ptr<ISODL_Object>*)&layout_));
 }
 
 bool ContainerSODLWrapper::setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) {
