@@ -6,7 +6,7 @@
 
 class Coord4SODLWrapper : public ISODL_Object {
 public:
-	const std::string objectType() const override { return "coord4"; }
+	std::string objectType() const override { return "coord4"; }
 	~Coord4SODLWrapper() override {}
 	Coord4SODLWrapper() {
 		definePrimaryProperty("top", {coordPairTopLeft_.y});

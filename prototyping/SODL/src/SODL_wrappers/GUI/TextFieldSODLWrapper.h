@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../../ISODL_Object.h"
+#include "GuiElementSODLWrapper.h"
 
-class TextFieldSODLWrapper : public ISODL_Object {
+class TextFieldSODLWrapper : public GuiElementSODLWrapper {
 public:
-	const std::string objectType() const override { return "textField"; }
+	std::string objectType() const override { return "textField"; }
+	std::string superType() const override { return GuiElementSODLWrapper::objectType(); }
+
 	~TextFieldSODLWrapper() override {}
 };

@@ -14,12 +14,12 @@ template<>
 inline SODL_Property_Descriptor::SODL_Property_Descriptor(std::string &stringValuePtr)
 	: SODL_Property_Descriptor(SODL_Value::Type::String, &stringValuePtr) {}
 
-template<>
-inline SODL_Property_Descriptor::SODL_Property_Descriptor(int32_t &enumValuePtr)
-	: SODL_Property_Descriptor(SODL_Value::Type::Enum, &enumValuePtr) {}
-
-inline SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type propType)
-	: SODL_Property_Descriptor(propType, nullptr) {}
+inline SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type propType, const char* enumType)
+	: SODL_Property_Descriptor(propType, (void*)nullptr) {
+	if (propType == SODL_Value::Type::Enum) {
+		this->enumName = enumType ? enumType : "UnspecifiedEnumName";
+	}
+}
 
 template<class FuncType>
 inline SODL_Property_Descriptor::SODL_Property_Descriptor(std::function<FuncType> &funcPtr, std::vector<SODL_Value::Type> argTypes)

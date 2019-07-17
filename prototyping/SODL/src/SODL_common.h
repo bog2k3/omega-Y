@@ -41,10 +41,23 @@ struct SODL_Value {
 
 class ISODL_Object;
 
+struct SODL_ObjectTypeDescriptor {
+	// the name of the super object type or empty if no super type exists
+	std::string superType;
+	// a vector of derived type names (for which this is the super type)
+	//std::vector<std::string> derivedTypes;
+	// true if this type cannot be directly instantiated
+	bool isAbstract;
+};
+
 // implement this interface to construct your objects given a type
 class ISODL_Object_Factory {
 public:
 	// construct an object given a type;
 	// return success or error with description
 	virtual SODL_result constructObject(std::string const& objType, std::shared_ptr<ISODL_Object> &outObj) = 0;
+
+	// provide type-related information;
+	// return an error if the typeName doesn't correspond to a known type
+	virtual SODL_result getTypeInfo(std::string const& typeName, SODL_ObjectTypeDescriptor &outInfo) = 0;
 };

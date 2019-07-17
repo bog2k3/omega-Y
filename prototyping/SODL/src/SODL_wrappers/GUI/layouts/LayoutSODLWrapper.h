@@ -4,22 +4,27 @@
 
 #include <boglfw/GUI/Layout.h>
 
-#include <string>
-#include <vector>
-#include <utility>
-
 class LayoutSODLWrapper : public ISODL_Object {
 public:
-	virtual ~LayoutSODLWrapper() = default;
+	std::string objectType() const override { return "layout"; }
 
-	virtual std::shared_ptr<Layout> get() const = 0;
+	~LayoutSODLWrapper() override = default;
+	LayoutSODLWrapper();
 
-	static std::vector<std::pair<std::string, std::string>> allLayoutTypes() {
-		return {
-			{"free", "freeLayout"},
-			{"fill", "fillLayout"},
-			{"grid", "gridLayout"},
-			{"split", "splitLayout"}
-		};
-	}
+	std::shared_ptr<Layout> get() const;
+
+protected:
+	bool setUserPropertyValue(const char* propName, int32_t enumVal) override;
+
+private:
+	class Impl;
+	Impl *pImpl_;
+
+	void defineFreeProps();
+	void defineFillProps();
+	void defineGridProps();
+	void defineListProps();
+	void defineSplitProps();
+
+	void onLoadingFinished();
 };

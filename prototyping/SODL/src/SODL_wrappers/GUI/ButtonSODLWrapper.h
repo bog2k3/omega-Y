@@ -1,14 +1,16 @@
 #pragma once
 
-#include "../../ISODL_Object.h"
+#include "GuiElementSODLWrapper.h"
 
 #include <boglfw/GUI/controls/Button.h>
 
 #include <memory>
 
-class ButtonSODLWrapper : public ISODL_Object {
+class ButtonSODLWrapper : public GuiElementSODLWrapper {
 public:
-	const std::string objectType() const override { return "button"; }
+	std::string objectType() const override { return "button"; }
+	std::string superType() const override { return GuiElementSODLWrapper::objectType(); }
+
 	~ButtonSODLWrapper() override {}
 	ButtonSODLWrapper();
 

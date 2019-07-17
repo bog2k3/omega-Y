@@ -26,24 +26,16 @@ struct SODL_Property_Descriptor {
 	template <class PropType, class = typename std::enable_if<!std::is_same<SODL_Property_Descriptor, PropType>::value, void*>::type>
 	SODL_Property_Descriptor(PropType &valuePtr);
 
-	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
-	SODL_Property_Descriptor(SODL_Value::Type valueType);
-
-	// constructs a descriptor for an enumeration type (that must have been previously defined within the ISODL_Object)
+	// constructs a descriptor for an enumeration type (that must have been previously defined within the ISODL_Object);
 	SODL_Property_Descriptor(const char* enumType, int32_t &valuePtr);
+
+	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
+	// if Enum is specified as valueType, then a valid enum name must be provided as the second argument
+	SODL_Property_Descriptor(SODL_Value::Type valueType, const char* enumType = nullptr);
 
 	// constructs a descriptor for an object type property;
 	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
 	SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr);
-
-	// constructs a descriptor for an object type property that can accept one of multiple object types
-	// 		for each element in vector: first is type alias (to be read from SODL file), second is actual object type;
-	// 		this allows you to use shorter aliases for different possible object types of one property; for example:
-	// 			descriptor for property1: { {"alias1", "Prop1ObjectType1"}, {...}...}
-	// 			SODL file: property1: alias1 5 3 1 "somePrimaryProp"
-	// 			'property1' will receive an object of type Prop1ObjectType1
-	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
-	SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr);
 
 	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
 	template<class FuncType>
@@ -52,11 +44,6 @@ struct SODL_Property_Descriptor {
 	// constructs a descriptor for an Event that will receive a handler from an action binding
 	template<class HandlerFuncType>
 	SODL_Property_Descriptor(Event<HandlerFuncType> &event, std::vector<SODL_Value::Type> argTypes);
-
-	// static method for convenient overload resolution when arg types are assignable but not identical
-	static SODL_Property_Descriptor multiObjType(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr) {
-		return SODL_Property_Descriptor { objectTypes, objectPtr };
-	}
 
 private:
 	friend class SODL_Loader;
@@ -70,11 +57,8 @@ private:
 	SODL_Value::Type type;
 	// for enum type properties, this holds the name of the enum defined within ISODL_Object
 	std::string enumName;
-	// the possible object types of the property, assuming isObject==true;
-	// if more than one value is supplied, then the first primary property read is interpreted as
-	// 		the effective object type and must match one of these; then that object type is instantiated;
-	// first is type alias, second is actual object type to instantiate
-	std::vector<std::pair<std::string, std::string>> objectTypes;
+	// the object type of the property, assuming isObject==true;
+	std::string objectType;
 	// types of arguments if the property is a callback
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the receiving value or callback of type std::function<...> within the object that will receive the callback binding
@@ -93,11 +77,14 @@ public:
 	const std::string& id() const { return id_; }
 
 	// each class that inherits ISODL_Object must define a unique object type identifier
-	virtual const std::string objectType() const = 0;
+	virtual std::string objectType() const = 0;
+
+	// override this to provide your object's super type (the object type of the ISODL_Object that represents the superclass)
+	virtual std::string superType() const { return ""; }
 
 protected:
-	// override this method if you need to do post-processing after the object has been fully loaded
-	virtual void loadingFinished() {};
+	// subscribe to this event if you need to do post-processing after the object has been fully loaded
+	Event<void()> loadingFinished;
 
 	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
 	// these can only be simple types or callbacks defined by SODL_Value::Type;
@@ -112,6 +99,10 @@ protected:
 	//   (within the provided array) of the enum value written in the SODL file
 	void defineEnum(const char* enumName, std::vector<std::string> enumLabels);
 
+	// supply a vector of object type names that this object supports as children;
+	// if none is supplied, then no children can be defined in the SODL file for this object
+	void defineSupportedChildTypes(std::vector<std::string> childTypes);
+
 	// the following methods allow the user to receive property values via callbacks instead of them being directly set into variables;
 	// override any one of these that you need;
 	// return true if the set was successful, or false if anything's wrong with the received value.
@@ -124,6 +115,9 @@ protected:
 	// the actual object type that is provided can be found by calling objPtr->objectType()
 	virtual bool setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) { return false; }
 
+	// override this method to receive child objects of the supported types defined previously
+	virtual bool addChildObject(std::shared_ptr<ISODL_Object> pObj) { return false; }
+
 private:
 	friend class SODL_Loader;
 
@@ -131,17 +125,18 @@ private:
 	std::vector<SODL_Property_Descriptor> primaryPropertyDesc_;
 	std::unordered_map<std::string, SODL_Property_Descriptor> mapPropertyDesc_;
 	std::unordered_map<std::string, std::vector<std::string>> userEnums_;
+	std::vector<std::string> childTypes_;
 
 	void setId(std::string id) { id_ = id; }
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
 	SODL_result setProperty(std::string const& propName, SODL_Value const& val);
 	SODL_result setProperty(std::string const& propName, std::shared_ptr<ISODL_Object> objPtr);
 	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance);
-	SODL_result addChildObject(std::shared_ptr<ISODL_Object> pObj);
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);
 	SODL_result resolveEnumValue(std::string const& enumName, std::string const& identName, int32_t &out_val);
+	bool supportsChildType(std::string const& objType);
 };
 
 #include "ISODL_Object_private.h"

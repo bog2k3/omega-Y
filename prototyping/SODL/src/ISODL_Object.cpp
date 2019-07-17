@@ -3,6 +3,8 @@
 
 #include <boglfw/utils/assert.h>
 
+#include <algorithm>
+
 // constructs a descriptor for a simple value type property
 SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type valueType, void* valuePtr)
 	: isObject(false), type(valueType), valueOrCallbackPtr(valuePtr) {
@@ -15,13 +17,8 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(const char* enumType, int32_t
 
 // constructs a descriptor for an object type property
 SODL_Property_Descriptor::SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr)
-	: isObject(true), valueOrCallbackPtr(objectPtr) {
-	objectTypes.push_back({objectType, objectType});
-}
-
-// constructs a descriptor for an object type property that can accept one of multiple object types
-SODL_Property_Descriptor::SODL_Property_Descriptor(std::vector<std::pair<std::string, std::string>> objectTypes, std::shared_ptr<ISODL_Object> *objectPtr)
-	: isObject(true), objectTypes(objectTypes), valueOrCallbackPtr(objectPtr) {
+	: isObject(true), objectType(objectType)
+	, valueOrCallbackPtr(objectPtr) {
 }
 
 // constructs a descriptor for a callback (std::function<void(argTypes...)>)
@@ -32,7 +29,7 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(void* funcPtr, std::vector<SO
 }
 
 void ISODL_Object::defineEnum(const char* enumName, std::vector<std::string> enumLabels) {
-	userEnums_[enumName] = enumLabels;
+	userEnums_[enumName].swap(enumLabels);
 }
 
 void ISODL_Object::definePrimaryProperty(const char* name, SODL_Property_Descriptor descriptor) {
@@ -56,10 +53,6 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 }
 
 SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
-	return SODL_result::error("not implemented");
-}
-
-SODL_result ISODL_Object::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 	return SODL_result::error("not implemented");
 }
 
@@ -118,15 +111,6 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, std::shared_p
 	auto &desc = it->second;
 	assertDbg(desc.isObject);
 	assertDbg(objPtr != nullptr);
-#ifdef DEBUG
-	bool objTypeFound = false;
-	for (auto &t : desc.objectTypes)
-		if (t.second == objPtr->objectType()) {
-			objTypeFound = true;
-			break;
-		}
-	assertDbg(objTypeFound);
-#endif
 	if (desc.valueOrCallbackPtr != nullptr)
 		*static_cast<std::shared_ptr<ISODL_Object>*>(desc.valueOrCallbackPtr) = objPtr;
 	else
@@ -164,5 +148,13 @@ SODL_result ISODL_Object::resolveEnumValue(std::string const& enumName, std::str
 	if (out_val >= 0)
 		return SODL_result::OK();
 	else
-		return SODL_result::error(strbld() << "Enum value '" << identName << "' doesnt exist in enum '" << enumName << "' within object type '" << objectType << "'");
+		return SODL_result::error(strbld() << "Enum value '" << identName << "' doesnt exist in enum '" << enumName << "' within object type '" << objectType() << "'");
+}
+
+void ISODL_Object::defineSupportedChildTypes(std::vector<std::string> childTypes) {
+	childTypes_.swap(childTypes);
+}
+
+bool ISODL_Object::supportsChildType(std::string const& objType) {
+	return std::find(childTypes_.begin(), childTypes_.end(), objType) != childTypes_.end();
 }

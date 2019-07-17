@@ -8,9 +8,11 @@ LabelSODLWrapper::LabelSODLWrapper()
 	definePrimaryProperty("text", {text_});
 	definePrimaryProperty("fontSize", {fontSize_});
 	definePrimaryProperty("align", {"enumAlignment", align_});
+
+	loadingFinished.add(std::bind(&LabelSODLWrapper::onLoadingFinished, this));
 }
 
-void LabelSODLWrapper::loadingFinished() {
+void LabelSODLWrapper::onLoadingFinished() {
 	label_->setText(text_);
 	//label_->setFontSize(fontSize_);
 }

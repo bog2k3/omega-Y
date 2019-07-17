@@ -427,7 +427,7 @@ SODL_result SODL_Loader::mergeObjectImpl(ISODL_Object &object, SODL_Loader::Pars
 			res = readObjectBlock(object, stream);
 	} while (0);
 	if (res)
-		object.loadingFinished();
+		object.loadingFinished.trigger();
 	return res;
 }
 
@@ -549,12 +549,15 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 			res = object.instantiateClass(ident, pInstanceObj);
 			if (!res)
 				return res;
+			if (!objectSupportsChildType(object, pInstanceObj->objectType()))
+				return SODL_result::error(strbld() << "Object of type '" << object.objectType() <<
+					"' does not support children of type '" << pInstanceObj->objectType() << "'");
 			res = mergeObjectImpl(*pInstanceObj, stream);
 			if (!res)
 				return res;
-			res = object.addChildObject(pInstanceObj);
-			if (!res)
-				return res;
+			if (!object.addChildObject(pInstanceObj))
+				return SODL_result::error(strbld() << "Failed to add object of type '" << pInstanceObj->objectType() <<
+					"' as child to '" << object.objectType() << "'");
 		} else if (ident == "class") {
 			res = readClass(object, stream);
 			if (!res)
@@ -569,27 +572,9 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 			if (!res)
 				return res;
 			if (pdesc.isObject) {
-				assertDbg(pdesc.objectTypes.size() > 0);
+				assertDbg(pdesc.objectType != "");
 				std::shared_ptr<ISODL_Object> pPropObj;
-				std::string objectType = pdesc.objectTypes[0].second;
-				if (pdesc.objectTypes.size() > 1) {
-					// there are multiple possible object types, we read the first primary value and
-					// that will tell us the object type to instantiate
-					std::string typeAlias;
-					res = stream.readIdentifier(typeAlias);
-					if (!res)
-						return res;
-					bool found = false;
-					for (auto &p : pdesc.objectTypes)
-						if (p.first == typeAlias) {
-							objectType = p.second;
-							found = true;
-							break;
-						}
-					if (!found)
-						return SODL_result::error(strbld() << "Object type alias '" << typeAlias << "' for property '" << ident << "' is not known");
-				}
-				res = instantiateObject(objectType, pPropObj);
+				res = instantiateObject(pdesc.objectType, pPropObj);
 				if (!res)
 					return res;
 				res = mergeObjectImpl(*pPropObj, stream);
@@ -608,13 +593,16 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 				return res;
 		} else {
 			// this must be a child object
+			if (!objectSupportsChildType(object, ident))
+				return SODL_result::error(strbld() << "Object of type '" << object.objectType() <<
+					"' does not support children of type '" << ident << "'");
 			std::shared_ptr<ISODL_Object> pObj;
 			res = loadObjectImpl(stream, &ident, pObj);
 			if (!res)
 				return res;
-			res = object.addChildObject(pObj);
-			if (!res)
-				return res;
+			if (!object.addChildObject(pObj))
+				return SODL_result::error(strbld() << "Failed to add object of type '" << ident <<
+					"' as child to '" << object.objectType() << "'");
 		}
 	}
 	if (stream.eof())
@@ -624,5 +612,10 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 }
 
 SODL_result SODL_Loader::readClass(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
+	return SODL_result::error("not implemented");
+}
 
+bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string const& typeName) {
+	// TODO: use factory.getTypeInfo() to recursively check supertypes of the typeName until no more supertype or match
+	return object.supportsChildType(typeName);
 }

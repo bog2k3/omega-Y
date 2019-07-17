@@ -1,21 +1,25 @@
 #pragma once
 
-#include "../../ISODL_Object.h"
+#include "GuiElementSODLWrapper.h"
 #include "layouts/LayoutSODLWrapper.h"
+#include "../common/Coord2SODLWrapper.h"
+#include "../common/Coord4SODLWrapper.h"
 
 #include <boglfw/GUI/GuiContainerElement.h>
 
-class ContainerSODLWrapper : public ISODL_Object {
+class ContainerSODLWrapper : public GuiElementSODLWrapper {
 public:
-	const std::string objectType() const override { return "container"; }
+	std::string objectType() const override { return "container"; }
+	std::string superType() const override { return GuiElementSODLWrapper::objectType(); }
+
 	~ContainerSODLWrapper() override {}
 	ContainerSODLWrapper();
-
-protected:
-	void loadingFinished() override;
-	bool setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) override;
 
 private:
 	std::shared_ptr<GuiContainerElement> container_;
 	std::shared_ptr<LayoutSODLWrapper> layout_;
+	std::shared_ptr<Coord2SODLWrapper> size_;
+	std::shared_ptr<Coord4SODLWrapper> padding_;
+
+	void onLoadingFinished();
 };
