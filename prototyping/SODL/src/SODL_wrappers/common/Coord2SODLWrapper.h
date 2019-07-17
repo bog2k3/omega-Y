@@ -13,6 +13,8 @@ public:
 		definePrimaryProperty("y", {coordPair_.y});
 	}
 
+	FlexCoordPair get() const { return coordPair_; }
+
 private:
 	FlexCoordPair coordPair_;
 };

@@ -13,6 +13,7 @@ public:
 
 protected:
 	void loadingFinished() override;
+	bool setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) override;
 
 private:
 	std::shared_ptr<GuiContainerElement> container_;

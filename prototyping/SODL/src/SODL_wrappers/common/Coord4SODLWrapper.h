@@ -15,6 +15,9 @@ public:
 		definePrimaryProperty("left", {coordPairTopLeft_.x});
 	}
 
+	FlexCoordPair getTopLeft() const { return coordPairTopLeft_; }
+	FlexCoordPair getBottomRight() const { return coordPairBottomRight_; }
+
 private:
 	FlexCoordPair coordPairTopLeft_;
 	FlexCoordPair coordPairBottomRight_;

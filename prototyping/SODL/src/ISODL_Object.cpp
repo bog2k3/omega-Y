@@ -52,6 +52,22 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 	auto &desc = primaryPropertyDesc_[index];
 	assertDbg(!desc.isObject);
 	assertDbg(!val.isBinding);
+	return setProperty(desc.name, val);
+}
+
+SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
+	return SODL_result::error("not implemented");
+}
+
+SODL_result ISODL_Object::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
+	return SODL_result::error("not implemented");
+}
+
+SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value const& val) {
+	auto it = mapPropertyDesc_.find(propName);
+	if (it == mapPropertyDesc_.end())
+		return SODL_result::error(strbld() << "Property with name '" << propName << "' not defined in object of type '" << objectType() << "'");
+	auto &desc = it->second;
 	bool success = true;
 	switch (desc.type)
 	{
@@ -85,20 +101,28 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 		return SODL_result::OK();
 }
 
-SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
-	return SODL_result::error("not implemented");
-}
-
-SODL_result ISODL_Object::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
-	return SODL_result::error("not implemented");
-}
-
-SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value const& val) {
-	return SODL_result::error("not implemented");
-}
-
 SODL_result ISODL_Object::setProperty(std::string const& propName, std::shared_ptr<ISODL_Object> objPtr) {
-	return SODL_result::error("not implemented");
+	auto it = mapPropertyDesc_.find(propName);
+	if (it == mapPropertyDesc_.end())
+		return SODL_result::error(strbld() << "Property with name '" << propName << "' not defined in object of type '" << objectType() << "'");
+	auto &desc = it->second;
+	assertDbg(desc.isObject);
+	assertDbg(objPtr != nullptr);
+#ifdef DEBUG
+	bool objTypeFound = false;
+	for (auto &t : desc.objectTypes)
+		if (t.second == objPtr->objectType()) {
+			objTypeFound = true;
+			break;
+		}
+	assertDbg(objTypeFound);
+#endif
+	if (desc.valueOrCallbackPtr != nullptr)
+		*static_cast<std::shared_ptr<ISODL_Object>*>(desc.valueOrCallbackPtr) = objPtr;
+	else
+		if (!setUserPropertyValue(propName.c_str(), objPtr))
+			return SODL_result::error(strbld() << "Failed to set user property '" << propName << "' for object type '" << objectType() << "'");
+	return SODL_result::OK();
 }
 
 SODL_result ISODL_Object::describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc) {
