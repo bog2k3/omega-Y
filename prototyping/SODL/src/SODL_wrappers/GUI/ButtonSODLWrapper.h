@@ -14,6 +14,9 @@ public:
 	~ButtonSODLWrapper() override {}
 	ButtonSODLWrapper();
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	std::shared_ptr<Button> button_;
 

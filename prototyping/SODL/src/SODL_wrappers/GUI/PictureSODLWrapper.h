@@ -12,6 +12,9 @@ public:
 	~PictureSODLWrapper() override {}
 	PictureSODLWrapper();
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	std::shared_ptr<Picture> picture_;
 };

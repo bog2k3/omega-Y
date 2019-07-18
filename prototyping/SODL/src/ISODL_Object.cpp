@@ -66,10 +66,6 @@ SODL_result ISODL_Object::setPrimaryProperty(unsigned index, SODL_Value const& v
 	return setProperty(desc.name, val);
 }
 
-SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
-	return SODL_result::error("not implemented");
-}
-
 SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value const& val) {
 	auto it = mapPropertyDesc_.find(propName);
 	if (it == mapPropertyDesc_.end())
@@ -181,4 +177,18 @@ void ISODL_Object::defineSupportedChildTypes(std::vector<std::string> childTypes
 
 bool ISODL_Object::supportsChildType(std::string const& objType) {
 	return std::find(childTypes_.begin(), childTypes_.end(), objType) != childTypes_.end();
+}
+
+SODL_result ISODL_Object::addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj) {
+	if (mapClasses_.find(className) != mapClasses_.end())
+		return SODL_result::error(strbld() << "Class '" << className << "' was already defined within object '" << objectType() << "' #" << id());
+	mapClasses_[className] = pClassObj;
+	return SODL_result::OK();
+}
+
+SODL_result ISODL_Object::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
+	if (mapClasses_.find(className) == mapClasses_.end())
+		return SODL_result::error(strbld() << "Undefined class '" << className << "' within object '" << objectType() << "' #" << id());
+	out_pInstance = mapClasses_[className]->clone();
+	return SODL_result::OK();
 }

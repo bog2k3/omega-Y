@@ -13,6 +13,9 @@ public:
 
 	std::shared_ptr<Layout> get() const;
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	class Impl;
 	Impl *pImpl_;

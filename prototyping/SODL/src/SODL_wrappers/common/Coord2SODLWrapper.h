@@ -23,6 +23,9 @@ public:
 	void setX(FlexCoord x) { coordPair_.x = x; }
 	void setY(FlexCoord y) { coordPair_.y = y; }
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	FlexCoordPair coordPair_;
 };

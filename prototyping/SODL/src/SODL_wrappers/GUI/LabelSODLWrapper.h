@@ -14,6 +14,9 @@ public:
 
 	std::shared_ptr<Label> get() const { return label_; }
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	std::shared_ptr<Label> label_;
 	std::string text_;

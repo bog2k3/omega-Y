@@ -609,7 +609,15 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 }
 
 SODL_result SODL_Loader::readClass(ISODL_Object &object, SODL_Loader::ParseStream &stream) {
-	return SODL_result::error("not implemented");
+	std::string className;
+	auto res = stream.readIdentifier(className);
+	if (!res)
+		return res;
+	std::shared_ptr<ISODL_Object> pClassObj;
+	res = loadObjectImpl(stream, nullptr, pClassObj);
+	if (!res)
+		return res;
+	return object.addClassDefinition(className, pClassObj);
 }
 
 bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string const& typeName) {

@@ -16,6 +16,7 @@ public:
 
 protected:
 	void setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement);
+	std::shared_ptr<ISODL_Object> clone() override;
 
 private:
 	std::shared_ptr<GuiBasicElement> element_;

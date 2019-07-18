@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <map>
+#include <unordered_map>
 
 class SODL_Loader {
 public:
@@ -43,8 +43,8 @@ private:
 	struct _SODL_Loader_ActionBindingDescriptor;
 
 	ISODL_Object_Factory &factory_;
-	std::map<std::string, std::pair<SODL_Value::Type, void*>> mapDataBindings_;
-	std::map<std::string, _SODL_Loader_ActionBindingDescriptor*> mapActionBindings_;
+	std::unordered_map<std::string, std::pair<SODL_Value::Type, void*>> mapDataBindings_;
+	std::unordered_map<std::string, _SODL_Loader_ActionBindingDescriptor*> mapActionBindings_;
 
 	std::pair<char*, size_t> readFile(const char* fileName);
 

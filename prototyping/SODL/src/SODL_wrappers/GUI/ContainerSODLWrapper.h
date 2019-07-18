@@ -17,6 +17,7 @@ public:
 
 protected:
 	bool addChildObject(std::shared_ptr<ISODL_Object> pObj) override;
+	std::shared_ptr<ISODL_Object> clone() override;
 
 private:
 	std::shared_ptr<GuiContainerElement> container_;

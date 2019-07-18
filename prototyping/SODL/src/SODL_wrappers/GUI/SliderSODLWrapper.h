@@ -8,4 +8,7 @@ public:
 	std::string superType() const override { return GuiElementSODLWrapper::objectType(); }
 
 	~SliderSODLWrapper() override {}
+
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
 };

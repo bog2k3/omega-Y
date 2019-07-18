@@ -18,6 +18,9 @@ public:
 	FlexCoordPair getTopLeft() const { return coordPairTopLeft_; }
 	FlexCoordPair getBottomRight() const { return coordPairBottomRight_; }
 
+protected:
+	std::shared_ptr<ISODL_Object> clone() override;
+
 private:
 	FlexCoordPair coordPairTopLeft_;
 	FlexCoordPair coordPairBottomRight_;
