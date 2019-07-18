@@ -16,6 +16,7 @@ public:
 
 protected:
 	void setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement);
+	bool setUserPropertyValue(const char* pName, FlexCoord coordVal) override;
 
 private:
 	std::shared_ptr<GuiBasicElement> element_;
@@ -23,4 +24,7 @@ private:
 	std::shared_ptr<Coord2SODLWrapper> size_;
 
 	void onLoadingFinished();
+
+	void setWidth(FlexCoord coordVal);
+	void setHeight(FlexCoord coordVal);
 };

@@ -20,6 +20,7 @@ private:
 	class Impl;
 	Impl *pImpl_;
 
+	void defineEnums();
 	void defineFreeProps();
 	void defineFillProps();
 	void defineGridProps();

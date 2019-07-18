@@ -108,8 +108,8 @@ protected:
 	// return true if the set was successful, or false if anything's wrong with the received value.
 	// there is one method overload for each data type that an object may receive
 	virtual bool setUserPropertyValue(const char* propName, float numberVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, FlexibleCoordinate const& coordVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, std::string const& stringVal) { return false; }
+	virtual bool setUserPropertyValue(const char* propName, FlexibleCoordinate coordVal) { return false; }
+	virtual bool setUserPropertyValue(const char* propName, std::string stringVal) { return false; }
 	virtual bool setUserPropertyValue(const char* propName, int32_t enumVal) { return false; }
 	// this method is invoked for object-type properties;
 	// the actual object type that is provided can be found by calling objPtr->objectType()

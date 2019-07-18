@@ -11,7 +11,7 @@ ButtonSODLWrapper::ButtonSODLWrapper()
 	definePrimaryProperty("onClick", {button_->onClick, {}});
 }
 
-bool ButtonSODLWrapper::setUserPropertyValue(const char* propName, std::string const& stringVal) {
+bool ButtonSODLWrapper::setUserPropertyValue(const char* propName, std::string stringVal) {
 	if (!strcmp(propName, "text")) {
 		button_->setText(stringVal);
 		return true;

@@ -13,7 +13,15 @@ public:
 		definePrimaryProperty("y", {coordPair_.y});
 	}
 
+	Coord2SODLWrapper(FlexCoordPair val)
+		: Coord2SODLWrapper() {
+		coordPair_ = val;
+	}
+
 	FlexCoordPair get() const { return coordPair_; }
+
+	void setX(FlexCoord x) { coordPair_.x = x; }
+	void setY(FlexCoord y) { coordPair_.y = y; }
 
 private:
 	FlexCoordPair coordPair_;

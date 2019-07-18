@@ -18,6 +18,22 @@ public:
 		split
 	} type;
 
+	enum eDirection : int32_t {
+		horizontal,
+		vertical
+	};
+
+	enum eHAlign : int32_t {
+		left,
+		right,
+		center
+	};
+	enum eVAlign : int32_t {
+		top,
+		bottom,
+		middle
+	};
+
 	bool isSet = false;
 	std::shared_ptr<Layout> pLayout;
 
@@ -35,13 +51,16 @@ public:
 
 	struct {
 		std::shared_ptr<ListLayout> ptr;
+		eDirection direction = vertical;
+		eHAlign align = left;
+		eVAlign vertAlign = top;
 	} listProps;
 
 	struct {
 		std::shared_ptr<SplitLayout> ptr;
 		std::shared_ptr<LayoutSODLWrapper> splitFirst;
 		std::shared_ptr<LayoutSODLWrapper> splitSecond;
-		int32_t direction;
+		eDirection direction = horizontal;
 		FlexCoord offset;
 		float splitPoint;
 	} splitProps;
@@ -96,6 +115,7 @@ bool LayoutSODLWrapper::setUserPropertyValue(const char* propName, int32_t enumV
 			return false; // type already set, we only allow it once
 		pImpl_->type = (Impl::layoutType)enumVal;
 		pImpl_->create();
+		defineEnums();
 		switch (pImpl_->type) {
 			case Impl::fill:
 				defineFillProps();
@@ -118,6 +138,23 @@ bool LayoutSODLWrapper::setUserPropertyValue(const char* propName, int32_t enumV
 		return false;
 }
 
+void LayoutSODLWrapper::defineEnums() {
+	defineEnum("enumDirection", {
+		"horizontal",
+		"vertical"
+	});
+	defineEnum("enumAlign", {
+		"left",
+		"right",
+		"center"
+	});
+	defineEnum("enumVertAlign", {
+		"top",
+		"bottom",
+		"middle"
+	});
+}
+
 void LayoutSODLWrapper::defineFillProps() {
 
 }
@@ -131,15 +168,13 @@ void LayoutSODLWrapper::defineGridProps() {
 }
 
 void LayoutSODLWrapper::defineListProps() {
-
+	definePrimaryProperty("direction", {"enumDirection", (int32_t&)pImpl_->listProps.direction});
+	defineSecondaryProperty("align", {"enumAlign", (int32_t&)pImpl_->listProps.align});
+	defineSecondaryProperty("vertAlign", {"enumVertAlign", (int32_t&)pImpl_->listProps.vertAlign});
 }
 
 void LayoutSODLWrapper::defineSplitProps() {
-	defineEnum("enumDirection", {
-		"horizontal",
-		"vertical"
-	});
-	definePrimaryProperty("direction", {"enumDirection", pImpl_->splitProps.direction});
+	definePrimaryProperty("direction", {"enumDirection", (int32_t&)pImpl_->splitProps.direction});
 	definePrimaryProperty("offset", {pImpl_->splitProps.offset});
 	definePrimaryProperty("splitPoint", {pImpl_->splitProps.splitPoint});
 
