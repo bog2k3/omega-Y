@@ -6,9 +6,9 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 	: container_(new GuiContainerElement()) {
 	setupCommonProperties(container_);
 
-	defineSecondaryProperty("size", {"coord2", (std::shared_ptr<ISODL_Object>*)&size_});
-	defineSecondaryProperty("padding", {"coord4", (std::shared_ptr<ISODL_Object>*)&padding_});
-	defineSecondaryProperty("layout", {"layout", (std::shared_ptr<ISODL_Object>*)&layout_});
+	defineSecondaryProperty("size", {"coord2", (std::shared_ptr<ISODL_Object>&)size_});
+	defineSecondaryProperty("padding", {"coord4", (std::shared_ptr<ISODL_Object>&)padding_});
+	defineSecondaryProperty("layout", {"layout", (std::shared_ptr<ISODL_Object>&)layout_});
 
 	defineSupportedChildTypes({	GuiElementSODLWrapper::objectType() });
 

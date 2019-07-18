@@ -13,9 +13,6 @@ public:
 
 	std::shared_ptr<Layout> get() const;
 
-protected:
-	bool setUserPropertyValue(const char* propName, int32_t enumVal) override;
-
 private:
 	class Impl;
 	Impl *pImpl_;
@@ -28,4 +25,6 @@ private:
 	void defineSplitProps();
 
 	void onLoadingFinished();
+
+	bool setType(int32_t type);
 };

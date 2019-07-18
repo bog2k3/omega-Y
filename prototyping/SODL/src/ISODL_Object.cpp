@@ -10,15 +10,29 @@ SODL_Property_Descriptor::SODL_Property_Descriptor(SODL_Value::Type valueType, v
 	: isObject(false), type(valueType), valueOrCallbackPtr(valuePtr) {
 }
 
+// ctor for an enum value
 SODL_Property_Descriptor::SODL_Property_Descriptor(const char* enumType, int32_t &valuePtr)
 	: SODL_Property_Descriptor(SODL_Value::Type::Enum, &valuePtr) {
 	this->enumName = enumType;
 }
 
 // constructs a descriptor for an object type property
-SODL_Property_Descriptor::SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr)
+SODL_Property_Descriptor::SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> &objectPtr)
 	: isObject(true), objectType(objectType)
-	, valueOrCallbackPtr(objectPtr) {
+	, valueOrCallbackPtr(&objectPtr) {
+}
+
+// constructs a descriptor for an object type property that will be set via the provided callback
+SODL_Property_Descriptor::SODL_Property_Descriptor(const char* objectType, std::function<bool(std::shared_ptr<ISODL_Object>)> setObjPropCallback)
+	: isObject(true), objectType(objectType)
+	, valueOrCallbackPtr(nullptr)
+	, pCallbackWrapper(new CallbackWrapperModel::Instance<std::shared_ptr<ISODL_Object>>(setObjPropCallback)) {
+}
+
+SODL_Property_Descriptor::SODL_Property_Descriptor(const char* enumType, std::function<bool(int32_t)> setValueCallback)
+	: SODL_Property_Descriptor(SODL_Value::Type::Enum, (void*)nullptr) {
+	this->enumName = enumType;
+	pCallbackWrapper.reset(new CallbackWrapperModel::Instance<int32_t>(setValueCallback));
 }
 
 // constructs a descriptor for a callback (std::function<void(argTypes...)>)
@@ -68,8 +82,10 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value co
 		FlexCoord coordVal {val.numberVal, val.isPercentCoord ? FlexCoord::PERCENT : FlexCoord::PIXELS};
 		if (desc.valueOrCallbackPtr)
 			*static_cast<FlexCoord*>(desc.valueOrCallbackPtr) = coordVal;
-		else
-			success = setUserPropertyValue(desc.name.c_str(), coordVal);
+		else {
+			assertDbg(desc.pCallbackWrapper != nullptr);
+			success = desc.pCallbackWrapper->applyCallback(&coordVal);
+		}
 	} break;
 	case SODL_Value::Type::Enum: {
 		int32_t enumVal;
@@ -78,20 +94,26 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value co
 			return res;
 		if (desc.valueOrCallbackPtr)
 			*static_cast<int32_t*>(desc.valueOrCallbackPtr) = enumVal;
-		else
-			success = setUserPropertyValue(desc.name.c_str(), enumVal);
+		else {
+			assertDbg(desc.pCallbackWrapper != nullptr);
+			success = desc.pCallbackWrapper->applyCallback(&enumVal);
+		}
 	} break;
 	case SODL_Value::Type::Number:
 		if (desc.valueOrCallbackPtr)
 			*static_cast<float*>(desc.valueOrCallbackPtr) = val.numberVal;
-		else
-			success = setUserPropertyValue(desc.name.c_str(), val.numberVal);
+		else {
+			assertDbg(desc.pCallbackWrapper != nullptr);
+			success = desc.pCallbackWrapper->applyCallback(&val.numberVal);
+		}
 		break;
 	case SODL_Value::Type::String:
 		if (desc.valueOrCallbackPtr)
 			*static_cast<std::string*>(desc.valueOrCallbackPtr) = val.stringVal;
-		else
-			success = setUserPropertyValue(desc.name.c_str(), val.stringVal);
+		else {
+			assertDbg(desc.pCallbackWrapper != nullptr);
+			success = desc.pCallbackWrapper->applyCallback(&val.stringVal);
+		}
 		break;
 	case SODL_Value::Type::Callback:
 		success = false;
@@ -99,7 +121,7 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value co
 		return SODL_result::error(strbld() << "Unhandled value type : " << (int)desc.type);
 	}
 	if (!success)
-		return SODL_result::error(strbld() << "Failed to set user property '" << desc.name << "' for object type '" << objectType() << "'");
+		return SODL_result::error(strbld() << "Failed to set property '" << desc.name << "' via callback for object type '" << objectType() << "'");
 	else
 		return SODL_result::OK();
 }
@@ -113,9 +135,11 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, std::shared_p
 	assertDbg(objPtr != nullptr);
 	if (desc.valueOrCallbackPtr != nullptr)
 		*static_cast<std::shared_ptr<ISODL_Object>*>(desc.valueOrCallbackPtr) = objPtr;
-	else
-		if (!setUserPropertyValue(propName.c_str(), objPtr))
-			return SODL_result::error(strbld() << "Failed to set user property '" << propName << "' for object type '" << objectType() << "'");
+	else {
+		assertDbg(desc.pCallbackWrapper != nullptr);
+		if (!desc.pCallbackWrapper->applyCallback(&objPtr))
+			return SODL_result::error(strbld() << "Failed to set property '" << propName << "' via callback for object type '" << objectType() << "'");
+	}
 	return SODL_result::OK();
 }
 

@@ -102,40 +102,37 @@ LayoutSODLWrapper::LayoutSODLWrapper()
 		"list",
 		"split"
 	});
-	definePrimaryProperty("type", {SODL_Value::Type::Enum, "enumLayoutType"});
+	definePrimaryProperty("type", {"enumLayoutType", std::bind(&LayoutSODLWrapper::setType, this, std::placeholders::_1)});
 	// the rest of the properties are defined dynamically depending on this first one
 	// see setUserPropertyValue
 
 	loadingFinished.add(std::bind(&LayoutSODLWrapper::onLoadingFinished, this));
 }
 
-bool LayoutSODLWrapper::setUserPropertyValue(const char* propName, int32_t enumVal) {
-	if (!strcmp(propName, "type")) {
-		if (pImpl_->isSet)
-			return false; // type already set, we only allow it once
-		pImpl_->type = (Impl::layoutType)enumVal;
-		pImpl_->create();
-		defineEnums();
-		switch (pImpl_->type) {
-			case Impl::fill:
-				defineFillProps();
-				break;
-			case Impl::free:
-				defineFreeProps();
-				break;
-			case Impl::grid:
-				defineGridProps();
-				break;
-			case Impl::list:
-				defineListProps();
-				break;
-			case Impl::split:
-				defineSplitProps();
-				break;
-		}
-		return true;
-	} else
-		return false;
+bool LayoutSODLWrapper::setType(int32_t type) {
+	if (pImpl_->isSet)
+		return false; // type already set, we only allow it once
+	pImpl_->type = (Impl::layoutType)type;
+	pImpl_->create();
+	defineEnums();
+	switch (pImpl_->type) {
+		case Impl::fill:
+			defineFillProps();
+			break;
+		case Impl::free:
+			defineFreeProps();
+			break;
+		case Impl::grid:
+			defineGridProps();
+			break;
+		case Impl::list:
+			defineListProps();
+			break;
+		case Impl::split:
+			defineSplitProps();
+			break;
+	}
+	return true;
 }
 
 void LayoutSODLWrapper::defineEnums() {
@@ -178,8 +175,8 @@ void LayoutSODLWrapper::defineSplitProps() {
 	definePrimaryProperty("offset", {pImpl_->splitProps.offset});
 	definePrimaryProperty("splitPoint", {pImpl_->splitProps.splitPoint});
 
-	defineSecondaryProperty("first", {"layout", (std::shared_ptr<ISODL_Object>*)&pImpl_->splitProps.splitFirst});
-	defineSecondaryProperty("second", {"layout", (std::shared_ptr<ISODL_Object>*)&pImpl_->splitProps.splitSecond});
+	defineSecondaryProperty("first", {"layout", (std::shared_ptr<ISODL_Object>&)pImpl_->splitProps.splitFirst});
+	defineSecondaryProperty("second", {"layout", (std::shared_ptr<ISODL_Object>&)pImpl_->splitProps.splitSecond});
 }
 
 std::shared_ptr<Layout> LayoutSODLWrapper::get() const {

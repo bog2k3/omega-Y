@@ -24,18 +24,26 @@ struct SODL_Property_Descriptor {
 
 	// constructs a descriptor for a simple non-callback value type property defined by SODL_Value::Type, that will be set directly into the receiving object
 	template <class PropType, class = typename std::enable_if<!std::is_same<SODL_Property_Descriptor, PropType>::value, void*>::type>
-	SODL_Property_Descriptor(PropType &valuePtr);
+	SODL_Property_Descriptor(PropType &valuePtr, ...);
 
 	// constructs a descriptor for an enumeration type (that must have been previously defined within the ISODL_Object);
 	SODL_Property_Descriptor(const char* enumType, int32_t &valuePtr);
 
-	// constructs a descriptor for a simple non-callback value type property that will be set via ISODL_Object::setUserPropertyValue()
-	// if Enum is specified as valueType, then a valid enum name must be provided as the second argument
-	SODL_Property_Descriptor(SODL_Value::Type valueType, const char* enumType = nullptr);
+	// constructs a descriptor for a simple non-callback, value type property that will be set via the provided callback;
+	// [setValueCallback] will be invoked with the value read from the file; return true for success, false if there's a problem with the value
+	template <class PropType>
+	SODL_Property_Descriptor(std::function<bool(PropType)> setValueCallback);
+
+	// constructs a descriptor for an enum value that will be set via the provided callback
+	// A valid enum name must be provided as the first argument;
+	// [setValueCallback] will be invoked with the value read from the file; return true for success, false if there's a problem with the value
+	SODL_Property_Descriptor(const char* enumType, std::function<bool(int32_t)> setValueCallback);
 
 	// constructs a descriptor for an object type property;
-	// if nullptr is provided as [objectPtr] the value will be set via ISODL_Object::setUserPropertyValue()
-	SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> *objectPtr);
+	SODL_Property_Descriptor(const char* objectType, std::shared_ptr<ISODL_Object> &objectPtr);
+
+	// constructs a descriptor for an object type property that will be set via the provided callback
+	SODL_Property_Descriptor(const char* objectType, std::function<bool(std::shared_ptr<ISODL_Object>)> setObjPropCallback);
 
 	// constructs a descriptor for a callback (std::function<void(argTypes...)>)
 	template<class FuncType>
@@ -48,6 +56,8 @@ struct SODL_Property_Descriptor {
 private:
 	friend class SODL_Loader;
 	friend class ISODL_Object;
+
+	class CallbackWrapperModel;
 
 	// true if property is an object type, false if it's a value type
 	bool isObject;
@@ -63,6 +73,8 @@ private:
 	std::vector<SODL_Value::Type> callbackArgTypes;
 	// pointer to the receiving value or callback of type std::function<...> within the object that will receive the callback binding
 	void* valueOrCallbackPtr = nullptr;
+
+	std::shared_ptr<CallbackWrapperModel> pCallbackWrapper;
 
 	std::string name;
 
@@ -94,6 +106,12 @@ protected:
 	// these can also be object types
 	void defineSecondaryProperty(const char* name, SODL_Property_Descriptor descriptor);
 
+	// convenience method to construct a property descriptor for a property that is assigned via a callback
+	template<class PropType>
+	SODL_Property_Descriptor callMeBack(std::function<bool(PropType)> cb) {
+		return SODL_Property_Descriptor(cb);
+	}
+
 	// defines an enumeration type for this object;
 	// properties can be defined with this enum type and they will receive as value an int32_t corresponding to the index
 	//   (within the provided array) of the enum value written in the SODL file
@@ -102,18 +120,6 @@ protected:
 	// supply a vector of object type names that this object supports as children;
 	// if none is supplied, then no children can be defined in the SODL file for this object
 	void defineSupportedChildTypes(std::vector<std::string> childTypes);
-
-	// the following methods allow the user to receive property values via callbacks instead of them being directly set into variables;
-	// override any one of these that you need;
-	// return true if the set was successful, or false if anything's wrong with the received value.
-	// there is one method overload for each data type that an object may receive
-	virtual bool setUserPropertyValue(const char* propName, float numberVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, FlexibleCoordinate coordVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, std::string stringVal) { return false; }
-	virtual bool setUserPropertyValue(const char* propName, int32_t enumVal) { return false; }
-	// this method is invoked for object-type properties;
-	// the actual object type that is provided can be found by calling objPtr->objectType()
-	virtual bool setUserPropertyValue(const char* propName, std::shared_ptr<ISODL_Object> objPtr) { return false; }
 
 	// override this method to receive child objects of the supported types defined previously
 	virtual bool addChildObject(std::shared_ptr<ISODL_Object> pObj) { return false; }
