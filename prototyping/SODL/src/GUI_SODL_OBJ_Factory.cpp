@@ -8,7 +8,7 @@
 #include "SODL_wrappers/GUI/PictureSODLWrapper.h"
 #include "SODL_wrappers/GUI/SliderSODLWrapper.h"
 #include "SODL_wrappers/GUI/TextFieldSODLWrapper.h"
-#include "SODL_wrappers/GUI/layouts/LayoutSODLWrapper.h"
+#include "SODL_wrappers/GUI/LayoutSODLWrapper.h"
 
 GUI_SODL_OBJ_Factory::~GUI_SODL_OBJ_Factory() {
 	for (auto &p : mapClassDef_)

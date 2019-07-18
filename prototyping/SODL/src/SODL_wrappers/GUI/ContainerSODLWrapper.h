@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GuiElementSODLWrapper.h"
-#include "layouts/LayoutSODLWrapper.h"
+#include "LayoutSODLWrapper.h"
 #include "../common/Coord2SODLWrapper.h"
 #include "../common/Coord4SODLWrapper.h"
 

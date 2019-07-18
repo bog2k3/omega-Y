@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../ISODL_Object.h"
+#include "../../ISODL_Object.h"
 
 #include <boglfw/GUI/Layout.h>
 

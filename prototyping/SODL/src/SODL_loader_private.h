@@ -21,9 +21,9 @@ public:
 	void setObjectCallbackBinding(void* fnPtr, bool isEvent) override {
 		assertDbg(fnPtr != nullptr);
 		if (isEvent)
-			reinterpret_cast<Event<FuncType>*>(fnPtr)->add(func_);
+			static_cast<Event<FuncType>*>(fnPtr)->add(func_);
 		else
-			*reinterpret_cast<std::function<FuncType>*>(fnPtr) = func_;
+			*static_cast<std::function<FuncType>*>(fnPtr) = func_;
 	}
 private:
 	std::function<FuncType> func_;
