@@ -186,3 +186,9 @@ std::shared_ptr<Layout> LayoutSODLWrapper::get() const {
 void LayoutSODLWrapper::onLoadingFinished() {
 	pImpl_->applyProps();
 }
+
+std::shared_ptr<ISODL_Object> LayoutSODLWrapper::clone() {
+	std::shared_ptr<LayoutSODLWrapper> ptr(new LayoutSODLWrapper());
+	// TODO actually do this thing
+	return nullptr;
+}

@@ -6,7 +6,6 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 	: container_(new GuiContainerElement()) {
 	setupCommonProperties(container_);
 
-	defineSecondaryProperty("size", {"coord2", (std::shared_ptr<ISODL_Object>&)size_});
 	defineSecondaryProperty("padding", {"coord4", (std::shared_ptr<ISODL_Object>&)padding_});
 	defineSecondaryProperty("layout", {"layout", (std::shared_ptr<ISODL_Object>&)layout_});
 
@@ -16,8 +15,6 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 }
 
 void ContainerSODLWrapper::onLoadingFinished() {
-	if (size_ != nullptr)
-		container_->setSize(size_->get());
 	if (padding_ != nullptr) {
 		container_->setClientArea(padding_->getTopLeft(), padding_->getBottomRight());
 	}
@@ -30,4 +27,14 @@ bool ContainerSODLWrapper::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 		return false;
 	container_->addElement(pElement->get());
 	return true;
+}
+
+std::shared_ptr<ISODL_Object> ContainerSODLWrapper::clone() {
+	std::shared_ptr<ContainerSODLWrapper> ptr(new ContainerSODLWrapper());
+	cloneCommonPropertiesTo(ptr);
+	ptr->padding_ = padding_;
+	ptr->layout_ = layout_;
+	// TODO copy all child objects
+
+	return ptr;
 }

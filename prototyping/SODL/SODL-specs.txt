@@ -8,7 +8,7 @@ data types:
 	5. IDentifier: #someID
 object property declaration:
 propertyName: value1 value2 ...
-some properties are mandatory, others are optional; ordering is important
+some properties are mandatory, others are optional; ordering is important for the inline ones
 child object declaration:
 child1 #childId "childPrimaryPropValues" 42 {
 }

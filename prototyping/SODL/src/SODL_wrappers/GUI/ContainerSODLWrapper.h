@@ -22,7 +22,6 @@ protected:
 private:
 	std::shared_ptr<GuiContainerElement> container_;
 	std::shared_ptr<LayoutSODLWrapper> layout_;
-	std::shared_ptr<Coord2SODLWrapper> size_;
 	std::shared_ptr<Coord4SODLWrapper> padding_;
 
 	void onLoadingFinished();

@@ -17,7 +17,7 @@ void GuiElementSODLWrapper::onLoadingFinished() {
 void GuiElementSODLWrapper::setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement) {
 	element_ = pElement;
 	defineSecondaryProperty("pos", {"coord2", (std::shared_ptr<ISODL_Object>&)position_});
-	defineSecondaryProperty("size", {"coord4", (std::shared_ptr<ISODL_Object>&)size_});
+	defineSecondaryProperty("size", {"coord2", (std::shared_ptr<ISODL_Object>&)size_});
 	defineSecondaryProperty("width", callMeBack<FlexCoord>(std::bind(&GuiElementSODLWrapper::setWidth, this, std::placeholders::_1)));
 	defineSecondaryProperty("height", callMeBack<FlexCoord>(std::bind(&GuiElementSODLWrapper::setHeight, this, std::placeholders::_1)));
 }
@@ -34,4 +34,9 @@ bool GuiElementSODLWrapper::setHeight(FlexCoord coordVal) {
 		position_ = std::make_shared<Coord2SODLWrapper>(element_->size());
 	position_->setY(coordVal);
 	return true;
+}
+
+void GuiElementSODLWrapper::cloneCommonPropertiesTo(std::shared_ptr<GuiElementSODLWrapper> pDest) {
+	pDest->position_ = position_;
+	pDest->size_ = size_;
 }

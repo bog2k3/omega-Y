@@ -10,5 +10,5 @@ public:
 	~SliderSODLWrapper() override {}
 
 protected:
-	std::shared_ptr<ISODL_Object> clone() override;
+	std::shared_ptr<ISODL_Object> clone() override { return nullptr; }
 };

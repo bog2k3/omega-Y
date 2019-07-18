@@ -19,7 +19,12 @@ public:
 	FlexCoordPair getBottomRight() const { return coordPairBottomRight_; }
 
 protected:
-	std::shared_ptr<ISODL_Object> clone() override;
+	std::shared_ptr<ISODL_Object> clone() override {
+		auto ptr = std::make_shared<Coord4SODLWrapper>();
+		ptr->coordPairTopLeft_ = coordPairTopLeft_;
+		ptr->coordPairBottomRight_ = coordPairBottomRight_;
+		return ptr;
+	}
 
 private:
 	FlexCoordPair coordPairTopLeft_;

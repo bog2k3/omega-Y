@@ -9,6 +9,7 @@
 #include "SODL_wrappers/GUI/SliderSODLWrapper.h"
 #include "SODL_wrappers/GUI/TextFieldSODLWrapper.h"
 #include "SODL_wrappers/GUI/LayoutSODLWrapper.h"
+#include "strbld.h"
 
 GUI_SODL_OBJ_Factory::~GUI_SODL_OBJ_Factory() {
 	for (auto &p : mapClassDef_)
@@ -19,7 +20,9 @@ GUI_SODL_OBJ_Factory::~GUI_SODL_OBJ_Factory() {
 SODL_result GUI_SODL_OBJ_Factory::constructObject(std::string const& objType, std::shared_ptr<ISODL_Object> &outObj) {
 	auto it = mapClassDef_.find(objType);
 	if (it == mapClassDef_.end())
-		return SODL_result::error("Unknown object type: " + objType);
+		return SODL_result::error(strbld() << "Unknown object type: '" << objType << "'");
+	if (it->second.metadata_.isAbstract)
+		return SODL_result::error(strbld() << "Cannot instantiate abstract type: '" << objType << "'");
 	outObj = it->second.creator_->create();
 	return SODL_result::OK();
 }
@@ -35,7 +38,7 @@ SODL_result GUI_SODL_OBJ_Factory::getTypeInfo(std::string const& typeName, SODL_
 GUI_SODL_OBJ_Factory::GUI_SODL_OBJ_Factory() {
 	addClassDefinition<Coord2SODLWrapper>();
 	addClassDefinition<Coord4SODLWrapper>();
-	addClassDefinition<GuiElementSODLWrapper>(true);
+	addAbstractClassDefinition<GuiElementSODLWrapper>();
 	addClassDefinition<LabelSODLWrapper>();
 	addClassDefinition<PictureSODLWrapper>();
 	addClassDefinition<ContainerSODLWrapper>();

@@ -34,11 +34,20 @@ private:
 	std::unordered_map<std::string, classDef> mapClassDef_;
 
 	template <class C>
-	void addClassDefinition(bool isAbstract = false) {
-		C c;
-		mapClassDef_[c.objectType()] = classDef {
-			new creator<C>(),
-			{ c.superType(), isAbstract }
+	void addClassDefinitionImpl(creatorModel* creatorPtr) {
+		mapClassDef_[((C*)0)->C::objectType()] = classDef {
+			creatorPtr,
+			{ ((C*)0)->C::superType(), creatorPtr == nullptr }
 		};
+	}
+
+	template<class C>
+	void addClassDefinition() {
+		addClassDefinitionImpl<C>(new creator<C>());
+	}
+
+	template<class C>
+	void addAbstractClassDefinition() {
+		addClassDefinitionImpl<C>(nullptr);
 	}
 };
