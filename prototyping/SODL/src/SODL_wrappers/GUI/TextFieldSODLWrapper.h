@@ -21,6 +21,10 @@ private:
 		text,
 		number
 	} type_ = text;
+	std::string textValue_;
+	float numberValue_;
+	std::function<void(float)> numberValChanged_;
+	std::function<void(std::string)> textValChanged_;
 
 	bool setType(int32_t type);
 	void defineTextProps();

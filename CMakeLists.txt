@@ -71,7 +71,7 @@ endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS "${BOGLFW_DIST_DIR}/lib/libboglfw.a")
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -std=c++14 -march=x86-64 -fPIC -DGLM_FORCE_RADIANS -DWITH_GLFW)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror=return-type -std=c++14 -march=x86-64 -fPIC -DGLM_FORCE_RADIANS -DWITH_GLFW)
 
 # add this flag to enable profiling with perfMarkers
 # target_compile_options(${PROJECT_NAME} PUBLIC -DENABLE_PERF_MARKERS)

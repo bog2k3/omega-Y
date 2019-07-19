@@ -159,6 +159,11 @@ public:
 				out_val.isBinding = true;
 				return readIdentifier(out_val.bindingName);
 			case SODL_Value::Type::Coordinate: {
+				if (nextChar() == '$') {
+					skipChar('$');
+					out_val.isBinding = true;
+					return readIdentifier(out_val.bindingName);
+				}
 				auto res = readNumber(out_val.numberVal, true);
 				if (!res)
 					return res;
@@ -172,8 +177,18 @@ public:
 			case SODL_Value::Type::Enum:
 				return readIdentifier(out_val.enumVal);
 			case SODL_Value::Type::Number:
+				if (nextChar() == '$') {
+					skipChar('$');
+					out_val.isBinding = true;
+					return readIdentifier(out_val.bindingName);
+				}
 				return readNumber(out_val.numberVal, false);
 			case SODL_Value::Type::String:
+				if (nextChar() == '$') {
+					skipChar('$');
+					out_val.isBinding = true;
+					return readIdentifier(out_val.bindingName);
+				}
 				return readQuotedString(out_val.stringVal);
 			default:
 				return SODL_result::error(strbld() << "unknown value type: " << (int)type);
@@ -509,6 +524,7 @@ SODL_result SODL_Loader::resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Ty
 	// 1. look up the data bindings map using inOutVal.bindingName as key
 	// 2. check its type against expectedType
 	// 3. update inOutVal's actual value to the retrieved data, and type to expectedType
+	return SODL_result::error("not implemented");
 }
 
 SODL_result SODL_Loader::checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes) {
