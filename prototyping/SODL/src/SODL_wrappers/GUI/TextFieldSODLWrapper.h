@@ -6,7 +6,7 @@
 
 class TextFieldSODLWrapper : public GuiElementSODLWrapper {
 public:
-	std::string objectType() const override { return "textField"; }
+	std::string objectType() const override { return "inputField"; }
 	std::string superType() const override { return GuiElementSODLWrapper::objectType(); }
 
 	~TextFieldSODLWrapper() override {}
@@ -17,4 +17,12 @@ protected:
 
 private:
 	std::shared_ptr<TextField> textField_;
+	enum {
+		text,
+		number
+	} type_ = text;
+
+	bool setType(int32_t type);
+	void defineTextProps();
+	void defineNumberProps();
 };

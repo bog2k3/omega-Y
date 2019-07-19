@@ -24,5 +24,7 @@ private:
 	std::shared_ptr<LayoutSODLWrapper> layout_;
 	std::shared_ptr<Coord4SODLWrapper> padding_;
 
+	std::vector<std::shared_ptr<ISODL_Object>> childNodes_;
+
 	void onLoadingFinished();
 };

@@ -26,8 +26,7 @@
 		}
 		@controlRow {						// terrain seed
 			label "Seed" 18
-			textField $terrainSeed {
-				type: number
+			inputField number $terrainSeed {
 				width: 150
 				onChange: $seedChanged
 			}

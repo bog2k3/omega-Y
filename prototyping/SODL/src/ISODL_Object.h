@@ -94,10 +94,10 @@ public:
 	// override this to provide your object's super type (the object type of the ISODL_Object that represents the superclass)
 	virtual std::string superType() const { return ""; }
 
-protected:
 	// implement this method to return a clone of your object along with all properties and children for class instantiation
 	virtual std::shared_ptr<ISODL_Object> clone() = 0;
 
+protected:
 	// subscribe to this event if you need to do post-processing after the object has been fully loaded
 	Event<void()> loadingFinished;
 

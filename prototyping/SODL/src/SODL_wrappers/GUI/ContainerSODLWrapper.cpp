@@ -26,6 +26,8 @@ bool ContainerSODLWrapper::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 	if (!pElement || !pElement->get())
 		return false;
 	container_->addElement(pElement->get());
+	// also keep track of the ISODL_Object interface so we can add it to cloned instances:
+	childNodes_.push_back(pObj);
 	return true;
 }
 
@@ -34,7 +36,10 @@ std::shared_ptr<ISODL_Object> ContainerSODLWrapper::clone() {
 	cloneCommonPropertiesTo(ptr);
 	ptr->padding_ = padding_;
 	ptr->layout_ = layout_;
-	// TODO copy all child objects
+	// clone all child objects:
+	for (auto sp : childNodes_) {
+		ptr->addChildObject(sp->clone());
+	}
 
 	return ptr;
 }
