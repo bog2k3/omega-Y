@@ -3,6 +3,12 @@
 #include <sstream>
 #include <string>
 
+// String Builder class - use to quickly build an std::string in a single line of code
+// by concatenating multiple streamable objects of various types
+//
+// example:
+// std::string out = strbld() << "some text " << intVar << " other text " << whatever_other_var << " and so on";
+//
 class strbld {
 public:
 	operator std::string() const {

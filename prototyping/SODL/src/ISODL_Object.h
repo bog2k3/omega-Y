@@ -96,11 +96,11 @@ public:
 
 	// implement this method to return a clone of your object along with all properties and children for class instantiation
 	virtual std::shared_ptr<ISODL_Object> clone() = 0;
-
-protected:
+	
 	// subscribe to this event if you need to do post-processing after the object has been fully loaded
 	Event<void()> loadingFinished;
 
+protected:
 	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header
 	// these can only be simple types or callbacks defined by SODL_Value::Type;
 	void definePrimaryProperty(const char* name, SODL_Property_Descriptor descriptor);

@@ -115,7 +115,8 @@ public:
 
 	~ParseStream() {}
 
-	// returns the next usable char in the stream, skipping whitespace and line ends
+	// returns the next usable char in the stream, looking over whitespace and line ends;
+	// does not change the current position of the stream.
 	char nextChar() {
 		const char* ptr = bufCrt_;
 		while (ptr < bufEnd_ && (isWhitespace(*ptr) || isEOL(*ptr)))

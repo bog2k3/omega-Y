@@ -56,8 +56,6 @@ class ISODL_Object;
 struct SODL_ObjectTypeDescriptor {
 	// the name of the super object type or empty if no super type exists
 	std::string superType;
-	// a vector of derived type names (for which this is the super type)
-	//std::vector<std::string> derivedTypes;
 	// true if this type cannot be directly instantiated
 	bool isAbstract;
 };
