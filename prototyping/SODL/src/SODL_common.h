@@ -37,6 +37,18 @@ struct SODL_Value {
 	bool isPercentCoord = false;
 	std::string stringVal;
 	std::string enumVal;
+
+	// returns a string representation for a type enum
+	static const char* typeStr(Type type) {
+		switch (type) {
+		case Type::Number: return "Number";
+		case Type::Coordinate: return "Coordinate";
+		case Type::String: return "String";
+		case Type::Enum: return "Enum";
+		case Type::Callback: return "Callback";
+		};
+		return "INVALID_TYPE";
+	}
 };
 
 class ISODL_Object;

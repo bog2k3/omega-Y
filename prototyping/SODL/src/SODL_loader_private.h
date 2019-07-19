@@ -42,3 +42,23 @@ void SODL_Loader::addActionBinding(const char* name, std::vector<SODL_Value::Typ
 		argumentTypes
 	};
 }
+
+template<>
+inline void SODL_Loader::addDataBinding<float>(const char* name, float &data) {
+	addDataBindingImpl(name, SODL_Value::Type::Number, &data);
+}
+
+template<>
+inline void SODL_Loader::addDataBinding<FlexCoord>(const char* name, FlexCoord &data) {
+	addDataBindingImpl(name, SODL_Value::Type::Coordinate, &data);
+}
+
+template<>
+inline void SODL_Loader::addDataBinding<std::string>(const char* name, std::string &data) {
+	addDataBindingImpl(name, SODL_Value::Type::String, &data);
+}
+
+template<class C>
+inline void SODL_Loader::addDataBinding(const char* name, C &data) {
+	static_assert(std::is_convertible<C, void>(), "Data binding type not allowed");
+}

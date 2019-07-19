@@ -26,7 +26,12 @@ public:
 	~SODL_Loader();
 
 	// registers a new data binding that can be referenced from the SODL that will be loaded
-	void addDataBinding(const char* name, SODL_Value::Type type, void* valuePtr);
+	// supported types are:
+	//		String (std::string)
+	//		Number (float)
+	//		Coordinate (FlexCoord)
+	template<class DataType>
+	void addDataBinding(const char* name, DataType &data);
 
 	// registers an action callback that can be referenced from the SODL that will be loaded
 	template <class FuncType>
@@ -67,6 +72,8 @@ private:
 	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc,
 									SODL_Value& val, unsigned primaryPropIdx, std::string propName);
 	bool objectSupportsChildType(ISODL_Object &object, std::string const& typeName);
+
+	void addDataBindingImpl(const char* name, SODL_Value::Type type, void* valuePtr);
 };
 
 #include "SODL_loader_private.h"

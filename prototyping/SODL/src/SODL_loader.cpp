@@ -312,8 +312,8 @@ SODL_Loader::~SODL_Loader() {
 	mapActionBindings_.clear();
 }
 
-void SODL_Loader::addDataBinding(const char* name, SODL_Value::Type type, void* valuePtr) {
-	// TOOD
+void SODL_Loader::addDataBindingImpl(const char* name, SODL_Value::Type type, void* valuePtr) {
+	mapDataBindings_[name] = {type, valuePtr};
 }
 
 // loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
@@ -524,7 +524,30 @@ SODL_result SODL_Loader::resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Ty
 	// 1. look up the data bindings map using inOutVal.bindingName as key
 	// 2. check its type against expectedType
 	// 3. update inOutVal's actual value to the retrieved data, and type to expectedType
-	return SODL_result::error("not implemented");
+	auto it = mapDataBindings_.find(inOutVal.bindingName);
+	if (it == mapDataBindings_.end())
+		return SODL_result::error(strbld() << "Undefined data binding '" << inOutVal.bindingName << "'");
+	if (it->second.first != expectedType)
+		return SODL_result::error(strbld() << "Data binding type mismatch: '" << inOutVal.bindingName <<
+			"' expected type: '" << SODL_Value::typeStr(expectedType) << "' actual type: '" << SODL_Value::typeStr(it->second.first) << "'");
+	assertDbg(it->second.second != nullptr);
+	switch(expectedType) {
+	case SODL_Value::Type::Coordinate: {
+		FlexCoord coordVal = *static_cast<FlexCoord*>(it->second.second);
+		inOutVal.numberVal = coordVal.get(FlexCoord::X_LEFT, glm::vec2(100, 100));
+		inOutVal.isPercentCoord = coordVal.unit() == FlexCoord::PERCENT;
+	} break;
+	case SODL_Value::Type::Number:
+		inOutVal.numberVal = *static_cast<float*>(it->second.second);
+		break;
+	case SODL_Value::Type::String:
+		inOutVal.stringVal = *static_cast<std::string*>(it->second.second);
+		break;
+	default:
+		return SODL_result::error(strbld() << "Property of type '" << SODL_Value::typeStr(expectedType) << "' cannot use data binding");
+	}
+	inOutVal.isBinding = false;
+	return SODL_result::OK();
 }
 
 SODL_result SODL_Loader::checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes) {
