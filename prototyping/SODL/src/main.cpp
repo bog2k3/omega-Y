@@ -1,5 +1,6 @@
 #include "SODL_loader.h"
 #include "GUI_SODL_OBJ_Factory.h"
+#include "SODL_wrappers/GUI/ContainerSODLWrapper.h"
 
 #include <boglfw/renderOpenGL/glToolkit.h>
 #include <boglfw/renderOpenGL/Viewport.h>
@@ -75,7 +76,7 @@ void drawDebug(std::vector<drawable> &list, RenderContext const& ctx) {
 	drawDebugTexts(ctx.viewport());
 }
 
-void loadSODL(char const* path) {
+void loadGUIFrom(char const* path) {
 	struct {
 		float terrainSeed = 1234567.f;
 		float minElevation = 1.5f;
@@ -113,14 +114,15 @@ void loadSODL(char const* path) {
 	loader.addActionBinding<void()>("goBack", {}, std::bind(&CALLBACKS::onGoBack, &callbacks));
 	loader.addActionBinding<void()>("startGame", {}, std::bind(&CALLBACKS::onStartGame, &callbacks));
 
-	std::shared_ptr<ISODL_Object> pRoot;
-	if (objFactory.constructObject("container", pRoot)) {
+	std::shared_ptr<ContainerSODLWrapper> pRoot;
+	if (objFactory.constructObject("container", (std::shared_ptr<ISODL_Object>&)pRoot)) {
 		auto res = loader.mergeObject(*pRoot, path);
 		if (!res) {
 			ERROR("Failed to load SODL: " << res.errorMessage);
 			signalQuit = true;
 		} else {
 			LOGLN("SODL Load success");
+			World::getGlobal<GuiSystem>()->addElement(pRoot->get());
 		}
 	} else {
 		ERROR("Failed to construct root object");
@@ -150,13 +152,14 @@ int main(int argc, char* argv[]) {
 	RenderContext renderCtx;
 	renderCtx.pViewport = &viewport;
 
-	loadSODL("sessionSetupHostMenuLayout.sodl");
-
 	do {
 		LOGLN("Initializing subsystems...");
 
 		const int margin = 20; // pixels
 		World::setGlobal<GuiSystem>(new GuiSystem(&viewport, {margin, margin}, {winW - 2*margin, winH - 2*margin}));
+
+		// load the GUI from SODL file like a boss :-)
+		loadGUIFrom("sessionSetupHostMenuLayout.sodl");
 
 		// initialize stuff:
 		GLFWInput::initialize(gltGetWindow());
