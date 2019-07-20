@@ -72,6 +72,7 @@ private:
 	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc,
 									SODL_Value& val, unsigned primaryPropIdx, std::string propName);
 	bool objectSupportsChildType(ISODL_Object &object, std::string const& typeName);
+	bool canConvertAssignType(SODL_Value::Type from, SODL_Value::Type to);
 
 	void addDataBindingImpl(const char* name, SODL_Value::Type type, void* valuePtr);
 };

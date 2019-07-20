@@ -306,6 +306,70 @@ private:
 	}
 };
 
+template<class TargetType>
+class ValueConverter {};
+
+template<>
+class ValueConverter<float> {
+public:
+	static float convertValue(SODL_Value::Type sourceType, void* sourceVal) {
+		switch (sourceType) {
+		case SODL_Value::Type::Coordinate:
+			return static_cast<FlexCoord*>(sourceVal)->get(FlexCoord::X_LEFT, glm::vec2(100.f, 0));
+		case SODL_Value::Type::Number:
+			return *static_cast<float*>(sourceVal);
+		case SODL_Value::Type::String: {
+			float ret;
+			sscanf(static_cast<std::string*>(sourceVal)->c_str(), "%f", &ret);
+			return ret;
+		}
+		default:
+			return 0.f;
+		}
+	}
+};
+
+template<>
+class ValueConverter<FlexCoord> {
+public:
+	static FlexCoord convertValue(SODL_Value::Type sourceType, void* sourceVal) {
+		switch (sourceType) {
+		case SODL_Value::Type::Coordinate:
+			return *static_cast<FlexCoord*>(sourceVal);
+		case SODL_Value::Type::Number:
+			return {*static_cast<float*>(sourceVal)};
+		case SODL_Value::Type::String: {
+			float out;
+			std::string *pStr = static_cast<std::string*>(sourceVal);
+			sscanf(pStr->c_str(), "%f", &out);
+			return {out, pStr->back() == '%' ? FlexCoord::PERCENT : FlexCoord::PIXELS};
+		}
+		default:
+			return {0.f};
+		}
+	}
+};
+
+template<>
+class ValueConverter<std::string> {
+public:
+	static std::string convertValue(SODL_Value::Type sourceType, void* sourceVal) {
+		switch (sourceType) {
+		case SODL_Value::Type::Coordinate: {
+			FlexCoord *pCoord = static_cast<FlexCoord*>(sourceVal);
+			return strbld() << pCoord->get(FlexCoord::X_LEFT, glm::vec2(100, 0))
+				<< (pCoord->unit() == FlexCoord::PERCENT ? "%" : "");
+		}
+		case SODL_Value::Type::Number:
+			return strbld() << *static_cast<float*>(sourceVal);
+		case SODL_Value::Type::String:
+			return *static_cast<std::string*>(sourceVal);
+		default:
+			return "";
+		}
+	}
+};
+
 SODL_Loader::~SODL_Loader() {
 	for (auto &pair : mapActionBindings_)
 		if (pair.second)
@@ -528,21 +592,21 @@ SODL_result SODL_Loader::resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Ty
 	auto it = mapDataBindings_.find(inOutVal.bindingName);
 	if (it == mapDataBindings_.end())
 		return SODL_result::error(strbld() << "Undefined data binding '" << inOutVal.bindingName << "'");
-	if (it->second.first != expectedType)
-		return SODL_result::error(strbld() << "Data binding type mismatch: '" << inOutVal.bindingName <<
-			"' expected type: '" << SODL_Value::typeStr(expectedType) << "' actual type: '" << SODL_Value::typeStr(it->second.first) << "'");
+	if (!canConvertAssignType(it->second.first, expectedType))
+		return SODL_result::error(strbld() << "Cannot assign binding '" << inOutVal.bindingName <<
+			"' of type '" << SODL_Value::typeStr(it->second.first) << "' to property of type: '" << SODL_Value::typeStr(expectedType));
 	assertDbg(it->second.second != nullptr);
 	switch(expectedType) {
 	case SODL_Value::Type::Coordinate: {
-		FlexCoord coordVal = *static_cast<FlexCoord*>(it->second.second);
+		FlexCoord coordVal = ValueConverter<FlexCoord>::convertValue(it->second.first, it->second.second);
 		inOutVal.numberVal = coordVal.get(FlexCoord::X_LEFT, glm::vec2(100, 100));
 		inOutVal.isPercentCoord = coordVal.unit() == FlexCoord::PERCENT;
 	} break;
 	case SODL_Value::Type::Number:
-		inOutVal.numberVal = *static_cast<float*>(it->second.second);
+		inOutVal.numberVal = ValueConverter<float>::convertValue(it->second.first, it->second.second);
 		break;
 	case SODL_Value::Type::String:
-		inOutVal.stringVal = *static_cast<std::string*>(it->second.second);
+		inOutVal.stringVal = ValueConverter<std::string>::convertValue(it->second.first, it->second.second);
 		break;
 	default:
 		return SODL_result::error(strbld() << "Property of type '" << SODL_Value::typeStr(expectedType) << "' cannot use data binding");
@@ -671,4 +735,13 @@ bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string cons
 		return objectSupportsChildType(object, typeDesc.superType);
 	else
 		return false;
+}
+
+bool SODL_Loader::canConvertAssignType(SODL_Value::Type from, SODL_Value::Type to) {
+	return ((from == SODL_Value::Type::Coordinate
+		|| from == SODL_Value::Type::Number
+		|| from == SODL_Value::Type::String)
+	&& (to == SODL_Value::Type::Coordinate
+		|| to == SODL_Value::Type::Number
+		|| to == SODL_Value::Type::String));
 }
