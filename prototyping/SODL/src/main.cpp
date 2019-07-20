@@ -84,9 +84,9 @@ void loadSODL(char const* path) {
 	} data;
 	struct CALLBACKS {
 		void onSeedChanged() {}
-		void onMinElevationChanged() {}
-		void onMaxElevationChanged() {}
-		void onRoughnessChanged() {}
+		void onMinElevationChanged(float) {}
+		void onMaxElevationChanged(float) {}
+		void onRoughnessChanged(float) {}
 		void onRandSeed() {}
 		void onRandomizeAll() {}
 		void onGoBack() {}
@@ -102,9 +102,12 @@ void loadSODL(char const* path) {
 	loader.addDataBinding("roughness", data.roughness);
 
 	loader.addActionBinding<void()>("seedChanged", {}, std::bind(&CALLBACKS::onSeedChanged, &callbacks));
-	loader.addActionBinding<void()>("minElevationChanged", {}, std::bind(&CALLBACKS::onMinElevationChanged, &callbacks));
-	loader.addActionBinding<void()>("maxElevationChanged", {}, std::bind(&CALLBACKS::onMaxElevationChanged, &callbacks));
-	loader.addActionBinding<void()>("roughnessChanged", {}, std::bind(&CALLBACKS::onRoughnessChanged, &callbacks));
+	loader.addActionBinding<void(float)>("minElevationChanged", {SODL_Value::Type::Number},
+		std::bind(&CALLBACKS::onMinElevationChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void(float)>("maxElevationChanged", {SODL_Value::Type::Number},
+		std::bind(&CALLBACKS::onMaxElevationChanged, &callbacks, std::placeholders::_1));
+	loader.addActionBinding<void(float)>("roughnessChanged", {SODL_Value::Type::Number},
+		std::bind(&CALLBACKS::onRoughnessChanged, &callbacks, std::placeholders::_1));
 	loader.addActionBinding<void()>("randSeed", {}, std::bind(&CALLBACKS::onRandSeed, &callbacks));
 	loader.addActionBinding<void()>("randomizeAll", {}, std::bind(&CALLBACKS::onRandomizeAll, &callbacks));
 	loader.addActionBinding<void()>("goBack", {}, std::bind(&CALLBACKS::onGoBack, &callbacks));
