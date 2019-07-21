@@ -25,13 +25,13 @@ public:
 
 	enum eHAlign : int32_t {
 		left,
-		right,
-		center
+		center,
+		right
 	};
 	enum eVAlign : int32_t {
 		top,
-		bottom,
-		middle
+		middle,
+		bottom
 	};
 
 	bool isSet = false;
@@ -54,6 +54,7 @@ public:
 		eDirection direction = vertical;
 		eHAlign align = left;
 		eVAlign vertAlign = top;
+		float spacing = 0.f;
 	} listProps;
 
 	struct {
@@ -89,7 +90,37 @@ public:
 	};
 
 	void applyProps() {
-
+		switch (type) {
+		case fill:
+			// no properties to set for this layout type
+			//fillProps.ptr->;
+			break;
+		case free:
+			// no properties to set for this layout type
+			//freeProps.ptr;
+			break;
+		case grid:
+			// no properties to set for this layout type
+			//gridProps.ptr;
+			break;
+		case list:
+			listProps.ptr->setDirection((ListLayout::Direction)listProps.direction);
+			listProps.ptr->setItemSpacing(listProps.spacing);
+			listProps.ptr->setAlignment((ListLayout::Alignment)listProps.align);
+			listProps.ptr->setVerticalAlignment((ListLayout::VerticalAlignment)listProps.vertAlign);
+			break;
+		case split:
+			if (splitProps.splitFirst != nullptr)
+				splitProps.ptr->setFirstSub(splitProps.splitFirst->get());
+			if (splitProps.splitSecond != nullptr)
+				splitProps.ptr->setSecondSub(splitProps.splitSecond->get());
+			splitProps.ptr->setDirection((SplitLayout::SplitDirection)splitProps.direction);
+			splitProps.ptr->setSplitPosition(splitProps.offset);
+			splitProps.ptr->setSplitCount((unsigned)splitProps.splitPoint);
+			break;
+		default:
+			assertDbg(false && "invalid layout type");
+		}
 	}
 };
 
@@ -142,13 +173,13 @@ void LayoutSODLWrapper::defineEnums() {
 	});
 	defineEnum("enumAlign", {
 		"left",
-		"right",
-		"center"
+		"center",
+		"right"
 	});
 	defineEnum("enumVertAlign", {
 		"top",
-		"bottom",
-		"middle"
+		"middle",
+		"bottom"
 	});
 }
 
@@ -168,6 +199,7 @@ void LayoutSODLWrapper::defineListProps() {
 	definePrimaryProperty("direction", {"enumDirection", (int32_t&)pImpl_->listProps.direction});
 	defineSecondaryProperty("align", {"enumAlign", (int32_t&)pImpl_->listProps.align});
 	defineSecondaryProperty("vertAlign", {"enumVertAlign", (int32_t&)pImpl_->listProps.vertAlign});
+	defineSecondaryProperty("spacing", pImpl_->listProps.spacing);
 }
 
 void LayoutSODLWrapper::defineSplitProps() {

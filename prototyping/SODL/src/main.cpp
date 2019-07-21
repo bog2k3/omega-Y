@@ -134,6 +134,7 @@ int main(int argc, char* argv[]) {
 
 	// set up window
 	GLFW_Init_Config glfwCfg(winW, winH, "SODL Test");
+	glfwCfg.enableVSync = true;
 	if (!gltInitGLFW(glfwCfg)) {
 		ERROR("Failed to initialize GLFW Window and/or OpenGL context");
 		return -1;
@@ -160,6 +161,7 @@ int main(int argc, char* argv[]) {
 
 		// load the GUI from SODL file like a boss :-)
 		loadGUIFrom("sessionSetupHostMenuLayout.sodl");
+		//loadGUIFrom("test.sodl");
 
 		// initialize stuff:
 		GLFWInput::initialize(gltGetWindow());

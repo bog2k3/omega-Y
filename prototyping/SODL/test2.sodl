@@ -1,0 +1,10 @@
+#root {
+	size: 100% 100%
+	layout: list horizontal
+	button "1" $goBack {
+		width: 150
+	}
+	button "2" $goBack {
+		width: 100
+	}
+}

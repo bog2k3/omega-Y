@@ -1,0 +1,38 @@
+#root {
+	size: 100% 100%
+	padding: 50 50 50 50
+	layout: split vertical 10% 1 {
+		first: fill
+		second: split vertical 89% 2 {
+			first: split horizontal 60% 1
+			second: fill
+		}
+	}
+	button #topRow "1" $goBack
+	button #leftMain "2.1" $goBack
+	container #rightMain {
+		layout: #mainList list {
+			align: right
+			vertAlign: middle
+			spacing: 20
+		}
+
+		class row container {
+			//layout: split horizontal 50% 1
+			layout: list horizontal {
+				align: right
+			}
+			height: 100
+
+			button "row.1" $goBack {
+				width: 100
+			}
+			button "row.2" $goBack
+		}
+
+		@row
+		@row
+		@row
+	}
+	button #bottomRow "3" $goBack
+}

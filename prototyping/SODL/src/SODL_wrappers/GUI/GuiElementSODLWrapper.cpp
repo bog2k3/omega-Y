@@ -23,20 +23,22 @@ void GuiElementSODLWrapper::setupCommonProperties(std::shared_ptr<GuiBasicElemen
 }
 
 bool GuiElementSODLWrapper::setWidth(FlexCoord coordVal) {
-	if (!position_)
-		position_ = std::make_shared<Coord2SODLWrapper>(element_->size());
-	position_->setX(coordVal);
+	if (!size_)
+		size_ = std::make_shared<Coord2SODLWrapper>(element_->size());
+	size_->setX(coordVal);
 	return true;
 }
 
 bool GuiElementSODLWrapper::setHeight(FlexCoord coordVal) {
-	if (!position_)
-		position_ = std::make_shared<Coord2SODLWrapper>(element_->size());
-	position_->setY(coordVal);
+	if (!size_)
+		size_ = std::make_shared<Coord2SODLWrapper>(element_->size());
+	size_->setY(coordVal);
 	return true;
 }
 
 void GuiElementSODLWrapper::cloneCommonPropertiesTo(std::shared_ptr<GuiElementSODLWrapper> pDest) {
-	pDest->position_ = position_;
-	pDest->size_ = size_;
+	if (position_ != nullptr)
+		pDest->position_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(position_->clone());
+	if (size_ != nullptr)
+		pDest->size_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(size_->clone());
 }

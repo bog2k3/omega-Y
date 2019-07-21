@@ -38,7 +38,9 @@ std::shared_ptr<ISODL_Object> ContainerSODLWrapper::clone() {
 	ptr->layout_ = layout_;
 	// clone all child objects:
 	for (auto sp : childNodes_) {
-		ptr->addChildObject(sp->clone());
+		auto clonedChild = sp->clone();
+		ptr->addChildObject(clonedChild);
+		clonedChild->loadingFinished.trigger();
 	}
 
 	return ptr;

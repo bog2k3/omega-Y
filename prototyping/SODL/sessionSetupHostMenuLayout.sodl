@@ -14,8 +14,10 @@
 	label #title "Host Game" 50 center
 	picture #TerrainPicture
 	container #controls {
+		transparent: true
 		layout: list {
 			align: right
+			vertAlign: top
 		}
 		class controlRow container {
 			height: 50
