@@ -7,6 +7,8 @@ TextFieldSODLWrapper::TextFieldSODLWrapper()
 	defineEnum("enumType", {"text", "number"});
 	definePrimaryProperty("type", {"enumType", std::bind(&TextFieldSODLWrapper::setType, this, std::placeholders::_1)});
 	defineSecondaryProperty("onChange", {textField_->onChanged, {}});
+
+	loadingFinished.add(std::bind(&TextFieldSODLWrapper::onLoadingFinished, this));
 }
 
 bool TextFieldSODLWrapper::setType(int32_t type) {
@@ -30,4 +32,12 @@ void TextFieldSODLWrapper::defineTextProps() {
 
 void TextFieldSODLWrapper::defineNumberProps() {
 	definePrimaryProperty("value", {numberValue_});
+}
+
+void TextFieldSODLWrapper::onLoadingFinished() {
+	textField_->setType((TextField::Type)type_);
+	if (type_ == text)
+		textField_->setText(textValue_);
+	else
+		textField_->setValue(numberValue_);
 }
