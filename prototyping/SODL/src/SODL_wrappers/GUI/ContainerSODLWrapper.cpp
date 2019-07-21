@@ -8,6 +8,7 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 
 	defineSecondaryProperty("padding", {"coord4", (std::shared_ptr<ISODL_Object>&)padding_});
 	defineSecondaryProperty("layout", {"layout", (std::shared_ptr<ISODL_Object>&)layout_});
+	defineSecondaryProperty("transparent", {transparent_});
 
 	defineSupportedChildTypes({	GuiElementSODLWrapper::objectType() });
 
@@ -19,6 +20,7 @@ void ContainerSODLWrapper::onLoadingFinished() {
 		container_->setClientArea(padding_->getTopLeft(), padding_->getBottomRight());
 	}
 	container_->useLayout(layout_->get());
+	container_->setTransparentBackground(transparent_);
 }
 
 bool ContainerSODLWrapper::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
@@ -36,6 +38,7 @@ std::shared_ptr<ISODL_Object> ContainerSODLWrapper::clone() {
 	cloneCommonPropertiesTo(ptr);
 	ptr->padding_ = padding_;
 	ptr->layout_ = layout_;
+	ptr->transparent_ = transparent_;
 	// clone all child objects:
 	for (auto sp : childNodes_) {
 		auto clonedChild = sp->clone();

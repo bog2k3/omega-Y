@@ -58,6 +58,11 @@ inline void SODL_Loader::addDataBinding<std::string>(const char* name, std::stri
 	addDataBindingImpl(name, SODL_Value::Type::String, &data);
 }
 
+template<>
+inline void SODL_Loader::addDataBinding<bool>(const char* name, bool &data) {
+	addDataBindingImpl(name, SODL_Value::Type::Bool, &data);
+}
+
 template<class C>
 inline void SODL_Loader::addDataBinding(const char* name, C &data) {
 	static_assert(std::is_convertible<C, void>(), "Data binding type not allowed");

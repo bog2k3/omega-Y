@@ -29,6 +29,7 @@ struct SODL_Value {
 		Coordinate,		// coordinates can be written either as numbers or percents and are delivered as FlexibleCoordinate
 		String,			// strings are delivered as std::string
 		Enum,			// enums are written as enum element names, and delivered as int32
+		Bool,			// bool can have literal values true or false and are delivered as a bool
 		Callback		// callbacks have special handling - see SODL_Property_Descriptor
 	};
 	bool isBinding = false;
@@ -37,6 +38,7 @@ struct SODL_Value {
 	bool isPercentCoord = false;
 	std::string stringVal;
 	std::string enumVal;
+	bool boolVal = false;
 
 	// returns a string representation for a type enum
 	static const char* typeStr(Type type) {

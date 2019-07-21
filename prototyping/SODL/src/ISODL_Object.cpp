@@ -111,6 +111,14 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, SODL_Value co
 			success = desc.pCallbackWrapper->applyCallback(&val.stringVal);
 		}
 		break;
+	case SODL_Value::Type::Bool:
+		if (desc.valueOrCallbackPtr)
+			*static_cast<bool*>(desc.valueOrCallbackPtr) = val.boolVal;
+		else {
+			assertDbg(desc.pCallbackWrapper != nullptr);
+			success = desc.pCallbackWrapper->applyCallback(&val.boolVal);
+		}
+		break;
 	case SODL_Value::Type::Callback:
 		success = false;
 	default:

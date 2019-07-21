@@ -67,6 +67,10 @@ template<>
 inline SODL_Property_Descriptor::SODL_Property_Descriptor(std::string &stringValuePtr, ...)
 	: SODL_Property_Descriptor(SODL_Value::Type::String, &stringValuePtr) {}
 
+template<>
+inline SODL_Property_Descriptor::SODL_Property_Descriptor(bool &boolValuePtr, ...)
+	: SODL_Property_Descriptor(SODL_Value::Type::Bool, &boolValuePtr) {}
+
 // value callbacks ctors ------------------------------------------------------------
 
 template<>
@@ -85,6 +89,12 @@ template<>
 inline SODL_Property_Descriptor::SODL_Property_Descriptor(std::function<bool(std::string)> setValueCallback)
 	: SODL_Property_Descriptor(SODL_Value::Type::String, (void*)nullptr) {
 	pCallbackWrapper.reset(new CallbackWrapperModel::Instance<std::string>(setValueCallback));
+}
+
+template<>
+inline SODL_Property_Descriptor::SODL_Property_Descriptor(std::function<bool(bool)> setValueCallback)
+	: SODL_Property_Descriptor(SODL_Value::Type::Bool, (void*)nullptr) {
+	pCallbackWrapper.reset(new CallbackWrapperModel::Instance<bool>(setValueCallback));
 }
 
 // callback and event ctors ------------------------------------------------------------

@@ -18,8 +18,10 @@
 		layout: list {
 			align: right
 			vertAlign: top
+			spacing: 15
 		}
 		class controlRow container {
+			transparent: true
 			height: 50
 			layout: list horizontal {
 				align: right

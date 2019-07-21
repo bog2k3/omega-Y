@@ -152,47 +152,47 @@ public:
 	}
 
 	SODL_result readValue(SODL_Value::Type type, SODL_Value &out_val) {
-		switch (type) {
-			case SODL_Value::Type::Callback:
-				if (nextChar() != '$')
-					return SODL_result::error("Expected callback binding to start with $");
-				skipChar('$');
-				out_val.isBinding = true;
-				return readIdentifier(out_val.bindingName);
-			case SODL_Value::Type::Coordinate: {
-				if (nextChar() == '$') {
-					skipChar('$');
-					out_val.isBinding = true;
-					return readIdentifier(out_val.bindingName);
-				}
-				auto res = readNumber(out_val.numberVal, true);
-				if (!res)
-					return res;
-				if (!eof() && *bufCrt_ == '%') {
-					skipChar('%');
-					out_val.isPercentCoord = true;
-					skipWhitespace(false);
-				}
-				return SODL_result::OK();
+		if (nextChar() == '$') {
+			if (type == SODL_Value::Type::Enum)
+				return SODL_result::error("Enum properties cannot use bindings, must be immediate values");
+			skipChar('$');
+			out_val.isBinding = true;
+			return readIdentifier(out_val.bindingName);
+		} else switch (type) {
+		case SODL_Value::Type::Callback:
+			return SODL_result::error("Expected callback binding to start with $");
+		case SODL_Value::Type::Coordinate: {
+			auto res = readNumber(out_val.numberVal, true);
+			if (!res)
+				return res;
+			if (!eof() && *bufCrt_ == '%') {
+				skipChar('%');
+				out_val.isPercentCoord = true;
+				skipWhitespace(false);
 			}
-			case SODL_Value::Type::Enum:
-				return readIdentifier(out_val.enumVal);
-			case SODL_Value::Type::Number:
-				if (nextChar() == '$') {
-					skipChar('$');
-					out_val.isBinding = true;
-					return readIdentifier(out_val.bindingName);
-				}
-				return readNumber(out_val.numberVal, false);
-			case SODL_Value::Type::String:
-				if (nextChar() == '$') {
-					skipChar('$');
-					out_val.isBinding = true;
-					return readIdentifier(out_val.bindingName);
-				}
-				return readQuotedString(out_val.stringVal);
-			default:
-				return SODL_result::error(strbld() << "unknown value type: " << (int)type);
+			return SODL_result::OK();
+		}
+		case SODL_Value::Type::Enum:
+			return readIdentifier(out_val.enumVal);
+		case SODL_Value::Type::Number:
+			return readNumber(out_val.numberVal, false);
+		case SODL_Value::Type::String:
+			return readQuotedString(out_val.stringVal);
+		case SODL_Value::Type::Bool: {
+			std::string boolValueName;
+			auto res = readIdentifier(boolValueName);
+			if (!res)
+				return res;
+			if (boolValueName == "true")
+				out_val.boolVal = true;
+			else if (boolValueName == "false")
+				out_val.boolVal = false;
+			else
+				return SODL_result::error("Invalid value for Bool property (must be one of the literals true or false");
+			return SODL_result::OK();
+		}
+		default:
+			return SODL_result::error(strbld() << "unknown value type: " << (int)type);
 		}
 	}
 
@@ -608,6 +608,8 @@ SODL_result SODL_Loader::resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Ty
 	case SODL_Value::Type::String:
 		inOutVal.stringVal = ValueConverter<std::string>::convertValue(it->second.first, it->second.second);
 		break;
+	case SODL_Value::Type::Bool:
+		inOutVal.boolVal = *static_cast<bool*>(it->second.second);
 	default:
 		return SODL_result::error(strbld() << "Property of type '" << SODL_Value::typeStr(expectedType) << "' cannot use data binding");
 	}
@@ -738,7 +740,10 @@ bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string cons
 }
 
 bool SODL_Loader::canConvertAssignType(SODL_Value::Type from, SODL_Value::Type to) {
-	return ((from == SODL_Value::Type::Coordinate
+	if (from == to)
+		return true;
+	else return (
+	(from == SODL_Value::Type::Coordinate
 		|| from == SODL_Value::Type::Number
 		|| from == SODL_Value::Type::String)
 	&& (to == SODL_Value::Type::Coordinate
