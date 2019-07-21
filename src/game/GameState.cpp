@@ -91,7 +91,7 @@ GameState* GameState::createState(StateNames name) {
 		return createGameplayState();
 	default:
 		assertDbg(false && "invalid state name");
-		break;
+		return nullptr;
 	}
 }
 

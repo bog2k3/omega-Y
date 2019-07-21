@@ -17,7 +17,7 @@ protected:
 
 private:
 	std::shared_ptr<TextField> textField_;
-	enum {
+	enum : int32_t {
 		text,
 		number
 	} type_ = text;

@@ -38,8 +38,8 @@ SessionSetupHostMenu::SessionSetupHostMenu(TerrainConfig* pData)
 	addElement(pSeedLabel);
 
 	//glm::vec2{780, 110}, glm::vec2{150, 30},
-	std::shared_ptr<TextField> pSeedField = std::make_shared<TextField>(std::to_string(pData->seed));
-	pSeedField->onTextChanged.add(std::bind(&SessionSetupHostMenu::onSeedChanged, this, pSeedField));
+	std::shared_ptr<TextField> pSeedField = std::make_shared<TextField>(TextField::NUMBER, std::to_string(pData->seed));
+	pSeedField->onChanged.add(std::bind(&SessionSetupHostMenu::onSeedChanged, this, pSeedField));
 	addElement(pSeedField);
 
 	//glm::vec2{950, 110}, glm::vec2{100, 30},

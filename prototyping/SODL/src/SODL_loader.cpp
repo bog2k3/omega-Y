@@ -725,9 +725,9 @@ SODL_result SODL_Loader::readClass(ISODL_Object &object, SODL_Loader::ParseStrea
 }
 
 bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string const& typeName) {
-	// TODO: use factory.getTypeInfo() to recursively check supertypes of the typeName until no more supertype or match
 	if (object.supportsChildType(typeName))
 		return true;
+	// use factory.getTypeInfo() to recursively check supertypes of the typeName until no more supertype or match
 	SODL_ObjectTypeDescriptor typeDesc;
 	if (!factory_.getTypeInfo(typeName, typeDesc))
 		return false;
