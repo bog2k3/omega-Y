@@ -16,10 +16,10 @@ ContainerSODLWrapper::ContainerSODLWrapper()
 }
 
 void ContainerSODLWrapper::onLoadingFinished() {
-	if (padding_ != nullptr) {
+	if (padding_ != nullptr)
 		container_->setClientArea(padding_->getTopLeft(), padding_->getBottomRight());
-	}
-	container_->useLayout(layout_->get());
+	if (layout_ != nullptr)
+		container_->useLayout(layout_->get());
 	container_->setTransparentBackground(transparent_);
 }
 

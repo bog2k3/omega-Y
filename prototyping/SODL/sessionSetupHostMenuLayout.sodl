@@ -1,13 +1,15 @@
 #root {
 	size: 100% 100%
 	padding: 50 50 50 50 // top, right, bottom, left
-	layout: split vertical 10% 1 {
-		first: fill
-		second: split vertical 89% 2 {
-			first: split horizontal 60% 1
-			second: list horizontal {
-				spacing: 50%
-				align: center
+	layout: split vertical 10% 1 {			// main layout
+		first: fill							// top title part
+		second: split vertical 85% 2 {
+			first: split horizontal 60% 1	// middle part
+			second: split vertical 25% 0 {	// bottom part - allow some free space in first section
+				second: list horizontal {	// bottom buttons part
+					spacing: 60%
+					align: center
+				}
 			}
 		}
 	}
@@ -26,12 +28,14 @@
 			layout: list horizontal {
 				align: right
 				vertAlign: bottom
+				spacing: 10
 			}
 		}
 		@controlRow {						// terrain seed
+			height: 30
 			label "Seed" 18
 			inputField number $terrainSeed {
-				width: 150
+				width: 180
 				onChange: $seedChanged
 			}
 			button "Random" $randSeed
@@ -43,6 +47,7 @@
 				divisionStep: 5
 				labelStep: 1
 				width: 250
+				maxHeight: 60%
 				onChange: $minElevationChanged
 			}
 		}
@@ -53,6 +58,7 @@
 				divisionStep: 5
 				labelStep: 2
 				width: 250
+				maxHeight: 60%
 				onChange: $maxElevationChanged
 			}
 		}
@@ -63,17 +69,22 @@
 				divisionStep: 0.1
 				labelStep: 2
 				width: 250
+				maxHeight: 60%
 				onChange: $roughnessChanged
 			}
 		}
-		button "Randomize all" $randomizeAll
+		container {
+			height: 40
+			padding: 0 0 0 20%
+			layout: fill
+			transparent: true
+			button "Randomize all" $randomizeAll
+		}
 	}
 	button "Back" $goBack {
-		//pos: 10 0
-		width: 15%
+		width: 20%
 	}
 	button "Start" $startGame {
-		//pos: -10 0
-		width: 15%
+		width: 20%
 	}
 }

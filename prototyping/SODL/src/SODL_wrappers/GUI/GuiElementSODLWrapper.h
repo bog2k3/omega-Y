@@ -22,9 +22,15 @@ private:
 	std::shared_ptr<GuiBasicElement> element_;
 	std::shared_ptr<Coord2SODLWrapper> position_;
 	std::shared_ptr<Coord2SODLWrapper> size_;
+	std::shared_ptr<Coord2SODLWrapper> minSize_;
+	std::shared_ptr<Coord2SODLWrapper> maxSize_;
 
 	void onLoadingFinished();
 
 	bool setWidth(FlexCoord coordVal);
 	bool setHeight(FlexCoord coordVal);
+	bool setMinWidth(FlexCoord coordVal);
+	bool setMinHeight(FlexCoord coordVal);
+	bool setMaxWidth(FlexCoord coordVal);
+	bool setMaxHeight(FlexCoord coordVal);
 };

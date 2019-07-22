@@ -54,7 +54,7 @@ public:
 		eDirection direction = vertical;
 		eHAlign align = left;
 		eVAlign vertAlign = top;
-		float spacing = 0.f;
+		FlexCoord spacing;
 	} listProps;
 
 	struct {
