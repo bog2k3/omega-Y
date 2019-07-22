@@ -12,8 +12,7 @@ TextFieldSODLWrapper::TextFieldSODLWrapper()
 }
 
 bool TextFieldSODLWrapper::setType(int32_t type) {
-	type_ = (decltype(type_))(type);
-	switch (type_) {
+	switch (type) {
 		case text:
 			defineTextProps();
 			break;
@@ -23,6 +22,7 @@ bool TextFieldSODLWrapper::setType(int32_t type) {
 		default:
 			return false;
 	}
+	type_ = (decltype(type_))(type);
 	return true;
 }
 
@@ -35,7 +35,7 @@ void TextFieldSODLWrapper::defineNumberProps() {
 }
 
 void TextFieldSODLWrapper::onLoadingFinished() {
-	textField_->setType((TextField::Type)type_);
+	textField_->setType(type_ == text ? TextField::TEXT : TextField::NUMBER);
 	if (type_ == text)
 		textField_->setText(textValue_);
 	else

@@ -4,11 +4,11 @@
 	layout: split vertical 10% 1 {
 		first: fill
 		second: split vertical 89% 2 {
-			first: split horizontal 60% 1 {
-				first: fill
-				second: fill
+			first: split horizontal 60% 1
+			second: list horizontal {
+				spacing: 50%
+				align: center
 			}
-			second: free
 		}
 	}
 	label #title "Host Game" 50 center
@@ -69,11 +69,11 @@
 		button "Randomize all" $randomizeAll
 	}
 	button "Back" $goBack {
-		pos: 10 0
-		size: 80 100%
+		//pos: 10 0
+		width: 15%
 	}
 	button "Start" $startGame {
-		pos: -10 0
-		size: 80 100%
+		//pos: -10 0
+		width: 15%
 	}
 }
