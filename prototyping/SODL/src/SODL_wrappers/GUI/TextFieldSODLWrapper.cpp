@@ -16,10 +16,10 @@ bool TextFieldSODLWrapper::setType(int32_t type) {
 	switch (type_) {
 		case text:
 			defineTextProps();
-			return true;
+			break;
 		case number:
 			defineNumberProps();
-			return true;
+			break;
 		default:
 			return false;
 	}
