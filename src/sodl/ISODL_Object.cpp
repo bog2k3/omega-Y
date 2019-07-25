@@ -1,6 +1,6 @@
 #include "ISODL_Object.h"
-#include <boglfw/utils/strbld.h>
 
+#include <boglfw/utils/strbld.h>
 #include <boglfw/utils/assert.h>
 
 #include <algorithm>

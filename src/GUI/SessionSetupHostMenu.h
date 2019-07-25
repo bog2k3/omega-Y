@@ -7,15 +7,12 @@
 
 #include <memory>
 
-class Picture;
 class Label;
-class TextField;
-class Slider;
 
 class SessionSetupHostMenu : public GuiContainerElement {
 public:
 	SessionSetupHostMenu(TerrainConfig* pData);
-	~SessionSetupHostMenu() override {}
+	~SessionSetupHostMenu() override;
 
 	Event<void()> onBack;
 	Event<void()> onStart;
@@ -31,13 +28,12 @@ public:
 	glm::vec2 terrainPictureSize() const;
 
 private:
-	std::shared_ptr<Picture> pTerrainPicture_;
+	struct Controls;
+	Controls *pControls_;
 	TerrainConfig* pData_;
 
-	void onSeedChanged(std::shared_ptr<TextField> pSeedField);
-	void onRandSeed(std::shared_ptr<TextField> pSeedField);
-	void onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> label);
-	void onRandomizeAll(std::shared_ptr<TextField> pSeedField,
-		std::shared_ptr<Slider> pMinElevSlider, std::shared_ptr<Slider> pMaxElevSlider,
-		std::shared_ptr<Slider> pRoughnessSlider);
+	void onSeedChanged();
+	void onRandSeed();
+	void onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> *label);
+	void onRandomizeAll();
 };
