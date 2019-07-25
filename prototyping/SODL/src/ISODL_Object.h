@@ -96,7 +96,7 @@ public:
 
 	// implement this method to return a clone of your object along with all properties and children for class instantiation
 	virtual std::shared_ptr<ISODL_Object> clone() = 0;
-	
+
 	// subscribe to this event if you need to do post-processing after the object has been fully loaded
 	Event<void()> loadingFinished;
 
@@ -135,14 +135,11 @@ private:
 	std::unordered_map<std::string, SODL_Property_Descriptor> mapPropertyDesc_;
 	std::unordered_map<std::string, std::vector<std::string>> userEnums_;
 	std::vector<std::string> childTypes_;
-	std::unordered_map<std::string, std::shared_ptr<ISODL_Object>> mapClasses_;
 
 	void setId(std::string id) { id_ = id; }
 	SODL_result setPrimaryProperty(unsigned index, SODL_Value const& val);
 	SODL_result setProperty(std::string const& propName, SODL_Value const& val);
 	SODL_result setProperty(std::string const& propName, std::shared_ptr<ISODL_Object> objPtr);
-	SODL_result addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj);
-	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance);
 
 	SODL_result describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc);
 	SODL_result describeProperty(std::string const& propName, SODL_Property_Descriptor &out_desc);

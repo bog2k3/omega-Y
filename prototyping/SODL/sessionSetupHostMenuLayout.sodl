@@ -48,6 +48,9 @@
 				spacing: 10
 			}
 		}
+		class sliderValue label "" 18 right {
+			width: 60
+		}
 		@controlRow {						// terrain seed
 			height: 30
 			label "Seed" 18 left middle
@@ -68,9 +71,7 @@
 				maxHeight: 60%
 				onChange: $minElevationChanged
 			}
-			label $minElevation 18 right {
-				width: 60
-			}
+			@sliderValue $minElevation
 		}
 		@controlRow {
 			slider "Max Elevation" 10 50 0.5 $maxElevation {
@@ -81,9 +82,7 @@
 				maxHeight: 60%
 				onChange: $maxElevationChanged
 			}
-			label $maxElevation 18 right {
-				width: 60
-			}
+			@sliderValue $maxElevation
 		}
 		@controlRow {
 			slider "Roughness" 0 1 0.1 $roughness {
@@ -94,9 +93,7 @@
 				maxHeight: 60%
 				onChange: $roughnessChanged
 			}
-			label $roughness 18 right {
-				width: 60
-			}
+			@sliderValue $roughness
 		}
 		container {
 			height: 40

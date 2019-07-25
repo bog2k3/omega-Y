@@ -649,7 +649,7 @@ SODL_result SODL_Loader::readObjectBlock(ISODL_Object &object, SODL_Loader::Pars
 			return res;
 		if (classInstance) {
 			std::shared_ptr<ISODL_Object> pInstanceObj;
-			res = object.instantiateClass(ident, pInstanceObj);
+			res = instantiateClass(ident, pInstanceObj);
 			if (!res)
 				return res;
 			if (!objectSupportsChildType(object, pInstanceObj->objectType()))
@@ -723,7 +723,7 @@ SODL_result SODL_Loader::readClass(ISODL_Object &object, SODL_Loader::ParseStrea
 	res = loadObjectImpl(stream, nullptr, pClassObj);
 	if (!res)
 		return res;
-	return object.addClassDefinition(className, pClassObj);
+	return addClassDefinition(className, pClassObj);
 }
 
 bool SODL_Loader::objectSupportsChildType(ISODL_Object &object, std::string const& typeName) {
@@ -749,4 +749,19 @@ bool SODL_Loader::canConvertAssignType(SODL_Value::Type from, SODL_Value::Type t
 	&& (to == SODL_Value::Type::Coordinate
 		|| to == SODL_Value::Type::Number
 		|| to == SODL_Value::Type::String));
+}
+
+
+SODL_result SODL_Loader::addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj) {
+	if (mapClasses_.find(className) != mapClasses_.end())
+		return SODL_result::error(strbld() << "Class '" << className << "' has already been defined!");
+	mapClasses_[className] = pClassObj;
+	return SODL_result::OK();
+}
+
+SODL_result SODL_Loader::instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance) {
+	if (mapClasses_.find(className) == mapClasses_.end())
+		return SODL_result::error(strbld() << "Undefined class '" << className << "' !");
+	out_pInstance = mapClasses_[className]->clone();
+	return SODL_result::OK();
 }

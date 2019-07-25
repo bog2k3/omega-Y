@@ -50,6 +50,7 @@ private:
 	ISODL_Object_Factory &factory_;
 	std::unordered_map<std::string, std::pair<SODL_Value::Type, void*>> mapDataBindings_;
 	std::unordered_map<std::string, _SODL_Loader_ActionBindingDescriptor*> mapActionBindings_;
+	std::unordered_map<std::string, std::shared_ptr<ISODL_Object>> mapClasses_;
 
 	std::pair<char*, size_t> readFile(const char* fileName);
 
@@ -73,6 +74,8 @@ private:
 									SODL_Value& val, unsigned primaryPropIdx, std::string propName);
 	bool objectSupportsChildType(ISODL_Object &object, std::string const& typeName);
 	bool canConvertAssignType(SODL_Value::Type from, SODL_Value::Type to);
+	SODL_result addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj);
+	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance);
 
 	void addDataBindingImpl(const char* name, SODL_Value::Type type, void* valuePtr);
 };
