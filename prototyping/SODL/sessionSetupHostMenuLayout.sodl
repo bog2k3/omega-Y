@@ -1,20 +1,3 @@
-// #root {
-	// size: 100% 100%
-	// layout: split vertical 20% 1 {
-		// second: split vertical 75% 1
-	// }
-	// container
-	// container {
-		// layout: list horizontal {
-			// align: right
-		// }
-		// label "test" 18 center middle {
-			// width: 100%
-		// }
-		// button "test" $goBack
-	// }
-// }
-
 #root {
 	size: 100% 100%
 	padding: 50 50 50 50 // top, right, bottom, left
