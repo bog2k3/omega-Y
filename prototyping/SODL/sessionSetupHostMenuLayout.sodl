@@ -1,3 +1,20 @@
+// #root {
+	// size: 100% 100%
+	// layout: split vertical 20% 1 {
+		// second: split vertical 75% 1
+	// }
+	// container
+	// container {
+		// layout: list horizontal {
+			// align: right
+		// }
+		// label "test" 18 center middle {
+			// width: 100%
+		// }
+		// button "test" $goBack
+	// }
+// }
+
 #root {
 	size: 100% 100%
 	padding: 50 50 50 50 // top, right, bottom, left
@@ -13,7 +30,7 @@
 			}
 		}
 	}
-	label #title "Host Game" 50 center
+	label #title "Host Game" 50 center middle
 	picture #TerrainPicture
 	container #controls {
 		transparent: true
@@ -33,15 +50,16 @@
 		}
 		@controlRow {						// terrain seed
 			height: 30
-			label "Seed" 18
+			label "Seed" 18 left middle
 			inputField number $terrainSeed {
 				width: 180
 				onChange: $seedChanged
 			}
-			button "Random" $randSeed
+			button "Random" $randSeed {
+				width: 80
+			}
 		}
 		@controlRow {
-			label $minElevation 18
 			slider "Min Elevation" -20 -1 0.5 $minElevation {
 				precision: 0
 				divisionStep: 5
@@ -50,9 +68,11 @@
 				maxHeight: 60%
 				onChange: $minElevationChanged
 			}
+			label $minElevation 18 right {
+				width: 60
+			}
 		}
 		@controlRow {
-			label $maxElevation 18
 			slider "Max Elevation" 10 50 0.5 $maxElevation {
 				precision: 0
 				divisionStep: 5
@@ -61,9 +81,11 @@
 				maxHeight: 60%
 				onChange: $maxElevationChanged
 			}
+			label $maxElevation 18 right {
+				width: 60
+			}
 		}
 		@controlRow {
-			label $roughness 18
 			slider "Roughness" 0 1 0.1 $roughness {
 				precision: 1
 				divisionStep: 0.1
@@ -71,6 +93,9 @@
 				width: 250
 				maxHeight: 60%
 				onChange: $roughnessChanged
+			}
+			label $roughness 18 right {
+				width: 60
 			}
 		}
 		container {

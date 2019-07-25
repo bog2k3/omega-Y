@@ -21,7 +21,8 @@ private:
 	std::shared_ptr<Label> label_;
 	std::string text_;
 	float fontSize_;
-	int32_t align_;
+	int32_t align_ = 0;
+	int32_t baseline_ = 2;
 
 	void onLoadingFinished();
 };

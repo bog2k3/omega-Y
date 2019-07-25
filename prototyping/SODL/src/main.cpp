@@ -135,6 +135,8 @@ int main(int argc, char* argv[]) {
 	// set up window
 	GLFW_Init_Config glfwCfg(winW, winH, "SODL Test");
 	glfwCfg.enableVSync = true;
+	glfwCfg.GL_Context_Major = 3;
+	glfwCfg.GL_Context_Minor = 3;
 	if (!gltInitGLFW(glfwCfg)) {
 		ERROR("Failed to initialize GLFW Window and/or OpenGL context");
 		return -1;

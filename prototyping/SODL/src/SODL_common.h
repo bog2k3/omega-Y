@@ -48,6 +48,7 @@ struct SODL_Value {
 		case Type::String: return "String";
 		case Type::Enum: return "Enum";
 		case Type::Callback: return "Callback";
+		case Type::Bool: return "Bool";
 		};
 		return "INVALID_TYPE";
 	}
