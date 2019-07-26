@@ -27,7 +27,6 @@ private:
 	float precision_;
 	float divisionStep_;
 	float labelStep_;
-	Event<void(float)> onChange_;
 
 	void onLoadingFinished();
 };

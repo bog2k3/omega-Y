@@ -13,7 +13,7 @@ SliderSODLWrapper::SliderSODLWrapper()
 	defineSecondaryProperty("precision", {precision_});
 	defineSecondaryProperty("divisionStep", {divisionStep_});
 	defineSecondaryProperty("labelStep", {labelStep_});
-	defineSecondaryProperty("onChange", {onChange_, {SODL_Value::Type::Number}});
+	defineSecondaryProperty("onChange", {slider_->onValueChanged, {SODL_Value::Type::Number}});
 
 	loadingFinished.add(std::bind(&SliderSODLWrapper::onLoadingFinished, this));
 }
@@ -29,7 +29,7 @@ std::shared_ptr<ISODL_Object> SliderSODLWrapper::clone() {
 	ptr->precision_ = precision_;
 	ptr->divisionStep_ = divisionStep_;
 	ptr->labelStep_ = labelStep_;
-	ptr->onChange_ = onChange_;
+	ptr->slider_->onValueChanged = slider_->onValueChanged;
 	return ptr;
 }
 
@@ -38,5 +38,4 @@ void SliderSODLWrapper::onLoadingFinished() {
 	slider_->setRange(rangeMin_, rangeMax_, step_);
 	slider_->setDisplayStyle(divisionStep_, labelStep_, precision_);
 	slider_->setValue(value_);
-	slider_->onValueChanged = onChange_;
 }

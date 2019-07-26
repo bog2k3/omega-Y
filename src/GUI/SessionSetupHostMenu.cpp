@@ -69,6 +69,10 @@ void SessionSetupHostMenu::load() {
 	loader.addActionBinding<void()>("randomizeAll", {}, std::bind(&SessionSetupHostMenu::onRandomizeAll, this));
 	loader.addActionBinding<>("goBack", {}, onBack);
 	loader.addActionBinding<>("startGame", {}, onStart);
+	loader.addActionBinding<float, float>("pictureStartDrag", {SODL_Value::Type::Number, SODL_Value::Type::Number}, onTerrainStartDrag);
+	loader.addActionBinding<float, float>("pictureDrag", {SODL_Value::Type::Number, SODL_Value::Type::Number}, onTerrainDrag);
+	loader.addActionBinding<>("pictureEndDrag", {}, onTerrainEndDrag);
+	loader.addActionBinding<float>("pictureScroll", {SODL_Value::Type::Number}, onTerrainZoom);
 
 	ContainerSODLWrapper root(*this);
 	auto res = loader.mergeObject(root, "data/ui/sessionSetupHostMenu.sodl");
@@ -84,10 +88,6 @@ void SessionSetupHostMenu::load() {
 	pControls_->pRoughnessSlider_ = root.getElement<Slider>("roughness");
 	pControls_->pSeedField_ = root.getElement<TextField>("seed");
 	pControls_->pTerrainPicture_ = root.getElement<Picture>("terrainPicture");
-	pControls_->pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
-	pControls_->pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
-	pControls_->pTerrainPicture_->onDrag.forward(onTerrainDrag);
-	pControls_->pTerrainPicture_->onScroll.forward(onTerrainZoom);
 }
 
 void SessionSetupHostMenu::setRTTexture(int texId) {
@@ -99,6 +99,8 @@ glm::vec2 SessionSetupHostMenu::terrainPictureSize() const {
 }
 
 void SessionSetupHostMenu::onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> *label) {
+	if (!label->get())
+		return;
 	assertDbg(pParam);
 	*pParam = value;
 	std::stringstream ss;

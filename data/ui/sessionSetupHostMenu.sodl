@@ -14,7 +14,12 @@
 		}
 	}
 	label #title "Host Game" 50 center middle
-	picture #terrainPicture
+	picture #terrainPicture {
+		onStartDrag: $pictureStartDrag
+		onEndDrag: $pictureEndDrag
+		onDrag: $pictureDrag
+		onScroll: $pictureScroll
+	}
 	container #controls {
 		transparent: true
 		padding: 40 0 0 0
