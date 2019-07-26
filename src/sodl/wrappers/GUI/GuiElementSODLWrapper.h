@@ -12,14 +12,14 @@ public:
 	virtual ~GuiElementSODLWrapper() override = default;
 	GuiElementSODLWrapper();
 
-	std::shared_ptr<GuiBasicElement> get() const { return element_; }
+	std::shared_ptr<GuiBasicElement> get() const { return pElement_; }
 
 protected:
-	void setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement);
-	void cloneCommonPropertiesTo(std::shared_ptr<GuiElementSODLWrapper> pDest);
+	void setupCommonProperties(GuiBasicElement &element);
+	void cloneCommonPropertiesTo(GuiElementSODLWrapper &dest);
 
 private:
-	std::shared_ptr<GuiBasicElement> element_;
+	std::shared_ptr<GuiBasicElement> pElement_;
 	std::shared_ptr<Coord2SODLWrapper> position_;
 	std::shared_ptr<Coord2SODLWrapper> size_;
 	std::shared_ptr<Coord2SODLWrapper> minSize_;

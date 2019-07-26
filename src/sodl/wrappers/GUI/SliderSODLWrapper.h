@@ -12,6 +12,8 @@ public:
 	~SliderSODLWrapper() override {}
 	SliderSODLWrapper();
 
+	std::shared_ptr<Slider> get() const { return slider_; }
+
 protected:
 	std::shared_ptr<ISODL_Object> clone() override;
 

@@ -43,6 +43,13 @@ void SODL_Loader::addActionBinding(const char* name, std::vector<SODL_Value::Typ
 	};
 }
 
+template<class... EventArgs>
+void SODL_Loader::addActionBinding(const char* name, std::vector<SODL_Value::Type> argTypes, Event<void(EventArgs...)> &event) {
+	addActionBinding<void(EventArgs...)>(name, argTypes, [&event](EventArgs... args) {
+		event.trigger(args...);
+	});
+}
+
 template<>
 inline void SODL_Loader::addDataBinding<float>(const char* name, float &data) {
 	addDataBindingImpl(name, SODL_Value::Type::Number, &data);

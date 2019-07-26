@@ -12,6 +12,8 @@ public:
 	~PictureSODLWrapper() override {}
 	PictureSODLWrapper();
 
+	std::shared_ptr<Picture> get() const { return picture_; }
+
 protected:
 	std::shared_ptr<ISODL_Object> clone() override;
 

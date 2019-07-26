@@ -2,7 +2,7 @@
 
 SliderSODLWrapper::SliderSODLWrapper()
 	: slider_(new Slider()) {
-	setupCommonProperties(slider_);
+	setupCommonProperties(*slider_);
 
 	definePrimaryProperty("label", {label_});
 	definePrimaryProperty("rangeMin", {rangeMin_});
@@ -20,7 +20,7 @@ SliderSODLWrapper::SliderSODLWrapper()
 
 std::shared_ptr<ISODL_Object> SliderSODLWrapper::clone() {
 	std::shared_ptr<SliderSODLWrapper> ptr(new SliderSODLWrapper());
-	cloneCommonPropertiesTo(ptr);
+	cloneCommonPropertiesTo(*ptr);
 	ptr->label_ = label_;
 	ptr->rangeMin_ = rangeMin_;
 	ptr->rangeMax_ = rangeMax_;
@@ -40,4 +40,3 @@ void SliderSODLWrapper::onLoadingFinished() {
 	slider_->setValue(value_);
 	slider_->onValueChanged = onChange_;
 }
-

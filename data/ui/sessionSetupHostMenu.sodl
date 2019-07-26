@@ -14,9 +14,10 @@
 		}
 	}
 	label #title "Host Game" 50 center middle
-	picture #TerrainPicture
+	picture #terrainPicture
 	container #controls {
 		transparent: true
+		padding: 40 0 0 0
 		layout: list {
 			align: right
 			vertAlign: top
@@ -37,7 +38,7 @@
 		@controlRow {						// terrain seed
 			height: 30
 			label "Seed" 18 left middle
-			inputField number $terrainSeed {
+			inputField #seed number $terrainSeed {
 				width: 180
 				onChange: $seedChanged
 			}
@@ -46,7 +47,7 @@
 			}
 		}
 		@controlRow {
-			slider "Min Elevation" -20 -1 0.5 $minElevation {
+			slider #minElev "Min Elevation" -20 -1 0.5 $minElevation {
 				precision: 0
 				divisionStep: 5
 				labelStep: 1
@@ -54,10 +55,10 @@
 				maxHeight: 60%
 				onChange: $minElevationChanged
 			}
-			@sliderValue $minElevation
+			@sliderValue #minElevDisp $minElevation
 		}
 		@controlRow {
-			slider "Max Elevation" 10 50 0.5 $maxElevation {
+			slider #maxElev "Max Elevation" 10 50 0.5 $maxElevation {
 				precision: 0
 				divisionStep: 5
 				labelStep: 2
@@ -65,10 +66,10 @@
 				maxHeight: 60%
 				onChange: $maxElevationChanged
 			}
-			@sliderValue $maxElevation
+			@sliderValue #maxElevDisp $maxElevation
 		}
 		@controlRow {
-			slider "Roughness" 0 1 0.1 $roughness {
+			slider #roughness "Roughness" 0 1 0.1 $roughness {
 				precision: 1
 				divisionStep: 0.1
 				labelStep: 2
@@ -76,7 +77,7 @@
 				maxHeight: 60%
 				onChange: $roughnessChanged
 			}
-			@sliderValue $roughness
+			@sliderValue #roughDisp $roughness
 		}
 		container {
 			height: 40

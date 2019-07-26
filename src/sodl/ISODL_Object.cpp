@@ -186,3 +186,14 @@ void ISODL_Object::defineSupportedChildTypes(std::vector<std::string> childTypes
 bool ISODL_Object::supportsChildType(std::string const& objType) {
 	return std::find(childTypes_.begin(), childTypes_.end(), objType) != childTypes_.end();
 }
+
+std::shared_ptr<ISODL_Object> ISODL_Object::getObjectById(const char* id) {
+	if (id_ == id)
+		return shared_from_this();
+	for (size_t i=0; i<childrenCount(); i++) {
+		auto sp = nthChild(i)->getObjectById(id);
+		if (sp)
+			return sp;
+	}
+	return nullptr;
+}

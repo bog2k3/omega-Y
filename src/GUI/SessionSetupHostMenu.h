@@ -14,6 +14,8 @@ public:
 	SessionSetupHostMenu(TerrainConfig* pData);
 	~SessionSetupHostMenu() override;
 
+	void load();
+
 	Event<void()> onBack;
 	Event<void()> onStart;
 

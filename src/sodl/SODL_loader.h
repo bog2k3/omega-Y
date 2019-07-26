@@ -37,6 +37,10 @@ public:
 	template <class FuncType>
 	void addActionBinding(const char* name, std::vector<SODL_Value::Type> argumentTypes, std::function<FuncType> func);
 
+	// registers an event to bind to the named action; when some element invokes the named action the event will be triggered.
+	template<class... EventArgs>
+	void addActionBinding(const char* name, std::vector<SODL_Value::Type> argTypes, Event<void(EventArgs...)> &event);
+
 	// loads a SODL file and returns a new ISODL_Object (actual type depending on the root node's type in the file)
 	SODL_result loadObject(const char* filename, std::shared_ptr<ISODL_Object> &out_pObj);
 

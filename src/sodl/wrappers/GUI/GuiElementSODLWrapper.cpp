@@ -9,17 +9,17 @@ GuiElementSODLWrapper::GuiElementSODLWrapper() {
 void GuiElementSODLWrapper::onLoadingFinished() {
 	// apply all common properties
 	if (position_)
-		element_->setPosition(position_->get());
+		pElement_->setPosition(position_->get());
 	if (size_)
-		element_->setSize(size_->get());
+		pElement_->setSize(size_->get());
 	if (minSize_)
-		element_->setMinSize(minSize_->get());
+		pElement_->setMinSize(minSize_->get());
 	if (maxSize_)
-		element_->setMaxSize(maxSize_->get());
+		pElement_->setMaxSize(maxSize_->get());
 }
 
-void GuiElementSODLWrapper::setupCommonProperties(std::shared_ptr<GuiBasicElement> pElement) {
-	element_ = pElement;
+void GuiElementSODLWrapper::setupCommonProperties(GuiBasicElement &element) {
+	pElement_ = element.shared_from_this();
 	defineSecondaryProperty("pos", {"coord2", (std::shared_ptr<ISODL_Object>&)position_});
 	defineSecondaryProperty("size", {"coord2", (std::shared_ptr<ISODL_Object>&)size_});
 	defineSecondaryProperty("width", callMeBack<FlexCoord>(std::bind(&GuiElementSODLWrapper::setWidth, this, std::placeholders::_1)));
@@ -32,14 +32,14 @@ void GuiElementSODLWrapper::setupCommonProperties(std::shared_ptr<GuiBasicElemen
 
 bool GuiElementSODLWrapper::setWidth(FlexCoord coordVal) {
 	if (!size_)
-		size_ = std::make_shared<Coord2SODLWrapper>(element_->size());
+		size_ = std::make_shared<Coord2SODLWrapper>(pElement_->size());
 	size_->setX(coordVal);
 	return true;
 }
 
 bool GuiElementSODLWrapper::setHeight(FlexCoord coordVal) {
 	if (!size_)
-		size_ = std::make_shared<Coord2SODLWrapper>(element_->size());
+		size_ = std::make_shared<Coord2SODLWrapper>(pElement_->size());
 	size_->setY(coordVal);
 	return true;
 }
@@ -72,13 +72,13 @@ bool GuiElementSODLWrapper::setMaxHeight(FlexCoord coordVal) {
 	return true;
 }
 
-void GuiElementSODLWrapper::cloneCommonPropertiesTo(std::shared_ptr<GuiElementSODLWrapper> pDest) {
+void GuiElementSODLWrapper::cloneCommonPropertiesTo(GuiElementSODLWrapper &dest) {
 	if (position_ != nullptr)
-		pDest->position_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(position_->clone());
+		dest.position_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(position_->clone());
 	if (size_ != nullptr)
-		pDest->size_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(size_->clone());
+		dest.size_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(size_->clone());
 	if (minSize_ != nullptr)
-		pDest->minSize_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(minSize_->clone());
+		dest.minSize_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(minSize_->clone());
 	if (maxSize_ != nullptr)
-		pDest->maxSize_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(maxSize_->clone());
+		dest.maxSize_ = std::dynamic_pointer_cast<Coord2SODLWrapper>(maxSize_->clone());
 }

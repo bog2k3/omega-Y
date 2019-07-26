@@ -2,7 +2,7 @@
 
 TextFieldSODLWrapper::TextFieldSODLWrapper()
 	: textField_(new TextField()) {
-	setupCommonProperties(textField_);
+	setupCommonProperties(*textField_);
 
 	defineEnum("enumType", {"text", "number"});
 	definePrimaryProperty("type", {"enumType", std::bind(&TextFieldSODLWrapper::setType, this, std::placeholders::_1)});
@@ -40,4 +40,14 @@ void TextFieldSODLWrapper::onLoadingFinished() {
 		textField_->setText(textValue_);
 	else
 		textField_->setValue(numberValue_);
+}
+
+std::shared_ptr<ISODL_Object> TextFieldSODLWrapper::clone() {
+	std::shared_ptr<TextFieldSODLWrapper> ptr(new TextFieldSODLWrapper());
+	cloneCommonPropertiesTo(*ptr);
+	ptr->setType(type_);
+	ptr->textValue_ = textValue_;
+	ptr->numberValue_ = numberValue_;
+
+	return ptr;
 }

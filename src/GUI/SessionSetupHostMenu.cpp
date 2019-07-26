@@ -40,13 +40,20 @@ SessionSetupHostMenu::SessionSetupHostMenu(TerrainConfig* pData)
 	: pControls_(new Controls())
 	, pData_(pData)
 {
+}
+
+SessionSetupHostMenu::~SessionSetupHostMenu() {
+	delete pControls_;
+}
+
+void SessionSetupHostMenu::load() {
 	GUI_SODL_OBJ_Factory objFactory;
 	SODL_Loader loader(objFactory);
 
-	loader.addDataBinding("terrainSeed", pData->seed);
-	loader.addDataBinding("minElevation", pData->minElevation);
-	loader.addDataBinding("maxElevation", pData->maxElevation);
-	loader.addDataBinding("roughness", pData->roughness);
+	loader.addDataBinding("terrainSeed", pData_->seed);
+	loader.addDataBinding("minElevation", pData_->minElevation);
+	loader.addDataBinding("maxElevation", pData_->maxElevation);
+	loader.addDataBinding("roughness", pData_->roughness);
 
 	loader.addActionBinding<void()>("seedChanged", {}, std::bind(std::bind(&SessionSetupHostMenu::onSeedChanged, this)));
 	loader.addActionBinding<void(float)>("minElevationChanged", {SODL_Value::Type::Number},
@@ -60,135 +67,35 @@ SessionSetupHostMenu::SessionSetupHostMenu(TerrainConfig* pData)
 		&pData_->roughness, std::placeholders::_1, &pControls_->pRoughnessDisplay_));
 	loader.addActionBinding<void()>("randSeed", {}, std::bind(&SessionSetupHostMenu::onRandSeed, this));
 	loader.addActionBinding<void()>("randomizeAll", {}, std::bind(&SessionSetupHostMenu::onRandomizeAll, this));
-	loader.addActionBinding<void()>("goBack", {}, onBack);
-	loader.addActionBinding<void()>("startGame", {}, onStart);
+	loader.addActionBinding<>("goBack", {}, onBack);
+	loader.addActionBinding<>("startGame", {}, onStart);
 
-	std::shared_ptr<ContainerSODLWrapper> pRoot(this);
-	auto res = loader.mergeObject(*pRoot, "data/ui/sessionSetupHostMenu.sodl");
+	ContainerSODLWrapper root(*this);
+	auto res = loader.mergeObject(root, "data/ui/sessionSetupHostMenu.sodl");
 	if (!res) {
 		ERROR("Failed to load SessionSetupHostMenu SODL: " << res.errorMessage);
 		return;
 	}
-
-	/* setSize({100, 100, FlexCoord::PERCENT});
-	setClientArea({50, 50}, {50, 50});
-	auto layout = std::make_shared<GridLayout>();
-	useLayout(layout);
-
-	//glm::vec2{mySize.x / 2 - 125, 85},
-	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Host Game");
-	addElement(pTitle);
-
-	//glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50},
-	std::shared_ptr<Button> pBack = std::make_shared<Button>("Back");
-	pBack->onClick.forward(onBack);
-	addElement(pBack);
-
-	//glm::vec2{mySize.x - 210, mySize.y - 60}, glm::vec2{200, 50},
-	std::shared_ptr<Button> pStart = std::make_shared<Button>("Start");
-	pStart->onClick.forward(onStart);
-	addElement(pStart);
-
-	//glm::vec2{700, 140},
-	std::shared_ptr<Label> pSeedLabel = std::make_shared<Label>(18, "Seed");
-	addElement(pSeedLabel);
-
-	//glm::vec2{780, 110}, glm::vec2{150, 30},
-	std::shared_ptr<TextField> pSeedField = std::make_shared<TextField>(TextField::NUMBER, std::to_string(pData->seed));
-	pSeedField->onChanged.add(std::bind(&SessionSetupHostMenu::onSeedChanged, this, pSeedField));
-	addElement(pSeedField);
-
-	//glm::vec2{950, 110}, glm::vec2{100, 30},
-	std::shared_ptr<Button> pRandSeed = std::make_shared<Button>("Random");
-	pRandSeed->onClick.add(std::bind(&SessionSetupHostMenu::onRandSeed, this, pSeedField));
-	addElement(pRandSeed);
-
-	constexpr float slidersStartY = 200;
-	constexpr float slidersSpacing = 60;
-
-	//glm::vec2{1120, slidersStartY + 30},
-	std::shared_ptr<Label> pMinElevDisplay = std::make_shared<Label>(18, "");
-	addElement(pMinElevDisplay);
-
-	//glm::vec2{850, slidersStartY}, 250
-	std::shared_ptr<Slider> pMinElevSlider = std::make_shared<Slider>();
-	pMinElevSlider->setLabel("Min Elevation");
-	pMinElevSlider->setRange(-20, -1, 0.5f);
-	pMinElevSlider->setDisplayStyle(5, 1, 0);
-	pMinElevSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->minElevation, std::placeholders::_1, pMinElevDisplay));
-	pMinElevSlider->setValue(pData_->minElevation);
-	addElement(pMinElevSlider);
-
-	//glm::vec2{1120, slidersStartY + slidersSpacing * 1 + 30},
-	std::shared_ptr<Label> pMaxElevDisplay = std::make_shared<Label>(18, "");
-	addElement(pMaxElevDisplay);
-
-	//glm::vec2{850, slidersStartY + slidersSpacing * 1}, 250
-	std::shared_ptr<Slider> pMaxElevSlider = std::make_shared<Slider>();
-	pMaxElevSlider->setLabel("Max Elevation");
-	pMaxElevSlider->setRange(10, 50, 0.5f);
-	pMaxElevSlider->setDisplayStyle(5, 2, 0);
-	pMaxElevSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->maxElevation, std::placeholders::_1, pMaxElevDisplay));
-	pMaxElevSlider->setValue(pData_->maxElevation);
-	addElement(pMaxElevSlider);
-
-	//glm::vec2{1120, slidersStartY + slidersSpacing * 2 + 30},
-	std::shared_ptr<Label> pRoughnessDisplay = std::make_shared<Label>(18, "");
-	addElement(pRoughnessDisplay);
-
-	//glm::vec2{850, slidersStartY + slidersSpacing * 2}, 250
-	std::shared_ptr<Slider> pRoughnessSlider = std::make_shared<Slider>();
-	pRoughnessSlider->setLabel("Roughness");
-	pRoughnessSlider->setRange(0.f, 1.f, 0.1f);
-	pRoughnessSlider->setDisplayStyle(0.1, 2, 1);
-	pRoughnessSlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->roughness, std::placeholders::_1, pRoughnessDisplay));
-	pRoughnessSlider->setValue(pData_->roughness);
-	addElement(pRoughnessSlider);
-
-	//glm::vec2{700, slidersStartY + slidersSpacing * 3.5f}, glm::vec2{450, 30},
-	std::shared_ptr<Button> pRandomize = std::make_shared<Button>("Randomize all");
-	pRandomize->onClick.add(std::bind(&SessionSetupHostMenu::onRandomizeAll, this,
-		pSeedField, pMinElevSlider, pMaxElevSlider, pRoughnessSlider));
-	addElement(pRandomize);
-
-#ifdef DEBUG
-	//glm::vec2{1120, slidersStartY + slidersSpacing * 5 + 30},
-	std::shared_ptr<Label> pDensityDisplay = std::make_shared<Label>(18, "");
-	addElement(pDensityDisplay);
-
-	//glm::vec2{850, slidersStartY + slidersSpacing * 5}, 250
-	std::shared_ptr<Slider> pVertexDensitySlider = std::make_shared<Slider>();
-	pVertexDensitySlider->setLabel("Vertex density");
-	pVertexDensitySlider->setRange(0.5, 2.0, 0.1f);
-	pVertexDensitySlider->setDisplayStyle(0.1, 4, 1);
-	pVertexDensitySlider->onValueChanged.add(std::bind(&SessionSetupHostMenu::onTerrainParameterChanged, this,
-		&pData_->vertexDensity, std::placeholders::_1, pDensityDisplay));
-	pVertexDensitySlider->setValue(pData_->vertexDensity);
-	addElement(pVertexDensitySlider);
-#endif
-
-	//glm::vec2{25, 100}, glm::vec2{650, 500}
-	pTerrainPicture_ = std::make_shared<Picture>();
-	pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
-	pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
-	pTerrainPicture_->onDrag.forward(onTerrainDrag);
-	pTerrainPicture_->onScroll.forward(onTerrainZoom);
-	addElement(pTerrainPicture_);*/
-}
-
-SessionSetupHostMenu::~SessionSetupHostMenu() {
-	delete pControls_;
+	pControls_->pMaxElevDisplay_ = root.getElement<Label>("maxElevDisp");
+	pControls_->pMinElevDisplay_ = root.getElement<Label>("minElevDisp");
+	pControls_->pRoughnessDisplay_ = root.getElement<Label>("roughDisp");
+	pControls_->pMaxElevSlider_ = root.getElement<Slider>("maxElev");
+	pControls_->pMinElevSlider_ = root.getElement<Slider>("minElev");
+	pControls_->pRoughnessSlider_ = root.getElement<Slider>("roughness");
+	pControls_->pSeedField_ = root.getElement<TextField>("seed");
+	pControls_->pTerrainPicture_ = root.getElement<Picture>("terrainPicture");
+	pControls_->pTerrainPicture_->onStartDrag.forward(onTerrainStartDrag);
+	pControls_->pTerrainPicture_->onEndDrag.forward(onTerrainEndDrag);
+	pControls_->pTerrainPicture_->onDrag.forward(onTerrainDrag);
+	pControls_->pTerrainPicture_->onScroll.forward(onTerrainZoom);
 }
 
 void SessionSetupHostMenu::setRTTexture(int texId) {
-	pTerrainPicture_->setPictureTexture(texId, false);
+	pControls_->pTerrainPicture_->setPictureTexture(texId, false);
 }
 
 glm::vec2 SessionSetupHostMenu::terrainPictureSize() const {
-	return pTerrainPicture_->computedSize();
+	return pControls_->pTerrainPicture_->computedSize();
 }
 
 void SessionSetupHostMenu::onTerrainParameterChanged(float* pParam, float value, std::shared_ptr<Label> *label) {
@@ -196,7 +103,7 @@ void SessionSetupHostMenu::onTerrainParameterChanged(float* pParam, float value,
 	*pParam = value;
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(1) << value;
-	label->->setText(ss.str());
+	(*label)->setText(ss.str());
 
 	onParametersChanged.trigger();
 }
@@ -207,7 +114,7 @@ void SessionSetupHostMenu::onSeedChanged() {
 
 void SessionSetupHostMenu::onRandSeed() {
 	pData_->seed = new_RID();
-	pSeedField_->setText(std::to_string(pData_->seed));
+	pControls_->pSeedField_->seValue(pData_->seed);
 	onParametersChanged.trigger();
 }
 
@@ -215,12 +122,12 @@ void SessionSetupHostMenu::onRandomizeAll()
 {
 	onRandSeed();
 
-	auto minElRange = pMinElevSlider_->getRange();
-	pMinElevSlider_->setValue(minElRange.first + (minElRange.second - minElRange.first) * randf());
+	auto minElRange = pControls_->pMinElevSlider_->getRange();
+	pControls_->pMinElevSlider_->setValue(minElRange.first + (minElRange.second - minElRange.first) * randf());
 
-	auto maxElRange = pMaxElevSlider_->getRange();
-	pMaxElevSlider_->setValue(maxElRange.first + (maxElRange.second - maxElRange.first) * randf());
+	auto maxElRange = pControls_->pMaxElevSlider_->getRange();
+	pControls_->pMaxElevSlider_->setValue(maxElRange.first + (maxElRange.second - maxElRange.first) * randf());
 
-	auto roughRange = pRoughnessSlider_->getRange();
-	pRoughnessSlider_->setValue(roughRange.first + (roughRange.second - roughRange.first) * randf());
+	auto roughRange = pControls_->pRoughnessSlider_->getRange();
+	pControls_->pRoughnessSlider_->setValue(roughRange.first + (roughRange.second - roughRange.first) * randf());
 }

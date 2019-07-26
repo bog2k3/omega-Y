@@ -5,7 +5,7 @@
 
 struct TerrainConfig {
 	// random seed
-	uint32_t seed = 0;
+	float seed = 0;
 
 	// size settings
 	float width = 200.f;	// X axis

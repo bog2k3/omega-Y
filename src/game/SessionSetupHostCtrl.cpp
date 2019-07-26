@@ -28,6 +28,7 @@ SessionSetupHostCtrl::SessionSetupHostCtrl(GameState &s)
 	state_.session()->gameConfig().terrainConfig.vertexDensity = 0.5;
 
 	menu_ = std::make_shared<SessionSetupHostMenu>(&state_.session()->gameConfig().terrainConfig);
+	menu_->load();
 	World::getGlobal<GuiSystem>()->addElement(menu_);
 
 	menu_->onParametersChanged.add(std::bind(&SessionSetupHostCtrl::terrainConfigChanged, this));

@@ -4,7 +4,16 @@
 
 ContainerSODLWrapper::ContainerSODLWrapper()
 	: container_(new GuiContainerElement()) {
-	setupCommonProperties(container_);
+	initialize();
+}
+
+ContainerSODLWrapper::ContainerSODLWrapper(GuiContainerElement &existingContainer)
+	: container_(std::dynamic_pointer_cast<GuiContainerElement>(existingContainer.shared_from_this())) {
+	initialize();
+}
+
+void ContainerSODLWrapper::initialize() {
+	setupCommonProperties(*container_);
 
 	defineSecondaryProperty("padding", {"coord4", (std::shared_ptr<ISODL_Object>&)padding_});
 	defineSecondaryProperty("layout", {"layout", (std::shared_ptr<ISODL_Object>&)layout_});
@@ -25,7 +34,7 @@ void ContainerSODLWrapper::onLoadingFinished() {
 
 bool ContainerSODLWrapper::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 	auto pElement = std::dynamic_pointer_cast<GuiElementSODLWrapper>(pObj);
-	if (!pElement || !pElement->get())
+	if (!pElement)
 		return false;
 	container_->addElement(pElement->get());
 	// also keep track of the ISODL_Object interface so we can add it to cloned instances:
@@ -35,7 +44,7 @@ bool ContainerSODLWrapper::addChildObject(std::shared_ptr<ISODL_Object> pObj) {
 
 std::shared_ptr<ISODL_Object> ContainerSODLWrapper::clone() {
 	std::shared_ptr<ContainerSODLWrapper> ptr(new ContainerSODLWrapper());
-	cloneCommonPropertiesTo(ptr);
+	cloneCommonPropertiesTo(*ptr);
 	ptr->padding_ = padding_;
 	ptr->layout_ = layout_;
 	ptr->transparent_ = transparent_;

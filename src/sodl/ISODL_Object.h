@@ -82,7 +82,7 @@ private:
 	SODL_Property_Descriptor(void* funcOrEventPtr, std::vector<SODL_Value::Type> argTypes, bool isEvent);
 };
 
-class ISODL_Object {
+class ISODL_Object : public std::enable_shared_from_this<ISODL_Object> {
 public:
 	virtual ~ISODL_Object() {}
 
@@ -99,6 +99,14 @@ public:
 
 	// subscribe to this event if you need to do post-processing after the object has been fully loaded
 	Event<void()> loadingFinished;
+
+	// returns a pointer to this or one of this object's children if the provided id matches any of them,
+	// or null otherwise.
+	std::shared_ptr<ISODL_Object> getObjectById(const char* id);
+
+	// override these two methods if your class supports children
+	virtual size_t childrenCount() const { return 0; }
+	virtual std::shared_ptr<ISODL_Object> nthChild(size_t n) { return nullptr; }
 
 protected:
 	// defines a "primary" (mandatory) property; primary property values can be written directly in the element's declaration header

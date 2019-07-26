@@ -12,8 +12,10 @@ public:
 	~TextFieldSODLWrapper() override {}
 	TextFieldSODLWrapper();
 
+	std::shared_ptr<TextField> get() const { return textField_; }
+
 protected:
-	std::shared_ptr<ISODL_Object> clone() override { return nullptr; }
+	std::shared_ptr<ISODL_Object> clone() override;
 
 private:
 	std::shared_ptr<TextField> textField_;
