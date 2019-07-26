@@ -114,7 +114,7 @@ void SessionSetupHostMenu::onSeedChanged() {
 
 void SessionSetupHostMenu::onRandSeed() {
 	pData_->seed = new_RID();
-	pControls_->pSeedField_->seValue(pData_->seed);
+	pControls_->pSeedField_->setValue(pData_->seed);
 	onParametersChanged.trigger();
 }
 
