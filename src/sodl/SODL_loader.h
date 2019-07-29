@@ -30,6 +30,7 @@ public:
 	//		String (std::string)
 	//		Number (float)
 	//		Coordinate (FlexCoord)
+	//		Bool (bool)
 	template<class DataType>
 	void addDataBinding(const char* name, DataType &data);
 
