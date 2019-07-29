@@ -25,11 +25,11 @@
             <Keywords name="Folders in comment, middle"></Keywords>
             <Keywords name="Folders in comment, close"></Keywords>
             <Keywords name="Keywords1">#</Keywords>
-            <Keywords name="Keywords2">container&#x000D;&#x000A;button&#x000D;&#x000A;picture&#x000D;&#x000A;label&#x000D;&#x000A;textField&#x000D;&#x000A;slider&#x000D;&#x000A;</Keywords>
+            <Keywords name="Keywords2">container&#x000D;&#x000A;button&#x000D;&#x000A;picture&#x000D;&#x000A;label&#x000D;&#x000A;inputField&#x000D;&#x000A;slider&#x000D;&#x000A;</Keywords>
             <Keywords name="Keywords3">@ class</Keywords>
             <Keywords name="Keywords4">split&#x000D;&#x000A;vertical&#x000D;&#x000A;horizontal&#x000D;&#x000A;fill&#x000D;&#x000A;list&#x000D;&#x000A;left&#x000D;&#x000A;right&#x000D;&#x000A;top&#x000D;&#x000A;bottom&#x000D;&#x000A;center&#x000D;&#x000A;middle&#x000D;&#x000A;free&#x000D;&#x000A;numeric</Keywords>
             <Keywords name="Keywords5">$</Keywords>
-            <Keywords name="Keywords6"></Keywords>
+            <Keywords name="Keywords6">true&#x000D;&#x000A;false</Keywords>
             <Keywords name="Keywords7"></Keywords>
             <Keywords name="Keywords8"></Keywords>
             <Keywords name="Delimiters">00&quot; 01 02&quot; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>
@@ -44,7 +44,7 @@
             <WordsStyle name="KEYWORDS3" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="1" nesting="0" />
             <WordsStyle name="KEYWORDS4" fgColor="FF0080" bgColor="FFFFFF" fontName="" fontStyle="0" nesting="0" />
             <WordsStyle name="KEYWORDS5" fgColor="8000FF" bgColor="FFFFFF" fontName="" fontStyle="2" nesting="0" />
-            <WordsStyle name="KEYWORDS6" fgColor="808080" bgColor="FFFFFF" fontName="" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS6" fgColor="0080C0" bgColor="FFFFFF" fontName="" fontStyle="0" nesting="0" />
             <WordsStyle name="KEYWORDS7" fgColor="808080" bgColor="FFFFFF" fontName="" fontStyle="0" nesting="0" />
             <WordsStyle name="KEYWORDS8" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" nesting="0" />
             <WordsStyle name="OPERATORS" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="1" nesting="0" />

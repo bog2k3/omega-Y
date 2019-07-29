@@ -10,6 +10,8 @@ public:
 	LobbyMenu(glm::vec2 viewportSize);
 	~LobbyMenu() override;
 
+	void load();
+
 	Event<void()> onBack;
 	Event<void(std::string ip)> onJoinHost;
 

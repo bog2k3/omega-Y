@@ -31,6 +31,7 @@ LobbyCtrl::LobbyCtrl(GameState &s)
 {
 	auto guiSystem = World::getGlobal<GuiSystem>();
 	menu_ = std::make_shared<LobbyMenu>(guiSystem->getViewportSize());
+	menu_->load();
 	guiSystem->addElement(menu_);
 
 	menu_->onBack.add([this]() {
@@ -66,7 +67,7 @@ void LobbyCtrl::update(float dt) {
 			// this host does not yet exist in the list, add it:
 			LOGLN("found new host on network at address: " << ip);
 			pNetData_->discoveredHosts_[ip] = {
-				pNetData_->discoveredHosts_.size(),
+				(unsigned)pNetData_->discoveredHosts_.size(),
 				ip,
 				false
 			};

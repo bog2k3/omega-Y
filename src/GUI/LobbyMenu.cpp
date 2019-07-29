@@ -1,10 +1,12 @@
 #include "LobbyMenu.h"
 #include "HostEntry.h"
 
+#include "../sodl/SODL_loader.h"
+#include "../sodl/GUI_SODL_OBJ_Factory.h"
+#include "../sodl/wrappers/GUI/ContainerSODLWrapper.h"
+
 #include <boglfw/GUI/controls/ScrollingContainer.h>
-#include <boglfw/GUI/controls/Button.h>
-#include <boglfw/GUI/controls/Label.h>
-#include <boglfw/GUI/ListLayout.h>
+#include <boglfw/utils/log.h>
 
 struct LobbyMenu::LobbyData {
 	std::shared_ptr<ScrollingContainer> spList;
@@ -13,25 +15,21 @@ struct LobbyMenu::LobbyData {
 LobbyMenu::LobbyMenu(glm::vec2 viewportSize)
 	: pData_(new LobbyData())
 {
-	setSize({100, 100, FlexCoord::PERCENT});
-	setClientArea({50, 50}, {50, 50});
-	auto layout = std::make_shared<ListLayout>();
-	layout->setItemSpacing(30);
-	layout->setAlignment(ListLayout::CENTER);			// center items horizontally
-	layout->setVerticalAlignment(ListLayout::MIDDLE);	// center contents vertically
-	useLayout(layout);
+}
 
-	std::shared_ptr<Label> pTitle = std::make_shared<Label>(50, "Join Game");
-	addElement(pTitle);
+void LobbyMenu::load() {
+	GUI_SODL_OBJ_Factory objFactory;
+	SODL_Loader loader(objFactory);
 
-	//glm::vec2{10, mySize.y - 60}, glm::vec2{200, 50},
-	std::shared_ptr<Button> pBack = std::make_shared<Button>("Back");
-	pBack->onClick.forward(onBack);
-	addElement(pBack);
+	loader.addActionBinding<>("goBack", {}, onBack);
 
-	//glm::vec2{20, 160}, glm::vec2{mySize.x - 40, 400}
-	pData_->spList = std::make_shared<ScrollingContainer>();
-	addElement(pData_->spList);
+	ContainerSODLWrapper root(*this);
+	auto res = loader.mergeObject(root, "data/ui/lobbyMenu.sodl");
+	if (!res) {
+		ERROR("Failed to load lobbyMenu SODL: " << res.toString());
+		return;
+	}
+	pData_->spList = root.getElement<ScrollingContainer>("hostsList");
 }
 
 LobbyMenu::~LobbyMenu() {

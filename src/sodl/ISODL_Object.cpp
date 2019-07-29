@@ -149,7 +149,7 @@ SODL_result ISODL_Object::setProperty(std::string const& propName, std::shared_p
 
 SODL_result ISODL_Object::describePrimaryProperty(unsigned index, SODL_Property_Descriptor &out_desc) {
 	if (index >= primaryPropertyDesc_.size())
-		return SODL_result::error(strbld() << "Invalid primary property index: " << index << " for object type '" << objectType() << "'");
+		return SODL_result::error(strbld() << "Too many primary properties (" << index+1 << ") for object type '" << objectType() << "'");
 	out_desc = primaryPropertyDesc_[index];
 	return SODL_result::OK();
 }

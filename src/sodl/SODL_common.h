@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <ostream>
 
 // result that can be evaluated as bool
 // 	true means success
@@ -9,18 +10,87 @@
 // also provides error message in case of error
 struct SODL_result {
 	bool success = false;
-	std::string errorMessage;
 
 	operator bool() const {
 		return success;
 	}
 
+	SODL_result() = default;
+
+	~SODL_result() {
+		if (pInnerError_)
+			delete pInnerError_;
+	}
+
+	SODL_result(SODL_result const& r) {
+		operator=(r);
+	}
+
+	SODL_result(SODL_result &&r) {
+		operator=(std::move(r));
+	}
+
+	SODL_result& operator=(SODL_result const& r) {
+		success = r.success;
+		errorMessage_ = r.errorMessage_;
+		if (r.pInnerError_) {
+			pInnerError_ = new SODL_result(*r.pInnerError_);
+		}
+		return *this;
+	}
+
+	SODL_result& operator=(SODL_result && r) {
+		success = r.success;
+		errorMessage_ = std::move(r.errorMessage_);
+		pInnerError_ = r.pInnerError_;
+		r.pInnerError_ = nullptr;
+		return *this;
+	}
+
+	SODL_result wrap(std::string outerError) const {
+		return SODL_result {
+			false,
+			outerError,
+			new SODL_result(*this)
+		};
+	}
+
+	const SODL_result* innerError() const {
+		return pInnerError_;
+	}
+
 	static SODL_result OK() {
-		return {true, ""};
+		return {true, "", nullptr};
 	}
 	static SODL_result error(std::string description) {
-		return {false, description};
+		return {false, description, nullptr};
 	}
+
+	static SODL_result error(std::string description, unsigned lineNr) {
+		return {false, description + " (at line: " + std::to_string(lineNr) + ")", nullptr};
+	}
+
+	void addLineInfo(unsigned lineNr) {
+		if (!success)
+			errorMessage_ += " (at line: " + std::to_string(lineNr) + ")";
+	}
+
+	std::string toString() const {
+		if (success)
+			return "SODL_SUCCESS";
+		else
+			return std::string("SODL_ERROR: ") + errorMessage_ + (
+				pInnerError_
+					? std::string("\n>>> ") + pInnerError_->toString()
+					: std::string(""));
+	}
+
+private:
+	std::string errorMessage_;
+	SODL_result* pInnerError_ = nullptr;
+
+	SODL_result(bool s, std::string e, SODL_result* pi)
+		: success(s), errorMessage_(e), pInnerError_(pi) {}
 };
 
 struct SODL_Value {

@@ -2,16 +2,11 @@
 
 #include "../sodl/SODL_loader.h"
 #include "../sodl/GUI_SODL_OBJ_Factory.h"
-//#include "../sodl/wrappers/common/Coord2SODLWrapper.h"
-//#include "../sodl/wrappers/common/Coord4SODLWrapper.h"
-//#include "../sodl/wrappers/GUI/GuiElementSODLWrapper.h"
-//#include "../sodl/wrappers/GUI/ButtonSODLWrapper.h"
 #include "../sodl/wrappers/GUI/ContainerSODLWrapper.h"
 #include "../sodl/wrappers/GUI/LabelSODLWrapper.h"
 #include "../sodl/wrappers/GUI/PictureSODLWrapper.h"
 #include "../sodl/wrappers/GUI/SliderSODLWrapper.h"
 #include "../sodl/wrappers/GUI/TextFieldSODLWrapper.h"
-//#include "../sodl/wrappers/GUI/LayoutSODLWrapper.h"
 
 #include <boglfw/GUI/controls/Button.h>
 #include <boglfw/GUI/controls/Label.h>
@@ -77,7 +72,7 @@ void SessionSetupHostMenu::load() {
 	ContainerSODLWrapper root(*this);
 	auto res = loader.mergeObject(root, "data/ui/sessionSetupHostMenu.sodl");
 	if (!res) {
-		ERROR("Failed to load SessionSetupHostMenu SODL: " << res.errorMessage);
+		ERROR("Failed to load SessionSetupHostMenu SODL: " << res.toString());
 		return;
 	}
 	pControls_->pMaxElevDisplay_ = root.getElement<Label>("maxElevDisp");

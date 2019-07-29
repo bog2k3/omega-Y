@@ -49,6 +49,7 @@ public:
 
 private:
 	class ParseStream;
+	class CharToLineMapping;
 	struct _SODL_Loader_ActionBindingDescriptor;
 
 	ISODL_Object_Factory &factory_;
@@ -56,12 +57,12 @@ private:
 	std::unordered_map<std::string, _SODL_Loader_ActionBindingDescriptor*> mapActionBindings_;
 	std::unordered_map<std::string, std::shared_ptr<ISODL_Object>> mapClasses_;
 
-	std::pair<char*, size_t> readFile(const char* fileName);
+	std::pair<char*, size_t> readFile(const char* fileName, CharToLineMapping &outMapping);
 
 	// remove all comments and reduce all whitespace to a single ' ' char;
 	// the output buffer must have at least the same size as the input buffer;
 	// returns the size of the preprocessed data
-	size_t preprocess(const char* input, size_t length, char* output);
+	size_t preprocess(const char* input, size_t length, char* output, CharToLineMapping &outMapping);
 
 	SODL_result loadObjectImpl(ParseStream &stream, std::string *pObjType, std::shared_ptr<ISODL_Object> &out_pObj);
 	SODL_result mergeObjectImpl(ISODL_Object &object, ParseStream &stream);
@@ -72,14 +73,14 @@ private:
 	SODL_result readObjectBlock(ISODL_Object &object, ParseStream &stream);
 	SODL_result readClass(ISODL_Object &object, ParseStream &stream);
 
-	SODL_result resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType);
-	SODL_result checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes);
+	SODL_result resolveDataBinding(SODL_Value &inOutVal, SODL_Value::Type expectedType, unsigned crtLine);
+	SODL_result checkCallbackArgumentsMatch(std::vector<SODL_Value::Type> argTypes, std::vector<SODL_Value::Type> expectedTypes, unsigned crtLine);
 	SODL_result assignPropertyValue(ISODL_Object &object, SODL_Property_Descriptor const& desc,
-									SODL_Value& val, unsigned primaryPropIdx, std::string propName);
+									SODL_Value& val, unsigned primaryPropIdx, std::string propName, unsigned crtLine);
 	bool objectSupportsChildType(ISODL_Object &object, std::string const& typeName);
 	bool canConvertAssignType(SODL_Value::Type from, SODL_Value::Type to);
-	SODL_result addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj);
-	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance);
+	SODL_result addClassDefinition(std::string const& className, std::shared_ptr<ISODL_Object> pClassObj, unsigned crtLine);
+	SODL_result instantiateClass(std::string const& className, std::shared_ptr<ISODL_Object> &out_pInstance, unsigned crtLine);
 
 	void addDataBindingImpl(const char* name, SODL_Value::Type type, void* valuePtr);
 };
